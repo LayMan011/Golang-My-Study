@@ -7,7 +7,7 @@ import (
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
-	"github.com/jackc/pgx/v5"
+	core_postgres_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool"
 )
 
 func (r *UserRepository) PatchUser(
@@ -29,7 +29,7 @@ func (r *UserRepository) PatchUser(
 		id,
 		version,
 		full_name,
-		phone_number
+		phone_number;
 	`
 
 	row := r.pool.QueryRow(
@@ -49,7 +49,7 @@ func (r *UserRepository) PatchUser(
 		&userModel.PhoneNumber,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return domain.User{}, fmt.Errorf(
 				"user with id='%d' concurrently accessed: %w",
 				id,

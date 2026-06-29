@@ -16,7 +16,7 @@ func (r *UserRepository) DeleteUser(
 
 	query := `
 	DELETE from progress.users
-	WHERE id=$1
+	WHERE id=$1;
 	`
 
 	cmdTag, err := r.pool.Exec(ctx, query, id)

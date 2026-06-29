@@ -13,7 +13,7 @@ env-cleanup:
 	@read -p "Очистить все volume файлы окружения? Опастность утери данных. [y/N]: " ans; \
 	if [ "$$ans" = "y" ]; then \
 		docker compose down project-postgres port-forwarder && \
-		sudo rm -rf out/pgdata && \
+		sudo rm -rf ${PROJECT_ROOT}/out/pgdata && \
 		echo "Файлы окружения очищены"; \
 	else \
 		echo "Очистка окружения отменена"; \
@@ -55,4 +55,4 @@ migrate-action:
 project-run:
 	@export LOGGER_FOLDER=${PROJECT_ROOT}/out/logs && \
 	export POSTGRES_HOST=localhost && \
-	go run cmd/learning_progress/main.go
+	go run ${PROJECT_ROOT}/cmd/learning_progress/main.go
