@@ -13,13 +13,13 @@ CREATE TABLE progress.users (
 
 CREATE TABLE progress.themes (
     id              SERIAL                  PRIMARY KEY,
-    version         BIGINT       NOT NULl   DEFAULT 1,
+    version         BIGINT       NOT NULL   DEFAULT 1,
     title           VARCHAR(100) NOT NULL   CHECK(char_length(title) BETWEEN 1 AND 100),
     description     VARCHAR(1000)           CHECK(char_length(description) BETWEEN 1 AND 1000),
-    created_at      TIMESTAMPTZ  NOT NULL,
     completed       BOOLEAN      NOT NULL,
-    percentages     INTEGER      NOT NULL,
+    created_at      TIMESTAMPTZ  NOT NULL,
     completed_at    TIMESTAMPTZ,
+    percentages     INTEGER      NOT NULL,
 
     CHECK (
         (completed=FALSE AND completed_at IS NULL AND percentages BETWEEN 0 AND 99)

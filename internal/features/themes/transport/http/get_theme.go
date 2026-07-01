@@ -1,4 +1,4 @@
-package users_transport_http
+package themes_transport_http
 
 import (
 	"net/http"
@@ -8,34 +8,34 @@ import (
 	core_http_response "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/response"
 )
 
-type GetUserResponse UserDTOResponse
+type GetThemeResponse ThemeDTOResponse
 
-func (h *UsersHTTPHandler) GetUser(rw http.ResponseWriter, r *http.Request) {
+func (h *ThemeHTTPHandler) GetTheme(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
 	responseHandler := core_http_response.NewHTTPResponseHandler(log, rw)
 
-	userID, err := core_http_request.GetInPathValue(r, "id")
+	themeID, err := core_http_request.GetInPathValue(r, "id")
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,
-			"failed to get userID path value",
+			"failed to get themeID path value",
 		)
 
 		return
 	}
 
-	user, err := h.userService.GetUser(ctx, userID)
+	themeDomain, err := h.themeService.GetTheme(ctx, themeID)
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,
-			"failed to get user",
+			"failed to get theme",
 		)
 
 		return
 	}
 
-	response := GetUserResponse(userDTOFromDomain(user))
+	response := GetThemeResponse(themeDTOFromDomain(themeDomain))
 
 	responseHandler.JSONResponse(response, http.StatusOK)
 }
