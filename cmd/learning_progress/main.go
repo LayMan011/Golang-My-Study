@@ -6,18 +6,28 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	core_pgx_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/middleware"
 	core_http_server "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/server"
+	themes_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/themes/repository/postgres"
+	themes_service "github.com/LayMan011/Golang-My-Study/internal/features/themes/service"
+	themes_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/themes/transport/http"
 	users_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/postgres"
 	users_service "github.com/LayMan011/Golang-My-Study/internal/features/users/service"
 	users_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/users/transport/http"
 	"go.uber.org/zap"
 )
 
+var (
+	timeZone = time.UTC
+)
+
 func main() {
+	time.Local = timeZone
+
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGINT, syscall.SIGTERM,
@@ -30,6 +40,8 @@ func main() {
 		os.Exit(1)
 	}
 	defer logger.Close()
+
+	logger.Debug("application time zone", zap.Any("zone", timeZone))
 
 	logger.Debug("initiazling postgres connection pool")
 	pool, err := core_pgx_pool.NewPool(
@@ -46,6 +58,11 @@ func main() {
 	usersService := users_service.NewUsersService(usersRepository)
 	usersTranspostHTTP := users_transport_http.NewUsersHTTPHandler(usersService)
 
+	logger.Debug("initializing feature", zap.String("feature", "themes"))
+	themesRepository := themes_postgres_repository.NewThemeRepository(pool)
+	themesService := themes_service.NewThemeService(themesRepository)
+	themesTransportHTTP := themes_transport_http.NewThemesHTTPHandler(themesService)
+
 	logger.Debug("initializing HTTP server")
 	httpServer := core_http_server.NewHTTPServer(
 		core_http_server.NewConfigMust(),
@@ -58,6 +75,7 @@ func main() {
 
 	apiVersionRouterV1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
 	apiVersionRouterV1.RegisterRouters(usersTranspostHTTP.Routes()...)
+	apiVersionRouterV1.RegisterRouters(themesTransportHTTP.Routes()...)
 
 	/*
 		Example of usage apiVersionRouterV2 with separate Middlewares
