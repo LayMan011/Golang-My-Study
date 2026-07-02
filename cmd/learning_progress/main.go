@@ -13,6 +13,9 @@ import (
 	core_pgx_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/middleware"
 	core_http_server "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/server"
+	statistics_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/statistics/repository/postgres"
+	statistics_service "github.com/LayMan011/Golang-My-Study/internal/features/statistics/service"
+	statistics_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/statistics/transport/http"
 	themes_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/themes/repository/postgres"
 	themes_service "github.com/LayMan011/Golang-My-Study/internal/features/themes/service"
 	themes_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/themes/transport/http"
@@ -61,6 +64,11 @@ func main() {
 	themesService := themes_service.NewThemeService(themesRepository)
 	themesTransportHTTP := themes_transport_http.NewThemesHTTPHandler(themesService)
 
+	logger.Debug("initializing feature", zap.String("feature", "statistics"))
+	statisticsRepository := statistics_postgres_repository.NewStatisticsRepository(pool)
+	statisticsService := statistics_service.NewStatisticsService(statisticsRepository)
+	statisticsTransportHTTP := statistics_transport_http.NewStatisticsHTTPHandler(statisticsService)
+
 	logger.Debug("initializing HTTP server")
 	httpServer := core_http_server.NewHTTPServer(
 		core_http_server.NewConfigMust(),
@@ -74,6 +82,7 @@ func main() {
 	apiVersionRouterV1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
 	apiVersionRouterV1.RegisterRouters(usersTranspostHTTP.Routes()...)
 	apiVersionRouterV1.RegisterRouters(themesTransportHTTP.Routes()...)
+	apiVersionRouterV1.RegisterRouters(statisticsTransportHTTP.Routes()...)
 
 	/*
 		Example of usage apiVersionRouterV2 with separate Middlewares

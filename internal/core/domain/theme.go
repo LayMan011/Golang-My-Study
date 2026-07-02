@@ -63,6 +63,20 @@ func NewThemeUnitialized(
 	)
 }
 
+func (t *Theme) CompletionDuration() *time.Duration {
+	if !t.Completed {
+		return nil
+	}
+
+	if t.CompletedAt == nil {
+		return nil
+	}
+
+	duration := t.CompletedAt.Sub(t.CreatedAt)
+
+	return &duration
+}
+
 func (t *Theme) Validate() error {
 	titleLen := len([]rune(t.Title))
 	if titleLen < 1 || titleLen > 100 {
