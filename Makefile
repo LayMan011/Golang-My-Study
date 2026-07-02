@@ -69,5 +69,8 @@ project-run:
 progress-deploy:
 	@docker compose up -d --build progress
 
+progress-undeploy:
+	@docker compose down progress
+
 ps:
 	@docker compose ps
