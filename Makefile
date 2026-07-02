@@ -65,3 +65,9 @@ project-run:
 	@export LOGGER_FOLDER=${PROJECT_ROOT}/out/logs && \
 	export POSTGRES_HOST=localhost && \
 	go run ${PROJECT_ROOT}/cmd/learning_progress/main.go
+
+progress-deploy:
+	@docker compose up -d --build progress
+
+ps:
+	@docker compose ps
