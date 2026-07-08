@@ -18,9 +18,9 @@ func (r *ThemeRepository) CreateTheme(
 	defer cancel()
 
 	query := `
-	INSERT INTO progress.themes (title, description, completed, created_at, completed_at, percentages, author_user_id)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
-	RETURNING id, version, title, description, completed, created_at, completed_at, percentages, author_user_id;
+	INSERT INTO progress.themes (title, description, created_at, subject, rating, all_ratings, number_of_ratings, number_of_users, price, author_user_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	RETURNING id, version, title, description, created_at, subject, rating, all_ratings, number_of_ratings, number_of_users, price, author_user_id;
 	`
 
 	row := r.pool.QueryRow(
@@ -28,10 +28,13 @@ func (r *ThemeRepository) CreateTheme(
 		query,
 		theme.Title,
 		theme.Description,
-		theme.Completed,
 		theme.CreatedAt,
-		theme.CompletedAt,
-		theme.Percentages,
+		theme.Subject,
+		theme.Rating,
+		theme.AllRatings,
+		theme.NumberOfRatings,
+		theme.NumberOfUsers,
+		theme.Price,
 		theme.AuthorUserID,
 	)
 
@@ -41,10 +44,13 @@ func (r *ThemeRepository) CreateTheme(
 		&themeModel.Version,
 		&themeModel.Title,
 		&themeModel.Description,
-		&themeModel.Completed,
 		&themeModel.CreatedAt,
-		&themeModel.CompletedAt,
-		&themeModel.Percentages,
+		&themeModel.Subject,
+		&themeModel.Rating,
+		&themeModel.AllRatings,
+		&themeModel.NumberOfRatings,
+		&themeModel.NumberOfUsers,
+		&themeModel.Price,
 		&themeModel.AuthorUserID,
 	)
 	if err != nil {

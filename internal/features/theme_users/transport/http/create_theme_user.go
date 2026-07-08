@@ -1,4 +1,4 @@
-package themes_transport_http
+package themes_user_transport_http
 
 import (
 	"net/http"
@@ -9,22 +9,19 @@ import (
 	core_http_response "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/response"
 )
 
-type CreateThemeRequest struct {
-	Title       string  `json:"title" validate:"required,min=1,max=100"`
-	Description *string `json:"description" validate:"omitempty,min=1,max=1000"`
-	Subject     string  `json:"subject" validate:"required,min=1,max=1000"`
-
-	AuthorUserID int `json:"author_user_id" validate:"required"`
+type CreateThemeUserRequest struct {
+	ThemeID int `json:"theme_id" validate:"required"`
+	UserID  int `json:"user_id" validate:"required"`
 }
 
-type CreateThemeResponse ThemeDTOResponse
+type CreateThemeUserResponse ThemeUserDTOResponse
 
-func (h *ThemeHTTPHandler) CreateTheme(rw http.ResponseWriter, r *http.Request) {
+func (h *ThemeUserHTTPHandler) CreateThemeUser(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
 	responseHandler := core_http_response.NewHTTPResponseHandler(log, rw)
 
-	var request CreateThemeRequest
+	var request CreateThemeUserRequest
 	if err := core_http_request.DecodeAndValidateRequest(r, &request); err != nil {
 		responseHandler.ErrorResponse(
 			err,
@@ -34,14 +31,12 @@ func (h *ThemeHTTPHandler) CreateTheme(rw http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	themeDomain := domain.NewThemeUnitialized(
-		request.Title,
-		request.Description,
-		request.Subject,
-		request.AuthorUserID,
+	themeDomain := domain.NewThemeUserUnitialized(
+		request.ThemeID,
+		request.UserID,
 	)
 
-	themeDomain, err := h.themeService.CreateTheme(ctx, themeDomain)
+	themeDomain, err := h.themeUserService.CreateThemeUser(ctx, themeDomain)
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,
@@ -51,7 +46,7 @@ func (h *ThemeHTTPHandler) CreateTheme(rw http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	response := CreateThemeResponse(themeDTOFromDomain(themeDomain))
+	response := CreateThemeUserResponse(themeUserDTOFromDomain(themeDomain))
 
 	responseHandler.JSONResponse(response, http.StatusCreated)
 }

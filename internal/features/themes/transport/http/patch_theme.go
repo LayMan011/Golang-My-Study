@@ -14,7 +14,7 @@ import (
 type PatchThemeRequest struct {
 	Title       core_http_types.Nullable[string] `json:"title"`
 	Description core_http_types.Nullable[string] `json:"description"`
-	Completed   core_http_types.Nullable[bool]   `json:"completed"`
+	Subject     core_http_types.Nullable[string] `json:"subject"`
 }
 
 func (r *PatchThemeRequest) Validate() error {
@@ -38,9 +38,14 @@ func (r *PatchThemeRequest) Validate() error {
 		}
 	}
 
-	if r.Completed.Set {
-		if r.Completed.Value == nil {
-			return fmt.Errorf("Completed' can't be NULL")
+	if r.Subject.Set {
+		if r.Subject.Value == nil {
+			return fmt.Errorf("Subject' can't be NULL")
+		}
+
+		subjectLen := len([]rune(*r.Subject.Value))
+		if subjectLen < 1 || subjectLen > 1000 {
+			return fmt.Errorf("'Subject' must be between 1 and 1000 symbols")
 		}
 	}
 
@@ -95,6 +100,6 @@ func themePatchFromRequest(request PatchThemeRequest) domain.ThemePatch {
 	return domain.NewThemePatch(
 		request.Title.ToDomain(),
 		request.Description.ToDomain(),
-		request.Completed.ToDomain(),
+		request.Subject.ToDomain(),
 	)
 }

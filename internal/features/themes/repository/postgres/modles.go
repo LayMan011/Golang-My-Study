@@ -7,15 +7,18 @@ import (
 )
 
 type ThemeModel struct {
-	ID           int
-	Version      int
-	Title        string
-	Description  *string
-	Completed    bool
-	CreatedAt    time.Time
-	CompletedAt  *time.Time
-	Percentages  int
-	AuthorUserID int
+	ID              int
+	Version         int
+	Title           string
+	Description     *string
+	CreatedAt       time.Time
+	Subject         string
+	Rating          *float64
+	AllRatings      int
+	NumberOfRatings int
+	NumberOfUsers   int
+	Price           int
+	AuthorUserID    int
 }
 
 func themesDomainFromModels(themeModels []ThemeModel) []domain.Theme {
@@ -33,10 +36,13 @@ func themeDomainFromModel(themeModel ThemeModel) domain.Theme {
 		themeModel.Version,
 		themeModel.Title,
 		themeModel.Description,
-		themeModel.Completed,
 		themeModel.CreatedAt,
-		themeModel.CompletedAt,
-		themeModel.Percentages,
+		themeModel.Subject,
+		themeModel.Rating,
+		themeModel.AllRatings,
+		themeModel.NumberOfRatings,
+		themeModel.NumberOfUsers,
+		themeModel.Price,
 		themeModel.AuthorUserID,
 	)
 }
