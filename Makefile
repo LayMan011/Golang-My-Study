@@ -52,6 +52,19 @@ migrate-action:
 		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@project-postgres:5432/${POSTGRES_DB}?sslmode=disable \
 		"${action}"
 
+migrate-version:
+	@docker compose run --rm project-postgres-migrate \
+		-path /migrations \
+		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@project-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
+		version
+
+
+migrate-force:
+	@docker compose run --rm project-postgres-migrate \
+		-path /migrations \
+		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@project-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
+		force 1
+
 logs-cleanup:
 	@read -p "Очистить все log файлы? Опастность утери логов. [y/N]: " ans; \
 	if [ "$$ans" = "y" ]; then \

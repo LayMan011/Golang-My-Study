@@ -11,12 +11,15 @@ type Theme struct {
 	ID      int
 	Version int
 
-	Title       string
-	Description *string
-	Completed   bool
-	CreatedAt   time.Time
-	CompletedAt *time.Time
-	Percentages int
+	Title           string
+	Description     *string
+	CreatedAt       time.Time
+	Subject         string
+	Rating          *float64
+	AllRatings      int
+	NumberOfRatings int
+	NumberOfUsers   int
+	Price           int
 
 	AuthorUserID int
 }
@@ -26,28 +29,35 @@ func NewTheme(
 	version int,
 	title string,
 	description *string,
-	completed bool,
 	createdAt time.Time,
-	completedAt *time.Time,
-	percentages int,
+	subject string,
+	rating *float64,
+	allRatings int,
+	numberOfRating int,
+	numberOfUsers int,
+	price int,
 	authorUserID int,
 ) Theme {
 	return Theme{
-		ID:           id,
-		Version:      version,
-		Title:        title,
-		Description:  description,
-		Completed:    completed,
-		CreatedAt:    createdAt,
-		CompletedAt:  completedAt,
-		Percentages:  percentages,
-		AuthorUserID: authorUserID,
+		ID:              id,
+		Version:         version,
+		Title:           title,
+		Description:     description,
+		CreatedAt:       createdAt,
+		Subject:         subject,
+		Rating:          rating,
+		AllRatings:      allRatings,
+		NumberOfRatings: numberOfRating,
+		NumberOfUsers:   numberOfUsers,
+		Price:           price,
+		AuthorUserID:    authorUserID,
 	}
 }
 
 func NewThemeUnitialized(
 	title string,
 	description *string,
+	subject string,
 	authorIserID int,
 ) Theme {
 	return NewTheme(
@@ -55,26 +65,15 @@ func NewThemeUnitialized(
 		UninitailizedVersion,
 		title,
 		description,
-		false,
 		time.Now(),
+		subject,
 		nil,
+		0,
+		0,
+		0,
 		0,
 		authorIserID,
 	)
-}
-
-func (t *Theme) CompletionDuration() *time.Duration {
-	if !t.Completed {
-		return nil
-	}
-
-	if t.CompletedAt == nil {
-		return nil
-	}
-
-	duration := t.CompletedAt.Sub(t.CreatedAt)
-
-	return &duration
 }
 
 func (t *Theme) Validate() error {
@@ -98,24 +97,20 @@ func (t *Theme) Validate() error {
 		}
 	}
 
-	if t.Completed {
-		if t.CompletedAt == nil {
-			return fmt.Errorf(
-				"'CompletedAt' can't be 'nil' if 'Completed' == true: %w",
-				core_errors.ErrInvalidArgument,
-			)
-		}
+	subjectLen := len([]rune(t.Subject))
+	if subjectLen < 1 || subjectLen > 100 {
+		return fmt.Errorf(
+			"invalid 'Subject' len: %d: %w",
+			subjectLen,
+			core_errors.ErrInvalidArgument,
+		)
+	}
 
-		if t.CompletedAt.Before(t.CreatedAt) {
+	if t.Rating != nil {
+		if *t.Rating < 0 || *t.Rating > 5 {
 			return fmt.Errorf(
-				"'CompletedAt' can't be before 'CreatedAt': %w",
-				core_errors.ErrInvalidArgument,
-			)
-		}
-	} else {
-		if t.CompletedAt != nil {
-			return fmt.Errorf(
-				"'CompletedAt' must be nil if 'Completed' == false: %w",
+				"invalid 'Rating' meaning: %f: %w",
+				*t.Rating,
 				core_errors.ErrInvalidArgument,
 			)
 		}
@@ -127,18 +122,18 @@ func (t *Theme) Validate() error {
 type ThemePatch struct {
 	Title       Nullable[string]
 	Description Nullable[string]
-	Completed   Nullable[bool]
+	Subject     Nullable[string]
 }
 
 func NewThemePatch(
 	title Nullable[string],
 	description Nullable[string],
-	completed Nullable[bool],
+	subject Nullable[string],
 ) ThemePatch {
 	return ThemePatch{
 		Title:       title,
 		Description: description,
-		Completed:   completed,
+		Subject:     subject,
 	}
 }
 
@@ -147,8 +142,8 @@ func (p *ThemePatch) Validate() error {
 		return fmt.Errorf("'Title' can't be patched to NULL: %w", core_errors.ErrInvalidArgument)
 	}
 
-	if p.Completed.Set && p.Completed.Value == nil {
-		return fmt.Errorf("'Completed' can't be patched to NULL: %w", core_errors.ErrInvalidArgument)
+	if p.Subject.Set && p.Subject.Value == nil {
+		return fmt.Errorf("'Subject' can't be patched to NULL: %w", core_errors.ErrInvalidArgument)
 	}
 
 	return nil
@@ -169,19 +164,8 @@ func (t *Theme) ApplyPatch(patch ThemePatch) error {
 		tmp.Description = patch.Description.Value
 	}
 
-	if patch.Completed.Set {
-		tmp.Completed = *patch.Completed.Value
-		if tmp.Completed {
-			completedAt := time.Now().UTC()
-			tmp.CompletedAt = &completedAt
-			tmp.Percentages = 100
-		} else {
-			tmp.CompletedAt = nil
-			/*
-				потом добавить функцию для перерасчета процентов выполнения темы
-			*/
-			tmp.Percentages = 0
-		}
+	if patch.Subject.Set {
+		tmp.Subject = *patch.Subject.Value
 	}
 
 	if err := tmp.Validate(); err != nil {
