@@ -1,0 +1,919 @@
+basePath: /api/v1
+definitions:
+  github_com_LayMan011_Golang-My-Study_internal_core_domain.ThemeUser:
+    properties:
+      additionAt:
+        type: string
+      completed:
+        type: boolean
+      completedAt:
+        type: string
+      id:
+        type: integer
+      percentages:
+        type: integer
+      themeID:
+        type: integer
+      userID:
+        type: integer
+      version:
+        type: integer
+    type: object
+  github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse:
+    properties:
+      error:
+        example: full error text
+        type: string
+      message:
+        example: short human-readable message
+        type: string
+    type: object
+  github_com_LayMan011_Golang-My-Study_internal_core_transport_http_types.Nullable-bool:
+    properties:
+      set:
+        type: boolean
+      value:
+        type: boolean
+    type: object
+  internal_features_theme_users_transport_http.CreateThemeUserRequest:
+    properties:
+      theme_id:
+        example: 1
+        type: integer
+      user_id:
+        example: 1
+        type: integer
+    required:
+    - theme_id
+    - user_id
+    type: object
+  internal_features_theme_users_transport_http.CreateThemeUserResponse:
+    properties:
+      addition_at:
+        example: "2026-02-26T10:30:00Z"
+        type: string
+      completed:
+        example: false
+        type: boolean
+      completed_at:
+        example: "null"
+        type: string
+      id:
+        example: 1
+        type: integer
+      percentages:
+        example: 0
+        type: integer
+      theme_id:
+        example: 3
+        type: integer
+      user_id:
+        example: 4
+        type: integer
+      version:
+        example: 2
+        type: integer
+    type: object
+  internal_features_theme_users_transport_http.GetThemeUserResponse:
+    properties:
+      addition_at:
+        example: "2026-02-26T10:30:00Z"
+        type: string
+      completed:
+        example: false
+        type: boolean
+      completed_at:
+        example: "null"
+        type: string
+      id:
+        example: 1
+        type: integer
+      percentages:
+        example: 0
+        type: integer
+      theme_id:
+        example: 3
+        type: integer
+      user_id:
+        example: 4
+        type: integer
+      version:
+        example: 2
+        type: integer
+    type: object
+  internal_features_theme_users_transport_http.PatchThemeUserRequest:
+    type: object
+  internal_features_theme_users_transport_http.PatchThemeUserResponse:
+    properties:
+      addition_at:
+        example: "2026-02-26T10:30:00Z"
+        type: string
+      completed:
+        example: false
+        type: boolean
+      completed_at:
+        example: "null"
+        type: string
+      id:
+        example: 1
+        type: integer
+      percentages:
+        example: 0
+        type: integer
+      theme_id:
+        example: 3
+        type: integer
+      user_id:
+        example: 4
+        type: integer
+      version:
+        example: 2
+        type: integer
+    type: object
+  internal_features_themes_transport_http.CreateThemeRequest:
+    properties:
+      author_user_id:
+        example: 1
+        type: integer
+      description:
+        example: Подготовка к ЕГЭ по русскому языку за 3 месяца
+        maxLength: 1000
+        minLength: 1
+        type: string
+      subject:
+        example: Русский язык
+        maxLength: 1000
+        minLength: 1
+        type: string
+      title:
+        example: Подготовка к ЕГЭ по русскому языку
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - author_user_id
+    - subject
+    - title
+    type: object
+  internal_features_themes_transport_http.CreateThemeResponse:
+    properties:
+      all_ratings:
+        example: 0
+        type: integer
+      author_user_id:
+        example: 2
+        type: integer
+      create_at:
+        example: Профильная математика
+        type: string
+      description:
+        example: Подготовка к ЕГЭ по профильной математике
+        type: string
+      id:
+        example: 13
+        type: integer
+      number_of_ratings:
+        example: 0
+        type: integer
+      number_of_users:
+        example: 0
+        type: integer
+      price:
+        example: 50
+        type: integer
+      subject:
+        example: "2026-02-26T10:30:00Z"
+        type: string
+      title:
+        example: Математика
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+  internal_features_themes_transport_http.GetThemeResponse:
+    properties:
+      all_ratings:
+        example: 0
+        type: integer
+      author_user_id:
+        example: 2
+        type: integer
+      create_at:
+        example: Профильная математика
+        type: string
+      description:
+        example: Подготовка к ЕГЭ по профильной математике
+        type: string
+      id:
+        example: 13
+        type: integer
+      number_of_ratings:
+        example: 0
+        type: integer
+      number_of_users:
+        example: 0
+        type: integer
+      price:
+        example: 50
+        type: integer
+      subject:
+        example: "2026-02-26T10:30:00Z"
+        type: string
+      title:
+        example: Математика
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+  internal_features_themes_transport_http.PatchThemeRequest:
+    properties:
+      description:
+        example: Подготовка к ЕГЭ по Биологии
+        type: string
+      subject:
+        example: Биология
+        type: string
+      title:
+        example: Биология
+        type: string
+    type: object
+  internal_features_themes_transport_http.PatchThemeResponse:
+    properties:
+      all_ratings:
+        example: 0
+        type: integer
+      author_user_id:
+        example: 2
+        type: integer
+      create_at:
+        example: Профильная математика
+        type: string
+      description:
+        example: Подготовка к ЕГЭ по профильной математике
+        type: string
+      id:
+        example: 13
+        type: integer
+      number_of_ratings:
+        example: 0
+        type: integer
+      number_of_users:
+        example: 0
+        type: integer
+      price:
+        example: 50
+        type: integer
+      subject:
+        example: "2026-02-26T10:30:00Z"
+        type: string
+      title:
+        example: Математика
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+  internal_features_themes_transport_http.ThemeDTOResponse:
+    properties:
+      all_ratings:
+        example: 0
+        type: integer
+      author_user_id:
+        example: 2
+        type: integer
+      create_at:
+        example: Профильная математика
+        type: string
+      description:
+        example: Подготовка к ЕГЭ по профильной математике
+        type: string
+      id:
+        example: 13
+        type: integer
+      number_of_ratings:
+        example: 0
+        type: integer
+      number_of_users:
+        example: 0
+        type: integer
+      price:
+        example: 50
+        type: integer
+      subject:
+        example: "2026-02-26T10:30:00Z"
+        type: string
+      title:
+        example: Математика
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+  internal_features_users_transport_http.CreateUserRequest:
+    properties:
+      full_name:
+        example: Ivan Ivanov
+        maxLength: 100
+        minLength: 3
+        type: string
+      phone_number:
+        example: "+79998887766"
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - full_name
+    type: object
+  internal_features_users_transport_http.CreateUserResponse:
+    properties:
+      full_name:
+        example: Ivan Ivanov
+        type: string
+      id:
+        example: 10
+        type: integer
+      phone_number:
+        example: "+79998887766"
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+  internal_features_users_transport_http.GetUserResponse:
+    properties:
+      full_name:
+        example: Ivan Ivanov
+        type: string
+      id:
+        example: 10
+        type: integer
+      phone_number:
+        example: "+79998887766"
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+  internal_features_users_transport_http.PatchUserRequest:
+    properties:
+      full_name:
+        example: Максим Максимович
+        type: string
+      phone_number:
+        example: "+79998887766"
+        type: string
+    type: object
+  internal_features_users_transport_http.PatchUserResponse:
+    properties:
+      full_name:
+        example: Ivan Ivanov
+        type: string
+      id:
+        example: 10
+        type: integer
+      phone_number:
+        example: "+79998887766"
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+  internal_features_users_transport_http.UserDTOResponse:
+    properties:
+      full_name:
+        example: Ivan Ivanov
+        type: string
+      id:
+        example: 10
+        type: integer
+      phone_number:
+        example: "+79998887766"
+        type: string
+      version:
+        example: 3
+        type: integer
+    type: object
+host: 127.0.0.1:5050
+info:
+  contact: {}
+  description: Learning Progress REST-API scheme
+  title: Golang My Project
+  version: "1.0"
+paths:
+  /themes:
+    get:
+      description: Получение списка тем с опциональной пагинацией
+      parameters:
+      - description: Фильтрация задач по ID автора
+        in: query
+        name: user_id
+        type: integer
+      - description: Размер страницы с темами
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение страницы с темами
+        in: query
+        name: offser
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное получение списка тем
+          schema:
+            items:
+              $ref: '#/definitions/internal_features_themes_transport_http.ThemeDTOResponse'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Список тем
+      tags:
+      - themes
+    post:
+      consumes:
+      - application/json
+      description: Создать новую тему в системе
+      parameters:
+      - description: CreateTheme тело запроса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_features_themes_transport_http.CreateThemeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Успешно созданная тема
+          schema:
+            $ref: '#/definitions/internal_features_themes_transport_http.CreateThemeResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: Author not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Создать тему
+      tags:
+      - themes
+  /themes/{id}:
+    delete:
+      description: Удаление существующей темы в системе по ее ID
+      parameters:
+      - description: ID удаляемой темы
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Успешное удаление темы
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: Theme not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Удаление темы
+      tags:
+      - themes
+    get:
+      description: Получение конкретной темы в системе по ее ID
+      parameters:
+      - description: ID получаемой темы
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Тема успешно найдена
+          schema:
+            $ref: '#/definitions/internal_features_themes_transport_http.GetThemeResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: Theme not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Получение темы
+      tags:
+      - themes
+    patch:
+      consumes:
+      - application/json
+      description: |-
+        Изменение информации об уже существующем в системе теме
+        ### Логика обновления полей (Three-state logic):
+        1. **Поле не передано**: `"description"` игнорируется, значение в БД не меняется
+        2. **Явно передано значение**: `"description": "Пойти на  тренировку"` - устанавливает новое описание в БД
+        3. **Передан null**: `"description": null` - очищает поле в БД (set to NULL)
+        Ограничение: `title` и `subject` не может быть выставлен как null
+      parameters:
+      - description: ID изменяемой темы
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: PatchTheme тело запроса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_features_themes_transport_http.PatchThemeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное изменение темы
+          schema:
+            $ref: '#/definitions/internal_features_themes_transport_http.PatchThemeResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: Theme not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Изменение темы
+      tags:
+      - themes
+  /themes_user:
+    get:
+      description: Получение списка тем пользователя с опциональной пагинацией
+      parameters:
+      - description: Фильтрация задач по ID автора
+        in: query
+        name: user_id
+        type: integer
+      - description: Фильтрация задач по ID темы
+        in: query
+        name: theme_id
+        type: integer
+      - description: Размер страницы с темами пользователя
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение страницы с темами пользователя
+        in: query
+        name: offser
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное получение списка тем пользователя
+          schema:
+            items:
+              $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_domain.ThemeUser'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Список тем пользователя
+      tags:
+      - themes_user
+    post:
+      consumes:
+      - application/json
+      description: Создать новую тему для пользователя в системе
+      parameters:
+      - description: CreateThemeUser тело запроса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_features_theme_users_transport_http.CreateThemeUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Успешно созданная тема для пользователя
+          schema:
+            $ref: '#/definitions/internal_features_theme_users_transport_http.CreateThemeUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: Author not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Создать тему для пользователя
+      tags:
+      - themes_user
+  /themes_user/{id}:
+    delete:
+      description: Удаление существующей темы пользователя в системе по ее ID
+      parameters:
+      - description: ID удаляемой темы пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Успешное удаление темы пользователя
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: ThemeUser not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Удаление темы пользователя
+      tags:
+      - themes_user
+    get:
+      description: Получение конкретной темы пользователя в системе по ее ID
+      parameters:
+      - description: ID получаемой темы пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Тема пользователя успешно найдена
+          schema:
+            $ref: '#/definitions/internal_features_theme_users_transport_http.GetThemeUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: ThemeUser not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Получение темы пользователя
+      tags:
+      - themes_user
+    patch:
+      consumes:
+      - application/json
+      description: |-
+        Изменение информации об уже существующем в системе теме пользователя
+        Ограничение: `completed` не может быть выставлен как null
+      parameters:
+      - description: ID изменяемой темы пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: PatchThemeUser тело запроса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_features_theme_users_transport_http.PatchThemeUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное изменение темы пользователя
+          schema:
+            $ref: '#/definitions/internal_features_theme_users_transport_http.PatchThemeUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: ThemeUser not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Изменение темы пользователя
+      tags:
+      - themes_user
+  /users:
+    get:
+      description: Получение списка пользователей с опциональной пагинацией
+      parameters:
+      - description: Размер страницы с пользователями
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение страницы с пользователями
+        in: query
+        name: offser
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное получение списка пользователей
+          schema:
+            items:
+              $ref: '#/definitions/internal_features_users_transport_http.UserDTOResponse'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Список пользователей
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Создать нового пользователя в системе
+      parameters:
+      - description: CreateUser тело запроса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_features_users_transport_http.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Успешно созданный пользователь
+          schema:
+            $ref: '#/definitions/internal_features_users_transport_http.CreateUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Создать пользователя
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: Удаление существующего пользователя в системе по его ID
+      parameters:
+      - description: ID удаляемого пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Успешное удаление пользователя
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Удаление пользователя
+      tags:
+      - users
+    get:
+      description: Получение конкретного пользователя в системе по его ID
+      parameters:
+      - description: ID получаемого пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пользователь успешно найден
+          schema:
+            $ref: '#/definitions/internal_features_users_transport_http.GetUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Получение пользователя
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: |-
+        Изменение информации об уже существующем в системе пользователе
+        ### Логика обновления полей (Three-state logic):
+        1. **Поле не передано**: `"phone_number"` игнорируется, значение в БД не меняется
+        2. **Явно передано значение**: `"phone_number": "+71112223344"` - устанавливает новый номер телефона в БД
+        3. **Передан null**: `"phone_number": null` - очищает поле в БД (set to NULL)
+        Ограничение: `full_name` не может быть выставлен как null
+      parameters:
+      - description: ID изменяемого пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: PatchUser тело запроса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_features_users_transport_http.PatchUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное изменение пользователя
+          schema:
+            $ref: '#/definitions/internal_features_users_transport_http.PatchUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse'
+      summary: Изменение пользователя
+      tags:
+      - users
+swagger: "2.0"

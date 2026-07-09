@@ -8,6 +8,19 @@ import (
 	core_http_response "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/response"
 )
 
+type GetThemeUserResponse ThemeUserDTOResponse
+
+// GetThemeUser 	godoc
+// @Summary			Получение темы пользователя
+// @Description 	Получение конкретной темы пользователя в системе по ее ID
+// @Tags			themes_user
+// @Produce 		json
+// @Param 			id path int true "ID получаемой темы пользователя"
+// @Success 		200 {object} GetThemeUserResponse "Тема пользователя успешно найдена"
+// @Failure 		400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure			404 {object} core_http_response.ErrorResponse "ThemeUser not found"
+// @Failure 		500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router 			/themes_user/{id} [get]
 func (h *ThemeUserHTTPHandler) GetThemeUser(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -33,7 +46,7 @@ func (h *ThemeUserHTTPHandler) GetThemeUser(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	response := themeUserDTOFromDomain(themeUserDomain)
+	response := GetThemeUserResponse(themeUserDTOFromDomain(themeUserDomain))
 
 	responseHandler.JSONResponse(response, http.StatusOK)
 }

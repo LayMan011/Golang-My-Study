@@ -7,17 +7,17 @@ import (
 )
 
 type ThemeDTOResponse struct {
-	ID              int       `json:"id"`
-	Version         int       `json:"version"`
-	Title           string    `json:"title"`
-	Description     *string   `json:"description"`
-	CreateAt        time.Time `json:"create_at"`
-	Subject         string    `json:"subject"`
-	AllRatings      int       `json:"all_ratings"`
-	NumberOfRatings int       `json:"number_of_ratings"`
-	NumberOfUsers   int       `json:"number_of_users"`
-	Price           int       `json:"price"`
-	AuthorUserID    int       `json:"author_user_id"`
+	ID              int       `json:"id" example:"13"`
+	Version         int       `json:"version" example:"3"`
+	Title           string    `json:"title" example:"Математика"`
+	Description     *string   `json:"description" example:"Подготовка к ЕГЭ по профильной математике"`
+	CreateAt        time.Time `json:"create_at" example:"Профильная математика"`
+	Subject         string    `json:"subject" example:"2026-02-26T10:30:00Z"`
+	AllRatings      int       `json:"all_ratings" example:"0"`
+	NumberOfRatings int       `json:"number_of_ratings" example:"0"`
+	NumberOfUsers   int       `json:"number_of_users" example:"0"`
+	Price           int       `json:"price" example:"50"`
+	AuthorUserID    int       `json:"author_user_id" example:"2"`
 }
 
 func themeDTOFromDomain(theme domain.Theme) ThemeDTOResponse {

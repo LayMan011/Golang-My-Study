@@ -85,5 +85,13 @@ progress-deploy:
 progress-undeploy:
 	@docker compose down progress
 
+swagger-gen:
+	@docker compose run --rm swagger \
+		init \
+		-g cmd/learning_progress/main.go \
+		-o docs \
+		--parseInternal \
+		--parseDependency 
+
 ps:
 	@docker compose ps
