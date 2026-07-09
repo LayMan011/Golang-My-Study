@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 // import { Mail, Github, Twitter, Youtube, BookOpen } from "lucide-react";
 
 // const SOCIALS = [
@@ -8,31 +8,6 @@ import { Link, useLocation } from "react-router-dom";
 //     { href: "mailto:support@progress.com", icon: Mail, label: "Email" },
 // ];
 
-const NAV_SECTIONS = [
-    {
-        title: "О платформе",
-        links: [
-            { to: "/about", label: "О нас" },
-            { to: "/blog", label: "Блог" },
-        ]
-    },
-    {
-        title: "Курсы",
-        links: [
-            { to: "/courses", label: "Все курсы" },
-            { to: "/courses?popular=true", label: "Популярные" },
-            { to: "/courses?new=true", label: "Новинки" },
-        ]
-    },
-    {
-        title: "Поддержка",
-        links: [
-            { to: "/help", label: "Помощь" },
-            { to: "/contacts", label: "Контакты" },
-        ]
-    }
-];
-
 export const Footer = () => {
     const location = useLocation();
     const isChatPage = location.pathname.includes("/messages/");
@@ -40,33 +15,45 @@ export const Footer = () => {
     if (isChatPage) return null;
 
     return (
-        <footer className="flex">
-            <div className="flex flex-wrap justify-between gap-5 w-full mt-auto">
-                {NAV_SECTIONS.map((block, index) => (
-                    <Block 
-                        key={index}
-                        title={block.title} 
-                        links={block.links}
-                    />
-                ))}
+      <footer className="bg-card border-t border-border py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">О платформе</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">О нас</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Блог</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Карьера</a></li>
+              </ul>
             </div>
-        </footer>
-    );
-};
-
-const Block = ({ title, links }: { title: string; links: { to: string; label: string }[] }) => {
-    return (
-        <div className="flex-1 min-w-[150px]">
-            <h3 className="text-lg font-semibold mb-2.5">{title}</h3>
-            {links.map((link, index) => (
-                <Link 
-                    key={index}
-                    to={link.to}
-                    className="block my-1 opacity-80 hover:opacity-100 transition-opacity"
-                >
-                    {link.label}
-                </Link>
-            ))}
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">Курсы</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Все курсы</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Популярные</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Новинки</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">Поддержка</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Помощь</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Контакты</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">FAQ</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">Правовая информация</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Условия использования</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Политика конфиденциальности</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-border text-center text-sm text-muted-foreground">
+            <p>© 2026 ЕГЭ Платформа. Все права защищены.</p>
+          </div>
         </div>
+      </footer>
     );
 };
