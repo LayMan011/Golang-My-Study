@@ -7,14 +7,14 @@ import (
 )
 
 type ThemeUserDTOResponse struct {
-	ID          int        `json:"id"`
-	Version     int        `json:"version"`
-	Completed   bool       `json:"completed"`
-	AdditionAt  time.Time  `json:"addition_at"`
-	CompletedAt *time.Time `json:"completed_at"`
-	Percentages int        `json:"percentages"`
-	ThemeID     int        `json:"theme_id"`
-	UserID      int        `json:"user_id"`
+	ID          int        `json:"id" example:"1"`
+	Version     int        `json:"version" example:"2"`
+	Completed   bool       `json:"completed" example:"false"`
+	AdditionAt  time.Time  `json:"addition_at" example:"2026-02-26T10:30:00Z"`
+	CompletedAt *time.Time `json:"completed_at" example:"null"`
+	Percentages int        `json:"percentages" example:"0"`
+	ThemeID     int        `json:"theme_id" example:"3"`
+	UserID      int        `json:"user_id" example:"4"`
 }
 
 func themeUserDTOFromDomain(theme domain.ThemeUser) ThemeUserDTOResponse {

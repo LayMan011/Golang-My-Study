@@ -10,6 +10,17 @@ import (
 
 type GetThemeResponse ThemeDTOResponse
 
+// GetTheme 	godoc
+// @Summary		Получение темы
+// @Description Получение конкретной темы в системе по ее ID
+// @Tags		themes
+// @Produce 	json
+// @Param 		id path int true "ID получаемой темы"
+// @Success 	200 {object} GetThemeResponse "Тема успешно найдена"
+// @Failure 	400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure		404 {object} core_http_response.ErrorResponse "Theme not found"
+// @Failure 	500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router 		/themes/{id} [get]
 func (h *ThemeHTTPHandler) GetTheme(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)

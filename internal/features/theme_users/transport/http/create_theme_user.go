@@ -10,12 +10,24 @@ import (
 )
 
 type CreateThemeUserRequest struct {
-	ThemeID int `json:"theme_id" validate:"required"`
-	UserID  int `json:"user_id" validate:"required"`
+	ThemeID int `json:"theme_id" validate:"required" example:"1"`
+	UserID  int `json:"user_id" validate:"required" example:"1"`
 }
 
 type CreateThemeUserResponse ThemeUserDTOResponse
 
+// CreateThemeUser 	godoc
+// @Summary 		Создать тему для пользователя
+// @Description 	Создать новую тему для пользователя в системе
+// @Tags 			themes_user
+// @Accept 			json
+// @Produce 		json
+// @Param 			request body CreateThemeUserRequest true "CreateThemeUser тело запроса"
+// @Success 		201 {object} CreateThemeUserResponse "Успешно созданная тема для пользователя"
+// @Failure 		400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure 		404 {object} core_http_response.ErrorResponse "Author not found"
+// @Failure 		500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router 			/themes_user [post]
 func (h *ThemeUserHTTPHandler) CreateThemeUser(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)

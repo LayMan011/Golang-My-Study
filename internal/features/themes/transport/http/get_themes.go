@@ -11,6 +11,18 @@ import (
 
 type GetThemesResponse []ThemeDTOResponse
 
+// GetThemes	godoc
+// @Summary		Список тем
+// @Description Получение списка тем с опциональной пагинацией
+// @Tags		themes
+// @Produce 	json
+// @Param		user_id query int false "Фильтрация задач по ID автора"
+// @Param 		limit query int false "Размер страницы с темами"
+// @Param 		offser query int false "Смещение страницы с темами"
+// @Success 	200 {object} GetThemesResponse "Успешное получение списка тем"
+// @Failure 	400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure 	500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router 		/themes [get]
 func (h *ThemeHTTPHandler) GetThemes(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
