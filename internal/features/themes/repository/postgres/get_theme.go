@@ -18,7 +18,7 @@ func (r *ThemeRepository) GetTheme(
 	defer cancel()
 
 	query := `
-	SELECT id, version, title, description, completed, created_at, completed_at, percentages, author_user_id
+	SELECT id, version, title, description, created_at, subject, rating, all_ratings, number_of_ratings, number_of_users, price, author_user_id
 	FROM progress.themes
 	WHERE id=$1;
 	`
@@ -31,10 +31,13 @@ func (r *ThemeRepository) GetTheme(
 		&themeModel.Version,
 		&themeModel.Title,
 		&themeModel.Description,
-		&themeModel.Completed,
 		&themeModel.CreatedAt,
-		&themeModel.CompletedAt,
-		&themeModel.Percentages,
+		&themeModel.Subject,
+		&themeModel.Rating,
+		&themeModel.AllRatings,
+		&themeModel.NumberOfRatings,
+		&themeModel.NumberOfUsers,
+		&themeModel.Price,
 		&themeModel.AuthorUserID,
 	)
 	if err != nil {

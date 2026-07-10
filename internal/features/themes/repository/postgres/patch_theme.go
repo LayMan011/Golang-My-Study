@@ -18,29 +18,28 @@ func (r *ThemeRepository) PatchTheme(
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	fmt.Println(theme)
-
 	query := `
 	UPDATE progress.themes
 	SET 
 		title=$1,
 		description=$2,
-		completed=$3,
-		completed_at=$4,
-		percentages=$5,
+		subject=$3,
 		version=version + 1
 	
-	WHERE id=$6 AND version=$7
+	WHERE id=$4 AND version=$5
 
 	RETURNING
 		id,
 		version,
 		title,
 		description,
-		completed,
 		created_at,
-		completed_at,
-		percentages,
+		subject,
+		rating,
+		all_ratings,
+		number_of_ratings,
+		number_of_users,
+		price,
 		author_user_id;
 	`
 
@@ -49,9 +48,7 @@ func (r *ThemeRepository) PatchTheme(
 		query,
 		theme.Title,
 		theme.Description,
-		theme.Completed,
-		theme.CompletedAt,
-		theme.Percentages,
+		theme.Subject,
 		id,
 		theme.Version,
 	)
@@ -62,10 +59,13 @@ func (r *ThemeRepository) PatchTheme(
 		&themeModel.Version,
 		&themeModel.Title,
 		&themeModel.Description,
-		&themeModel.Completed,
 		&themeModel.CreatedAt,
-		&themeModel.CompletedAt,
-		&themeModel.Percentages,
+		&themeModel.Subject,
+		&themeModel.Rating,
+		&themeModel.AllRatings,
+		&themeModel.NumberOfRatings,
+		&themeModel.NumberOfUsers,
+		&themeModel.Price,
 		&themeModel.AuthorUserID,
 	)
 	if err != nil {

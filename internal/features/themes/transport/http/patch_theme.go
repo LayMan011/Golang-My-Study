@@ -12,9 +12,9 @@ import (
 )
 
 type PatchThemeRequest struct {
-	Title       core_http_types.Nullable[string] `json:"title"`
-	Description core_http_types.Nullable[string] `json:"description"`
-	Completed   core_http_types.Nullable[bool]   `json:"completed"`
+	Title       core_http_types.Nullable[string] `json:"title" swaggertype:"string" example:"Биология"`
+	Description core_http_types.Nullable[string] `json:"description" swaggertype:"string" example:"Подготовка к ЕГЭ по Биологии"`
+	Subject     core_http_types.Nullable[string] `json:"subject" swaggertype:"string" example:"Биология"`
 }
 
 func (r *PatchThemeRequest) Validate() error {
@@ -38,9 +38,14 @@ func (r *PatchThemeRequest) Validate() error {
 		}
 	}
 
-	if r.Completed.Set {
-		if r.Completed.Value == nil {
-			return fmt.Errorf("Completed' can't be NULL")
+	if r.Subject.Set {
+		if r.Subject.Value == nil {
+			return fmt.Errorf("Subject' can't be NULL")
+		}
+
+		subjectLen := len([]rune(*r.Subject.Value))
+		if subjectLen < 1 || subjectLen > 1000 {
+			return fmt.Errorf("'Subject' must be between 1 and 1000 symbols")
 		}
 	}
 
@@ -49,6 +54,25 @@ func (r *PatchThemeRequest) Validate() error {
 
 type PatchThemeResponse ThemeDTOResponse
 
+// PatchTheme 	godoc
+// @Summary		Изменение темы
+// @Description Изменение информации об уже существующем в системе теме
+// @Description ### Логика обновления полей (Three-state logic):
+// @Description 1. **Поле не передано**: `"description"` игнорируется, значение в БД не меняется
+// @Description 2. **Явно передано значение**: `"description": "Пойти на  тренировку"` - устанавливает новое описание в БД
+// @Description 3. **Передан null**: `"description": null` - очищает поле в БД (set to NULL)
+// @Description Ограничение: `title` и `subject` не может быть выставлен как null
+// @Tags 		themes
+// @Accept 		json
+// @Produce 	json
+// @Param 		id path int true "ID изменяемой темы"
+// @Param 		request body PatchThemeRequest true "PatchTheme тело запроса"
+// @Success 	200 {object} PatchThemeResponse "Успешное изменение темы"
+// @Failure 	400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure		404 {object} core_http_response.ErrorResponse "Theme not found"
+// @Failure		409 {object} core_http_response.ErrorResponse "Conflict"
+// @Failure 	500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router 		/themes/{id} [patch]
 func (h *ThemeHTTPHandler) PatchTheme(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -95,6 +119,6 @@ func themePatchFromRequest(request PatchThemeRequest) domain.ThemePatch {
 	return domain.NewThemePatch(
 		request.Title.ToDomain(),
 		request.Description.ToDomain(),
-		request.Completed.ToDomain(),
+		request.Subject.ToDomain(),
 	)
 }
