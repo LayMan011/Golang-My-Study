@@ -13,6 +13,7 @@ type ThemeDTOResponse struct {
 	Description     *string   `json:"description" example:"Подготовка к ЕГЭ по профильной математике"`
 	CreateAt        time.Time `json:"create_at" example:"Профильная математика"`
 	Subject         string    `json:"subject" example:"2026-02-26T10:30:00Z"`
+	Rating          *float64  `json:"rating" example:"4.9"`
 	AllRatings      int       `json:"all_ratings" example:"0"`
 	NumberOfRatings int       `json:"number_of_ratings" example:"0"`
 	NumberOfUsers   int       `json:"number_of_users" example:"0"`
@@ -28,6 +29,7 @@ func themeDTOFromDomain(theme domain.Theme) ThemeDTOResponse {
 		Description:     theme.Description,
 		CreateAt:        theme.CreatedAt,
 		Subject:         theme.Subject,
+		Rating:          theme.Rating,
 		AllRatings:      theme.AllRatings,
 		NumberOfRatings: theme.NumberOfRatings,
 		NumberOfUsers:   theme.NumberOfUsers,

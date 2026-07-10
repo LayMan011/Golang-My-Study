@@ -17,7 +17,7 @@ export const Started = () => {
                 <span className="text-primary">на максимум</span>
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground mb-8">
-                Более 500 курсов от лучших преподавателей. Учись в своем темпе и достигай высоких результатов
+                Более 100 курсов от лучших преподавателей. Учись в своем темпе и достигай высоких результатов
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

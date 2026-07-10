@@ -58,6 +58,7 @@ func NewThemeUnitialized(
 	title string,
 	description *string,
 	subject string,
+	price int,
 	authorIserID int,
 ) Theme {
 	return NewTheme(
@@ -71,7 +72,7 @@ func NewThemeUnitialized(
 		0,
 		0,
 		0,
-		0,
+		price,
 		authorIserID,
 	)
 }
@@ -102,6 +103,14 @@ func (t *Theme) Validate() error {
 		return fmt.Errorf(
 			"invalid 'Subject' len: %d: %w",
 			subjectLen,
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	if t.Price < 0 {
+		return fmt.Errorf(
+			"invalid 'Price' meaning: %f: %w",
+			t.Price,
 			core_errors.ErrInvalidArgument,
 		)
 	}

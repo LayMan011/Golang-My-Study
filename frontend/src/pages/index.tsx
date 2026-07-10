@@ -1,4 +1,4 @@
 export * from './Home'
-export * from './Curses'
+export * from './Cuorses'
 export * from './Auth'
 export * from './Profile'
