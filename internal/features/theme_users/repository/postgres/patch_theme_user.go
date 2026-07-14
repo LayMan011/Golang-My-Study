@@ -35,6 +35,8 @@ func (r *ThemeUserRepository) PatchThemeUser(
 		addition_at,
 		completed_at,
 		percentages,
+		total_lessons,
+		completed_lessons,
 		theme_id,
 		user_id;
 	`
@@ -57,6 +59,8 @@ func (r *ThemeUserRepository) PatchThemeUser(
 		&themeUserModel.AdditionAt,
 		&themeUserModel.CompletedAt,
 		&themeUserModel.Percentages,
+		&themeUserModel.TotalLessons,
+		&themeUserModel.CompletedLessons,
 		&themeUserModel.ThemeID,
 		&themeUserModel.UserID,
 	)

@@ -30,7 +30,7 @@ migrate-create:
 		echo "Отсутствует необходимый параметр seq. Пример: make migrate-create seq=init"; \
 		exit 1; \
 	fi; \
-	docker compose run --rm project-postgres-migrate \
+	docker compose run --rm --user "$$(id -u):$$(id -g)" project-postgres-migrate \
 		create \
 		-ext sql \
 		-dir /migrations \
@@ -50,7 +50,7 @@ migrate-action:
 	docker compose run --rm project-postgres-migrate \
 		-path /migrations \
 		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@project-postgres:5432/${POSTGRES_DB}?sslmode=disable \
-		"${action}"
+		$(action)
 
 migrate-version:
 	@docker compose run --rm project-postgres-migrate \
@@ -63,7 +63,7 @@ migrate-force:
 	@docker compose run --rm project-postgres-migrate \
 		-path /migrations \
 		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@project-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
-		force 1
+		force 3
 
 logs-cleanup:
 	@read -p "Очистить все log файлы? Опастность утери логов. [y/N]: " ans; \

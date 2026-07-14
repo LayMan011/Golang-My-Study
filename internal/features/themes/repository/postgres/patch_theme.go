@@ -24,9 +24,12 @@ func (r *ThemeRepository) PatchTheme(
 		title=$1,
 		description=$2,
 		subject=$3,
+		level=$4,
+		duration=$5,
+		format=$6,
 		version=version + 1
 	
-	WHERE id=$4 AND version=$5
+	WHERE id=$7 AND version=$8
 
 	RETURNING
 		id,
@@ -40,6 +43,9 @@ func (r *ThemeRepository) PatchTheme(
 		number_of_ratings,
 		number_of_users,
 		price,
+		level,
+		duration,
+		format,
 		author_user_id;
 	`
 
@@ -49,6 +55,9 @@ func (r *ThemeRepository) PatchTheme(
 		theme.Title,
 		theme.Description,
 		theme.Subject,
+		theme.Level,
+		theme.Duration,
+		theme.Format,
 		id,
 		theme.Version,
 	)
@@ -66,6 +75,9 @@ func (r *ThemeRepository) PatchTheme(
 		&themeModel.NumberOfRatings,
 		&themeModel.NumberOfUsers,
 		&themeModel.Price,
+		&themeModel.Level,
+		&themeModel.Duration,
+		&themeModel.Format,
 		&themeModel.AuthorUserID,
 	)
 	if err != nil {

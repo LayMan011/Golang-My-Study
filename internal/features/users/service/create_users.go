@@ -15,7 +15,7 @@ func (s *UserService) CreateUser(
 		return domain.User{}, fmt.Errorf("validate user domain: %w", err)
 	}
 
-	user, err := s.userRepository.CreateUser(ctx, user)
+	user, err := s.userRepositoryPostgres.CreateUser(ctx, user)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("create user: %w", err)
 	}

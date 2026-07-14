@@ -11,6 +11,7 @@ import (
 	core_config "github.com/LayMan011/Golang-My-Study/internal/core/config"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	core_pgx_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool/pgx"
+	core_goredis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool/goredis"
 	core_http_middleware "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/middleware"
 	core_http_server "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/server"
 	themes_user_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/repository/postgres"
@@ -60,6 +61,12 @@ func main() {
 		logger.Fatal("failed to init postgres connection pool", zap.Error(err))
 	}
 	defer pool.Close()
+
+	logger.Debug("initiazling redis connection pool")
+
+	redisConfig := core_goredis_pool.MustGetRedisConfig()
+	redisClient := core_goredis_pool.CreateRedisClientMust(redisConfig)
+	defer redisClient.Close()
 
 	logger.Debug("initializing feature", zap.String("feature", "users"))
 	usersRepository := users_postgres_repository.NewUsersRepository(pool)

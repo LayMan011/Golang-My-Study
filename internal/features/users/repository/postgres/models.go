@@ -5,6 +5,8 @@ import "github.com/LayMan011/Golang-My-Study/internal/core/domain"
 type UserModel struct {
 	ID          int
 	Version     int
+	Login       string
+	Password    []byte
 	FullName    string
 	PhoneNumber *string
 }
@@ -16,6 +18,8 @@ func usersDomainsFromModels(users []UserModel) []domain.User {
 		userDomains[i] = domain.NewUser(
 			user.ID,
 			user.Version,
+			user.Login,
+			user.Password,
 			user.FullName,
 			user.PhoneNumber,
 		)

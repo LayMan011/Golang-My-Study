@@ -27,7 +27,7 @@ func (s *UserService) GetUsers(
 		)
 	}
 
-	users, err := s.userRepository.GetUsers(
+	users, err := s.userRepositoryPostgres.GetUsers(
 		ctx,
 		limit,
 		offset,

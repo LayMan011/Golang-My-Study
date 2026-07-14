@@ -1,4 +1,4 @@
-
+import type { Course } from '@/types';
 
 const sortOptions = [
   { id: 'popular', name: 'По популярности' },
@@ -8,22 +8,7 @@ const sortOptions = [
   { id: 'new', name: 'Новинки' },
 ];
 
-interface filteredCourses {
-    id: number;
-    subject: string;
-    subjectName: string;
-    title: string;
-    description: string;
-    rating: number;
-    reviews: number;
-    price: number;
-    students: number;
-    level: string;
-    duration: string;
-    format: string;
-}
-
-export const Sort = ({sortBy, setSortBy, filteredCourses }: { sortBy: string, setSortBy: React.Dispatch<React.SetStateAction<string>>, filteredCourses: filteredCourses[]}) => {
+export const Sort = ({sortBy, setSortBy, filteredCourses }: { sortBy: string, setSortBy: React.Dispatch<React.SetStateAction<string>>, filteredCourses: Course[]}) => {
     return (
         <div className="flex items-center justify-between mb-6">
         <div className="text-sm text-muted-foreground">

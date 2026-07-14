@@ -11,7 +11,7 @@ func (s *UserService) GetUser(
 	ctx context.Context,
 	id int,
 ) (domain.User, error) {
-	user, err := s.userRepository.GetUser(ctx, id)
+	user, err := s.userRepositoryPostgres.GetUser(ctx, id)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("get user from repository: %w", err)
 	}

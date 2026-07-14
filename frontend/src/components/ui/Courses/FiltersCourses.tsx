@@ -1,22 +1,8 @@
 import { motion } from 'motion/react';
 import { Star, Users } from 'lucide-react';
+import type { Course } from '@/types';
 
-interface filteredCourses {
-    id: number;
-    subject: string;
-    subjectName: string;
-    title: string;
-    description: string;
-    rating: number;
-    reviews: number;
-    price: number;
-    students: number;
-    level: string;
-    duration: string;
-    format: string;
-}
-
-export const FiltersCourses = ({ filteredCourses }: {filteredCourses: filteredCourses[] }) => {
+export const FiltersCourses = ({ filteredCourses }: {filteredCourses: Course[] }) => {
     return (
         <div className="grid md:grid-cols-2 gap-6">
         {filteredCourses.map((course, index) => (
@@ -33,7 +19,7 @@ export const FiltersCourses = ({ filteredCourses }: {filteredCourses: filteredCo
                 className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-4"
                 style={{ backgroundColor: `var(--subject-${course.subject})` }}
                 >
-                {course.subjectName}
+                {Color({color: course.subject})}
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">
                 {course.title}
@@ -44,11 +30,11 @@ export const FiltersCourses = ({ filteredCourses }: {filteredCourses: filteredCo
                 <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-accent fill-accent" />
                     <span className="font-semibold text-foreground">{course.rating}</span>
-                    <span className="text-muted-foreground">({course.reviews})</span>
+                    <span className="text-muted-foreground">({course.number_of_ratings})</span>
                 </div>
                 <div className="flex items-center gap-1 text-muted-foreground">
                     <Users className="w-4 h-4" />
-                    <span>{course.students}</span>
+                    <span>{course.number_of_users}</span>
                 </div>
                 </div>
 
@@ -74,4 +60,27 @@ export const FiltersCourses = ({ filteredCourses }: {filteredCourses: filteredCo
         ))}
         </div>
     )
+}
+
+function Color({ color }: { color: string }) {
+    switch(color) {
+        case 'russian':
+            return 'Русский язык'
+        case 'english':
+            return 'Английский язык'
+        case 'math':
+            return 'Математика'
+        case 'physics':
+            return 'Физика'
+        case 'chemistry':
+            return 'Химия'
+        case 'biology':
+            return 'Биология'
+        case 'history':
+            return 'История'
+        case 'social':
+            return 'Обществознание'
+    }
+
+    return 'Общий'
 }

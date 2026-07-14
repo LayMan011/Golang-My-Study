@@ -31,6 +31,16 @@ services:
         volumes:
          - ${PROJECT_ROOT}/out/pgdata:/var/lib/postgresql
         restart: always 
+
+    project-redis:
+        image: redis:7-alpine
+        container_name: project-redis
+        ports:
+        - "6379:6379"
+        volumes:
+        - redis-data:/data
+        command: redis-server --requirepass my_secure_password
+        restart: unless-stopped
     
     project-postgres-migrate:
         image: migrate/migrate:v4.19.1

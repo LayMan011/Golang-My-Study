@@ -6,9 +6,8 @@ const inProgressCourses = [
   {
     id: 1,
     subject: 'russian',
-    subjectName: 'Русский язык',
     title: 'Полная подготовка к ЕГЭ',
-    progress: 65,
+    percentages: 65,
     totalLessons: 48,
     completedLessons: 31,
     lastActivity: '2 часа назад',
@@ -16,9 +15,8 @@ const inProgressCourses = [
   {
     id: 2,
     subject: 'math',
-    subjectName: 'Математика',
     title: 'Профильная математика',
-    progress: 42,
+    percentages: 42,
     totalLessons: 60,
     completedLessons: 25,
     lastActivity: '1 день назад',
@@ -26,9 +24,8 @@ const inProgressCourses = [
   {
     id: 3,
     subject: 'english',
-    subjectName: 'Английский язык',
     title: 'Подготовка к ЕГЭ за 3 месяца',
-    progress: 78,
+    percentages: 78,
     totalLessons: 36,
     completedLessons: 28,
     lastActivity: '5 часов назад',
@@ -61,7 +58,7 @@ export const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <ProfileHeader />
+      <ProfileHeader fullname={"Иванов Иван"} mail={"ivan@example.com"} register={"11.02.2026"} noCompletedCourses={inProgressCourses.length} CompletedCourses={completedCourses.length} />
 
       {/* Courses Section */}
       <section className="py-12">

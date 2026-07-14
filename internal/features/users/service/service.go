@@ -7,10 +7,19 @@ import (
 )
 
 type UserService struct {
-	userRepository UserRepository
+	userRepositoryPostgres UserRepositoryPostgres
+	userRepositoryRedis    UserRepositoryRedis
 }
 
-type UserRepository interface {
+type UserRepositoryRedis interface {
+	SaveToken(
+		ctx context.Context,
+		login string,
+		pair *domain.TokenPair,
+	) error
+}
+
+type UserRepositoryPostgres interface {
 	CreateUser(
 		ctx context.Context,
 		user domain.User,
@@ -27,6 +36,11 @@ type UserRepository interface {
 		id int,
 	) (domain.User, error)
 
+	GetUserByLogin(
+		ctx context.Context,
+		login string,
+	) (domain.User, error)
+
 	DeleteUser(
 		ctx context.Context,
 		id int,
@@ -40,9 +54,9 @@ type UserRepository interface {
 }
 
 func NewUsersService(
-	userRepository UserRepository,
+	userRepository UserRepositoryPostgres,
 ) *UserService {
 	return &UserService{
-		userRepository: userRepository,
+		userRepositoryPostgres: userRepository,
 	}
 }

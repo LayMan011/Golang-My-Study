@@ -2,17 +2,7 @@ import { motion } from 'motion/react';
 import { ArrowRight, Users, Star } from 'lucide-react';
 import { Link } from 'react-router';
 import {useState, useEffect} from 'react'
-
-interface Course {
-  id: number
-  title: string
-  subject: string
-  rating: number
-  number_of_ratings: number
-  price: number
-  number_of_users: number
-  color: string 
-}
+import type { Course } from '@/types';
 
 const getCoursesLimit6 = async (): Promise<Course[]> => {
   try {
@@ -99,47 +89,56 @@ export const PopularCurses = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {courses.map((course, index) => (
             <motion.div
-              key={course.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
-              className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-border"
-            >
-              <div className="p-6">
-                <div
-                  className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-4"
-                  style={{ backgroundColor: `var(--${course.color})` }}
+                key={course.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ y: -4 }}
+                className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-border"
                 >
-                  {course.subject}
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-4">
-                  {course.title}
-                </h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-accent fill-accent" />
-                    <span className="font-semibold text-foreground">{course.rating}</span>
-                    <span className="text-sm text-muted-foreground">({course.number_of_ratings})</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Users className="w-4 h-4" />
-                    <span>{course.number_of_users}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">
-                      {course.price.toLocaleString('ru-RU')} ₽
+                <div className="p-6">
+                    <div
+                    className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-4"
+                    style={{ backgroundColor: `var(--subject-${course.subject})` }}
+                    >
+                    {Color({color: course.subject})}
                     </div>
-                  </div>
-                  <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-                    Подробнее
-                  </button>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                    {course.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">{course.description}</p>
+                    
+                    <div className="flex items-center gap-4 mb-4 text-sm">
+                    <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-accent fill-accent" />
+                        <span className="font-semibold text-foreground">{course.rating}</span>
+                        <span className="text-muted-foreground">({course.number_of_ratings})</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                        <Users className="w-4 h-4" />
+                        <span>{course.number_of_users}</span>
+                    </div>
+                    </div>
+    
+                    <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="px-2 py-1 bg-muted rounded text-xs text-muted-foreground">
+                        {course.duration}
+                    </span>
+                    <span className="px-2 py-1 bg-muted rounded text-xs text-muted-foreground capitalize">
+                        {course.level === 'beginner' ? 'Начальный' : course.level === 'intermediate' ? 'Средний' : 'Продвинутый'}
+                    </span>
+                    </div>
+    
+                    <div className="flex items-center justify-between pt-4 border-t border-border">
+                    <div className="text-2xl font-bold text-foreground">
+                        {course.price.toLocaleString('ru-RU')} ₽
+                    </div>
+                    <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+                        Подробнее
+                    </button>
+                    </div>
                 </div>
-              </div>
-            </motion.div>
+                </motion.div>
           ))}
         </div>
 
@@ -155,4 +154,27 @@ export const PopularCurses = () => {
       </div>
     </section>
   )
+}
+
+function Color({ color }: { color: string }) {
+    switch(color) {
+        case 'russian':
+            return 'Русский язык'
+        case 'english':
+            return 'Английский язык'
+        case 'math':
+            return 'Математика'
+        case 'physics':
+            return 'Физика'
+        case 'chemistry':
+            return 'Химия'
+        case 'biology':
+            return 'Биология'
+        case 'history':
+            return 'История'
+        case 'social':
+            return 'Обществознание'
+    }
+
+    return 'Общий'
 }

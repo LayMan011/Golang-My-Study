@@ -18,6 +18,9 @@ type ThemeModel struct {
 	NumberOfRatings int
 	NumberOfUsers   int
 	Price           int
+	Level           string
+	Duration        string
+	Format          string
 	AuthorUserID    int
 }
 
@@ -43,6 +46,9 @@ func themeDomainFromModel(themeModel ThemeModel) domain.Theme {
 		themeModel.NumberOfRatings,
 		themeModel.NumberOfUsers,
 		themeModel.Price,
+		themeModel.Level,
+		themeModel.Duration,
+		themeModel.Format,
 		themeModel.AuthorUserID,
 	)
 }

@@ -9,7 +9,7 @@ func (s *UserService) DeleteUser(
 	ctx context.Context,
 	id int,
 ) error {
-	if err := s.userRepository.DeleteUser(ctx, id); err != nil {
+	if err := s.userRepositoryPostgres.DeleteUser(ctx, id); err != nil {
 		return fmt.Errorf("delete user: %w", err)
 	}
 

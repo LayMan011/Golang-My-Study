@@ -1,17 +1,8 @@
 import { motion } from 'motion/react';
 import { Award } from 'lucide-react';
+import type { completedCourses } from '@/types';
 
-export const CompletedTab = ({ completedCourses }: {
-    completedCourses: {
-        id: number;
-        subject: string;
-        subjectName: string;
-        title: string;
-        score: number;
-        completedDate: string;
-        certificate: boolean;
-    }[]
-}) => {
+export const CompletedTab = ({ completedCourses }: { completedCourses: completedCourses[] }) => {
     return (
         <motion.div
             key="completed"
@@ -30,38 +21,52 @@ export const CompletedTab = ({ completedCourses }: {
             >
                 {/* Success Badge */}
                 <div className="absolute top-4 right-4">
-                <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
-                    <Award className="w-6 h-6 text-green-500" />
-                </div>
+                    <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
+                        <Award className="w-6 h-6 text-green-500" />
+                    </div>
                 </div>
 
                 <div
                 className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-3"
                 style={{ backgroundColor: `var(--subject-${course.subject})` }}
                 >
-                {course.subjectName}
+                {SubjectName({subcject: course.subject})}
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-4 pr-12">
                 {course.title}
                 </h3>
 
                 <div className="space-y-3">
-                <div className="flex items-center justify-between py-3 border-t border-border">
-                    <span className="text-sm text-muted-foreground">Результат</span>
-                    <span className="text-2xl font-bold text-foreground">{course.score} баллов</span>
-                </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Завершено</span>
-                    <span className="text-sm text-foreground">{course.completedDate}</span>
-                </div>
-                {course.certificate && (
-                    <button className="w-full mt-4 px-4 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-colors font-medium border border-accent/20">
-                    Скачать сертификат
-                    </button>
-                )}
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Завершено</span>
+                        <span className="text-sm text-foreground">{course.completedDate}</span>
+                    </div>
                 </div>
             </motion.div>
             ))}
         </motion.div>
     )
+}
+
+function SubjectName({ subcject }: { subcject: string }) {
+    switch(subcject) {
+        case 'russian':
+            return 'Русский язык'
+        case 'english':
+            return 'Английский язык'
+        case 'math':
+            return 'Математика'
+        case 'physics':
+            return 'Физика'
+        case 'chemistry':
+            return 'Химия'
+        case 'biology':
+            return 'Биология'
+        case 'history':
+            return 'История'
+        case 'social':
+            return 'Обществознание'
+    }
+
+    return 'Общий'
 }

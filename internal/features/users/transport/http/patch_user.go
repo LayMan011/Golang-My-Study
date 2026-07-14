@@ -13,6 +13,7 @@ import (
 )
 
 type PatchUserRequest struct {
+	Password    core_http_types.Nullable[[]byte] `json:"password" swaggertype:"string" format:"base64"`
 	FullName    core_http_types.Nullable[string] `json:"full_name" swaggertype:"string" example:"Максим Максимович"`
 	PhoneNumber core_http_types.Nullable[string] `json:"phone_number" swaggertype:"string" example:"+79998887766"`
 }
@@ -59,6 +60,17 @@ func (r *PatchUserRequest) Validate() error {
 			if !strings.HasPrefix(*r.PhoneNumber.Value, "+") {
 				return fmt.Errorf("'PhoneNumber' must startswith '+' symbol")
 			}
+		}
+	}
+
+	if r.Password.Set {
+		if r.Password.Value == nil {
+			return fmt.Errorf("'Password' can't be NULL")
+		}
+
+		passwordLen := len([]rune(string(*r.Password.Value)))
+		if passwordLen < 8 || passwordLen > 70 {
+			return fmt.Errorf("'Password' must be between 8 and 70 symbol")
 		}
 	}
 
@@ -111,6 +123,7 @@ func (h *UsersHTTPHandler) PatchUser(rw http.ResponseWriter, r *http.Request) {
 
 func userPatchFromRequest(request PatchUserRequest) domain.UserPatch {
 	return domain.NewUserPatch(
+		request.Password.ToDomain(),
 		request.FullName.ToDomain(),
 		request.PhoneNumber.ToDomain(),
 	)

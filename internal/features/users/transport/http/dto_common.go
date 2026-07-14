@@ -5,6 +5,8 @@ import "github.com/LayMan011/Golang-My-Study/internal/core/domain"
 type UserDTOResponse struct {
 	ID          int     `json:"id" example:"10"`
 	Version     int     `json:"version" example:"3"`
+	Login       string  `json:"login" example:"Ivan123"`
+	Password    []byte  `json:"password"`
 	FullName    string  `json:"full_name" example:"Ivan Ivanov"`
 	PhoneNumber *string `json:"phone_number" example:"+79998887766"`
 }
@@ -13,6 +15,8 @@ func userDTOFromDomain(user domain.User) UserDTOResponse {
 	return UserDTOResponse{
 		ID:          user.ID,
 		Version:     user.Version,
+		Login:       user.Login,
+		Password:    user.Password,
 		FullName:    user.FullName,
 		PhoneNumber: user.PhoneNumber,
 	}

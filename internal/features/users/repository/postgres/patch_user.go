@@ -21,13 +21,16 @@ func (r *UserRepository) PatchUser(
 	query := `
 	UPDATE progress.users
 	SET
-		full_name=$1,
-		phone_number=$2,
+		password=$1,
+		full_name=$2,
+		phone_number=$3,
 		version=version+1
-	WHERE id=$3 AND version=$4
+	WHERE id=$4 AND version=$5
 	RETURNING
 		id,
 		version,
+		login,
+		password,
 		full_name,
 		phone_number;
 	`
@@ -35,6 +38,7 @@ func (r *UserRepository) PatchUser(
 	row := r.pool.QueryRow(
 		ctx,
 		query,
+		user.Password,
 		user.FullName,
 		user.PhoneNumber,
 		id,
@@ -45,6 +49,8 @@ func (r *UserRepository) PatchUser(
 	err := row.Scan(
 		&userModel.ID,
 		&userModel.Version,
+		&userModel.Login,
+		&userModel.Password,
 		&userModel.FullName,
 		&userModel.PhoneNumber,
 	)
@@ -63,6 +69,8 @@ func (r *UserRepository) PatchUser(
 	userDomain := domain.NewUser(
 		userModel.ID,
 		userModel.Version,
+		userModel.Login,
+		userModel.Password,
 		userModel.FullName,
 		userModel.PhoneNumber,
 	)

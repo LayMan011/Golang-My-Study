@@ -18,7 +18,7 @@ func (r *ThemeUserRepository) GetThemeUser(
 	defer cancel()
 
 	query := `
-	SELECT id, version, completed, addition_at, completed_at, percentages, theme_id, user_id
+	SELECT id, version, completed, addition_at, completed_at, percentages, total_lessons, completed_lessons, theme_id, user_id
 	FROM progress.themes_user
 	WHERE id=$1
 	`
@@ -33,6 +33,8 @@ func (r *ThemeUserRepository) GetThemeUser(
 		&themeUserModel.AdditionAt,
 		&themeUserModel.CompletedAt,
 		&themeUserModel.Percentages,
+		&themeUserModel.TotalLessons,
+		&themeUserModel.CompletedLessons,
 		&themeUserModel.ThemeID,
 		&themeUserModel.UserID,
 	)

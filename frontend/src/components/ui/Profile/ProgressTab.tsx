@@ -1,19 +1,11 @@
 import { motion } from 'motion/react';
 import * as Progress from '@radix-ui/react-progress';
+import type { inProgressCourses } from '@/types';
 
 export const ProgressTab = ({
   inProgressCourses
 }: {
-  inProgressCourses: {
-    id: number;
-    subject: string;
-    subjectName: string;
-    title: string;
-    progress: number;
-    totalLessons: number;
-    completedLessons: number;
-    lastActivity: string;
-}[]
+  inProgressCourses: inProgressCourses[]
 }) => {
     return (
       <motion.div
@@ -37,7 +29,7 @@ export const ProgressTab = ({
                   className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-3"
                   style={{ backgroundColor: `var(--subject-${course.subject})` }}
                 >
-                  {course.subjectName}
+                  {SubjectName({subcject: course.subject})}
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">
                   {course.title}
@@ -57,16 +49,16 @@ export const ProgressTab = ({
                 <span className="text-muted-foreground">
                   {course.completedLessons} из {course.totalLessons} уроков
                 </span>
-                <span className="font-semibold text-foreground">{course.progress}%</span>
+                <span className="font-semibold text-foreground">{course.percentages}%</span>
               </div>
               <Progress.Root
                 className="relative h-3 overflow-hidden rounded-full bg-muted"
-                value={course.progress}
+                value={course.percentages}
               >
                 <Progress.Indicator
                   className="h-full bg-accent transition-all duration-300 ease-out rounded-full"
                   style={{
-                    width: `${course.progress}%`,
+                    width: `${course.percentages}%`,
                   }}
                 />
               </Progress.Root>
@@ -75,4 +67,27 @@ export const ProgressTab = ({
         ))}
       </motion.div>
     )
+}
+
+function SubjectName({ subcject }: { subcject: string }) {
+    switch(subcject) {
+        case 'russian':
+            return 'Русский язык'
+        case 'english':
+            return 'Английский язык'
+        case 'math':
+            return 'Математика'
+        case 'physics':
+            return 'Физика'
+        case 'chemistry':
+            return 'Химия'
+        case 'biology':
+            return 'Биология'
+        case 'history':
+            return 'История'
+        case 'social':
+            return 'Обществознание'
+    }
+
+    return 'Общий'
 }

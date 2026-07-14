@@ -18,6 +18,9 @@ type ThemeDTOResponse struct {
 	NumberOfRatings int       `json:"number_of_ratings" example:"0"`
 	NumberOfUsers   int       `json:"number_of_users" example:"0"`
 	Price           int       `json:"price" example:"50"`
+	Level           string    `json:"level" example:"beginner"`
+	Duration        string    `json:"duration" example:"3 месяца"`
+	Format          string    `json:"format" example:"text"`
 	AuthorUserID    int       `json:"author_user_id" example:"2"`
 }
 
@@ -34,6 +37,9 @@ func themeDTOFromDomain(theme domain.Theme) ThemeDTOResponse {
 		NumberOfRatings: theme.NumberOfRatings,
 		NumberOfUsers:   theme.NumberOfUsers,
 		Price:           theme.Price,
+		Level:           theme.Level,
+		Duration:        theme.Duration,
+		Format:          theme.Format,
 		AuthorUserID:    theme.AuthorUserID,
 	}
 }

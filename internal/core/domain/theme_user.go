@@ -8,14 +8,16 @@ import (
 )
 
 type ThemeUser struct {
-	ID          int
-	Version     int
-	Completed   bool
-	AdditionAt  time.Time
-	CompletedAt *time.Time
-	Percentages int
-	ThemeID     int
-	UserID      int
+	ID               int
+	Version          int
+	Completed        bool
+	AdditionAt       time.Time
+	CompletedAt      *time.Time
+	Percentages      int
+	TotalLessons     int
+	CompletedLessons int
+	ThemeID          int
+	UserID           int
 }
 
 func NewThemeUser(
@@ -25,18 +27,22 @@ func NewThemeUser(
 	additionAt time.Time,
 	completeAt *time.Time,
 	percentages int,
+	totalLesssons int,
+	compeletedLessons int,
 	themeID int,
 	userID int,
 ) ThemeUser {
 	return ThemeUser{
-		ID:          id,
-		Version:     version,
-		Completed:   completed,
-		AdditionAt:  additionAt,
-		CompletedAt: completeAt,
-		Percentages: percentages,
-		ThemeID:     themeID,
-		UserID:      userID,
+		ID:               id,
+		Version:          version,
+		Completed:        completed,
+		AdditionAt:       additionAt,
+		CompletedAt:      completeAt,
+		Percentages:      percentages,
+		TotalLessons:     totalLesssons,
+		CompletedLessons: compeletedLessons,
+		ThemeID:          themeID,
+		UserID:           userID,
 	}
 }
 
@@ -50,6 +56,8 @@ func NewThemeUserUnitialized(
 		false,
 		time.Now(),
 		nil,
+		0,
+		0,
 		0,
 		themeID,
 		userID,
@@ -78,6 +86,13 @@ func (t *ThemeUser) Validate() error {
 				core_errors.ErrInvalidArgument,
 			)
 		}
+	}
+
+	if t.TotalLessons < t.CompletedLessons {
+		return fmt.Errorf(
+			"'TotalLessons' can't be less than 'CompletedLessons': %w",
+			core_errors.ErrInvalidArgument,
+		)
 	}
 
 	return nil

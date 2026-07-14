@@ -15,17 +15,26 @@ func (r *UserRepository) CreateUser(
 	defer cancel()
 
 	query := `
-	INSERT INTO progress.users (full_name, phone_number)
-	VALUES ($1, $2)
-	RETURNING id, version, full_name, phone_number;
+	INSERT INTO progress.users (login, password, full_name, phone_number)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, version, login, password, full_name, phone_number;
 	`
 
-	row := r.pool.QueryRow(ctx, query, user.FullName, user.PhoneNumber)
+	row := r.pool.QueryRow(
+		ctx,
+		query,
+		user.Login,
+		user.Password,
+		user.FullName,
+		user.PhoneNumber,
+	)
 
 	var userModel UserModel
 	err := row.Scan(
 		&userModel.ID,
 		&userModel.Version,
+		&userModel.Login,
+		&userModel.Password,
 		&userModel.FullName,
 		&userModel.PhoneNumber,
 	)
@@ -36,6 +45,8 @@ func (r *UserRepository) CreateUser(
 	userDomain := domain.NewUser(
 		userModel.ID,
 		userModel.Version,
+		userModel.Login,
+		userModel.Password,
 		userModel.FullName,
 		userModel.PhoneNumber,
 	)

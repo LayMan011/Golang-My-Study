@@ -1,121 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { SearchBar, SubjectSerchHelpers, Filters, Sort, FiltersCourses, Pagination } from '@/components/ui/Courses'
 
-const allCourses = [
-  {
-    id: 1,
-    subject: 'russian',
-    subjectName: 'Русский язык',
-    title: 'Полная подготовка к ЕГЭ',
-    description: 'Комплексный курс по всем разделам экзамена',
-    rating: 4.9,
-    reviews: 234,
-    price: 4990,
-    students: 1234,
-    level: 'advanced',
-    duration: '6 месяцев',
-    format: 'video',
-  },
-  {
-    id: 2,
-    subject: 'english',
-    subjectName: 'Английский язык',
-    title: 'Подготовка к ЕГЭ за 3 месяца',
-    description: 'Интенсивный курс для быстрой подготовки',
-    rating: 4.8,
-    reviews: 189,
-    price: 5990,
-    students: 987,
-    level: 'intermediate',
-    duration: '3 месяца',
-    format: 'video',
-  },
-  {
-    id: 3,
-    subject: 'math',
-    subjectName: 'Математика',
-    title: 'Профильная математика',
-    description: 'Углубленная подготовка к профильному ЕГЭ',
-    rating: 4.9,
-    reviews: 456,
-    price: 5490,
-    students: 2134,
-    level: 'advanced',
-    duration: '8 месяцев',
-    format: 'video',
-  },
-  {
-    id: 4,
-    subject: 'physics',
-    subjectName: 'Физика',
-    title: 'Механика и термодинамика',
-    description: 'Детальный разбор сложных тем',
-    rating: 4.7,
-    reviews: 123,
-    price: 4490,
-    students: 654,
-    level: 'intermediate',
-    duration: '5 месяцев',
-    format: 'video',
-  },
-  {
-    id: 5,
-    subject: 'chemistry',
-    subjectName: 'Химия',
-    title: 'Органическая химия',
-    description: 'Полный разбор органической химии',
-    rating: 4.8,
-    reviews: 167,
-    price: 4790,
-    students: 789,
-    level: 'intermediate',
-    duration: '4 месяца',
-    format: 'video',
-  },
-  {
-    id: 6,
-    subject: 'biology',
-    subjectName: 'Биология',
-    title: 'Полный курс подготовки',
-    description: 'Все темы по биологии для ЕГЭ',
-    rating: 4.9,
-    reviews: 201,
-    price: 4990,
-    students: 1098,
-    level: 'advanced',
-    duration: '6 месяцев',
-    format: 'video',
-  },
-  {
-    id: 7,
-    subject: 'history',
-    subjectName: 'История',
-    title: 'История России',
-    description: 'От древности до современности',
-    rating: 4.7,
-    reviews: 145,
-    price: 4290,
-    students: 567,
-    level: 'beginner',
-    duration: '5 месяцев',
-    format: 'text',
-  },
-  {
-    id: 8,
-    subject: 'social',
-    subjectName: 'Обществознание',
-    title: 'Обществознание: теория и практика',
-    description: 'Подготовка с нуля до высоких баллов',
-    rating: 4.8,
-    reviews: 198,
-    price: 4490,
-    students: 876,
-    level: 'beginner',
-    duration: '4 месяца',
-    format: 'mixed',
-  },
-];
+interface Course {
+  id: number;
+  subject: string;
+  title: string;
+  description: string;
+  rating: number;
+  number_of_ratings: number;
+  price: number;
+  number_of_users: number;
+  level: string;
+  duration: string;
+  format: string;
+}
+
+const getCourses = async (): Promise<Course[]> => {
+  try {
+    const response = await fetch('http://localhost:5050/api/v1/themes');
+    
+    if (!response.ok) {
+      throw new Error(`Ошибка: ${response.status}`);
+    }
+
+    const courses: Course[] = await response.json();
+    return courses;
+  } catch (error) {
+    console.error('Ошибка загрузки:', error);
+    return [];
+  }
+};
+
+const subjectColors: Record<string, string> = {
+  'Русский язык': 'subject-russian',
+  'Английский язык': 'subject-english',
+  'Математика': 'subject-math',
+  'Физика': 'subject-physics',
+  'Химия': 'subject-chemistry',
+  'Биология': 'subject-biology',
+  'История': 'subject-history',
+  'Обществознание': 'subject-society',
+  'Информатика': 'subject-it',
+  'Литература': 'subject-literature',
+};
+
+const addColorsToCourses = (courses: Omit<Course, 'color'>[]): Course[] => {
+  return courses.map(course => ({
+    ...course,
+    color: subjectColors[course.subject],
+  }));
+};
 
 export const Courses = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -126,8 +61,21 @@ export const Courses = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [courses, setCourses] = useState<Course[]>([]);
+  // const [loading, setLoading] = useState(true);
 
-  const filteredCourses = allCourses.filter(course => {
+  useEffect(() => {
+    const fetchCourses = async () => {
+      // setLoading(true);
+      const data = await getCourses();
+      setCourses(addColorsToCourses(data));
+      // setLoading(false);
+    };
+
+    fetchCourses();
+  }, []);
+
+  const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSubject = selectedSubject === 'all' || course.subject === selectedSubject;

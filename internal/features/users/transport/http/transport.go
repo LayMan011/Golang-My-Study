@@ -29,6 +29,11 @@ type UserService interface {
 		id int,
 	) (domain.User, error)
 
+	GetUserByLogin(
+		ctx context.Context,
+		login string,
+	) (domain.User, error)
+
 	DeleteUser(
 		ctx context.Context,
 		id int,
@@ -39,6 +44,12 @@ type UserService interface {
 		id int,
 		patch domain.UserPatch,
 	) (domain.User, error)
+
+	Login(
+		ctx context.Context,
+		login string,
+		pair *domain.TokenPair,
+	) error
 }
 
 func NewUsersHTTPHandler(
