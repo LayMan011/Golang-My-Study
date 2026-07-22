@@ -3,10 +3,10 @@ import { CheckCircle, TrendingUp, Users, Award } from 'lucide-react';
 import {useState, useEffect} from 'react'
 
 const achievements = [
-  { icon: Users, value: '12,000+', label: 'Учеников' },
+  { icon: Users, value: '200+', label: 'Учеников' },
   { icon: Award, value: '95%', label: 'Поступили в вузы' },
   { icon: TrendingUp, value: '87', label: 'Средний балл ЕГЭ' },
-  { icon: CheckCircle, value: '500+', label: 'Курсов' },
+  { icon: CheckCircle, value: '50+', label: 'Курсов' },
 ];
 
 const updateAchievements = async () => {
@@ -19,7 +19,11 @@ const updateAchievements = async () => {
 
     const updatedAchievements = achievements.map((item) => {
       if (item.label === 'Учеников') {
-        return { ...item, value: `${dataUsers.length}+` };
+        if (dataUsers && dataUsers.length > 0) {
+          return { ...item, value: `${dataUsers.length}+` };
+        }
+
+        return { ...item, value: `0+` };
       }
       if (item.label === 'Курсов') {
         return { ...item, value: `${dataCourses.length}+` };

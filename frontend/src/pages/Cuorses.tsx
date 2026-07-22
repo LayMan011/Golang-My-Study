@@ -52,7 +52,7 @@ const addColorsToCourses = (courses: Omit<Course, 'color'>[]): Course[] => {
   }));
 };
 
-export const Courses = () => {
+const Courses = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedLevel, setSelectedLevel] = useState('all');
@@ -89,11 +89,32 @@ export const Courses = () => {
     return matchesSearch && matchesSubject && matchesLevel && matchesPrice;
   });
 
+  const sortedCourses = [...filteredCourses].sort((a, b) => {
+    switch (sortBy) {
+      case 'rating':
+        return b.rating - a.rating;
+      case 'price-low':
+        return a.price - b.price;
+      case 'price-high':
+        return b.price - a.price;
+      case 'new':
+        return b.id - a.id;
+      case 'popular':
+      default:
+        return b.number_of_users - a.number_of_users;
+    }
+  });
+
   const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
+  const paginatedCourses = sortedCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);  // Обновляем состояние
+    setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -131,9 +152,9 @@ export const Courses = () => {
 
             {/* Results */}
             <div className="flex-1">
-              <Sort sortBy={sortBy} setSortBy={setSortBy} filteredCourses={filteredCourses} />
+              <Sort sortBy={sortBy} setSortBy={setSortBy} filteredCourses={paginatedCourses} />
 
-              <FiltersCourses filteredCourses={filteredCourses} />
+              <FiltersCourses filteredCourses={paginatedCourses} />
 
               {/* Pagination */}
               <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
@@ -163,3 +184,5 @@ export const Courses = () => {
     </div>
   );
 }
+
+export default Courses

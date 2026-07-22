@@ -3,14 +3,23 @@ import { ThemeToggle } from '@/components/common';
 import { User, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
-
-import { Logo } from '@/components/common'
+import { Logo } from '@/components/common';
+import { useAuth } from '@/hooks';
+import { useAuthModal } from '@/hooks';
 
 export function Header() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const { isAuthenticated } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
+
   const isActive = (path: string) => location.pathname === path;
+
+  const handleOpenAuth = () => {
+    setMobileMenuOpen(false);
+    openAuthModal();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/60">
@@ -18,8 +27,10 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-          <Logo />
-            <span className="text-xl font-bold text-foreground">ЕГЭ Платформа</span>
+            <Logo />
+            <span className="text-xl font-bold text-foreground">
+              ЕГЭ Платформа
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -27,8 +38,8 @@ export function Header() {
             <Link
               to="/"
               className={`relative px-3 py-2 text-sm font-medium transition-colors ${
-                isActive('/') 
-                  ? 'text-primary' 
+                isActive('/')
+                  ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -37,15 +48,20 @@ export function Header() {
                 <motion.div
                   layoutId="activeTab"
                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30,
+                  }}
                 />
               )}
             </Link>
+
             <Link
               to="/courses"
               className={`relative px-3 py-2 text-sm font-medium transition-colors ${
-                isActive('/courses') 
-                  ? 'text-primary' 
+                isActive('/courses')
+                  ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -54,7 +70,11 @@ export function Header() {
                 <motion.div
                   layoutId="activeTab"
                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30,
+                  }}
                 />
               )}
             </Link>
@@ -63,25 +83,38 @@ export function Header() {
           {/* Right side */}
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <Link
-              to="/auth"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
-            >
-              Войти
-            </Link>
-            <Link
-              to="/profile"
-              className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-primary hover:bg-primary/90 transition-colors"
-            >
-              <User className="w-5 h-5 text-primary-foreground" />
-            </Link>
-            
+
+            {/* Если не залогинен — кнопка Войти (открывает модалку) */}
+            {!isAuthenticated && (
+              <button
+                type="button"
+                onClick={handleOpenAuth}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+              >
+                Войти
+              </button>
+            )}
+
+            {/* Если залогинен — иконка профиля */}
+            {isAuthenticated && (
+              <Link
+                to="/profile"
+                className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-primary hover:bg-primary/90 transition-colors"
+              >
+                <User className="w-5 h-5 text-primary-foreground" />
+              </Link>
+            )}
+
             {/* Mobile menu button */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
               className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
@@ -100,38 +133,50 @@ export function Header() {
                   to="/"
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-4 py-2 rounded-lg transition-colors ${
-                    isActive('/') ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
+                    isActive('/')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
                   }`}
                 >
                   Главная
                 </Link>
+
                 <Link
                   to="/courses"
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-4 py-2 rounded-lg transition-colors ${
-                    isActive('/courses') ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
+                    isActive('/courses')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
                   }`}
                 >
                   Курсы
                 </Link>
-                <Link
-                  to="/auth"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-2 rounded-lg transition-colors ${
-                    isActive('/auth') ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  Вход / Регистрация
-                </Link>
-                <Link
-                  to="/profile"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-2 rounded-lg transition-colors ${
-                    isActive('/profile') ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  Профиль
-                </Link>
+
+                {/* Мобильное меню: либо Вход / Регистрация (модалка), либо Профиль */}
+                {!isAuthenticated && (
+                  <button
+                    type="button"
+                    onClick={handleOpenAuth}
+                    className="block w-full text-left px-4 py-2 rounded-lg transition-colors text-foreground hover:bg-muted"
+                  >
+                    Вход / Регистрация
+                  </button>
+                )}
+
+                {isAuthenticated && (
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-2 rounded-lg transition-colors ${
+                      isActive('/profile')
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    Профиль
+                  </Link>
+                )}
               </nav>
             </motion.div>
           )}

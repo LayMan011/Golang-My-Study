@@ -26,5 +26,9 @@ func (s *UserService) PatchUser(
 		return domain.User{}, fmt.Errorf("patch user: %w", err)
 	}
 
+	if err := s.userRepositoryRedis.PatchUser(ctx, patchedUser.ID, patch); err != nil {
+		return domain.User{}, fmt.Errorf("patch user to cache: %w", err)
+	}
+
 	return patchedUser, nil
 }

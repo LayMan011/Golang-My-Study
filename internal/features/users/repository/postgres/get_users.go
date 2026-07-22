@@ -16,7 +16,7 @@ func (r *UserRepository) GetUsers(
 	defer cancel()
 
 	query := `
-	SELECT id, version, login, password, full_name, phone_number
+	SELECT id, version, email, created_at, password, full_name
 	FROM progress.users
 	ORDER BY id ASC
 	LIMIT $1
@@ -41,10 +41,10 @@ func (r *UserRepository) GetUsers(
 		err := rows.Scan(
 			&userModel.ID,
 			&userModel.Version,
-			&userModel.Login,
+			&userModel.Email,
+			&userModel.CreatedAt,
 			&userModel.Password,
 			&userModel.FullName,
-			&userModel.PhoneNumber,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan users: %w", err)

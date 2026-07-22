@@ -23,16 +23,15 @@ func (r *UserRepository) PatchUser(
 	SET
 		password=$1,
 		full_name=$2,
-		phone_number=$3,
 		version=version+1
-	WHERE id=$4 AND version=$5
+	WHERE id=$3 AND version=$4
 	RETURNING
 		id,
 		version,
-		login,
+		email,
+		created_at,
 		password,
-		full_name,
-		phone_number;
+		full_name;
 	`
 
 	row := r.pool.QueryRow(
@@ -40,7 +39,6 @@ func (r *UserRepository) PatchUser(
 		query,
 		user.Password,
 		user.FullName,
-		user.PhoneNumber,
 		id,
 		user.Version,
 	)
@@ -49,10 +47,10 @@ func (r *UserRepository) PatchUser(
 	err := row.Scan(
 		&userModel.ID,
 		&userModel.Version,
-		&userModel.Login,
+		&userModel.Email,
+		&userModel.CreatedAt,
 		&userModel.Password,
 		&userModel.FullName,
-		&userModel.PhoneNumber,
 	)
 	if err != nil {
 		if errors.Is(err, core_postgres_pool.ErrNoRows) {
@@ -69,10 +67,10 @@ func (r *UserRepository) PatchUser(
 	userDomain := domain.NewUser(
 		userModel.ID,
 		userModel.Version,
-		userModel.Login,
+		userModel.Email,
+		userModel.CreatedAt,
 		userModel.Password,
 		userModel.FullName,
-		userModel.PhoneNumber,
 	)
 
 	return userDomain, nil

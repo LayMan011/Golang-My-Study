@@ -9,10 +9,12 @@ import (
 
 func (s *UserService) Login(
 	ctx context.Context,
-	login string,
+	id int,
 	pair *domain.TokenPair,
 ) error {
-	err := s.userRepositoryRedis.SaveToken(ctx, login, pair)
+	key := fmt.Sprintf("token:%d", id)
+
+	err := s.userRepositoryRedis.SaveToken(ctx, key, pair)
 	if err != nil {
 		return fmt.Errorf("set token from repository: %w", err)
 	}

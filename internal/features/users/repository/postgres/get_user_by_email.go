@@ -10,36 +10,36 @@ import (
 	core_postgres_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool"
 )
 
-func (r *UserRepository) GetUserByLogin(
+func (r *UserRepository) GetUserByEmail(
 	ctx context.Context,
-	login string,
+	email string,
 ) (domain.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
 	query := `
-	SELECT id, version, login, password, full_name, phone_number
+	SELECT id, version, email, created_at, password, full_name
 	FROM progress.users
-	WHERE login=$1;
+	WHERE email=$1;
 	`
 
-	row := r.pool.QueryRow(ctx, query, login)
+	row := r.pool.QueryRow(ctx, query, email)
 
 	var userModel UserModel
 
 	err := row.Scan(
 		&userModel.ID,
 		&userModel.Version,
-		&userModel.Login,
+		&userModel.Email,
+		&userModel.CreatedAt,
 		&userModel.Password,
 		&userModel.FullName,
-		&userModel.PhoneNumber,
 	)
 	if err != nil {
 		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return domain.User{}, fmt.Errorf(
-				"user with login='%s': %w",
-				login,
+				"user with email='%s': %w",
+				email,
 				core_errors.ErrNotFound,
 			)
 		}
@@ -50,10 +50,10 @@ func (r *UserRepository) GetUserByLogin(
 	userDomain := domain.NewUser(
 		userModel.ID,
 		userModel.Version,
-		userModel.Login,
+		userModel.Email,
+		userModel.CreatedAt,
 		userModel.Password,
 		userModel.FullName,
-		userModel.PhoneNumber,
 	)
 
 	return userDomain, nil

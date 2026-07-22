@@ -1,14 +1,18 @@
 package users_postgres_repository
 
-import "github.com/LayMan011/Golang-My-Study/internal/core/domain"
+import (
+	"time"
+
+	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+)
 
 type UserModel struct {
-	ID          int
-	Version     int
-	Login       string
-	Password    []byte
-	FullName    string
-	PhoneNumber *string
+	ID        int
+	Version   int
+	Email     string
+	CreatedAt time.Time
+	Password  []byte
+	FullName  string
 }
 
 func usersDomainsFromModels(users []UserModel) []domain.User {
@@ -18,10 +22,10 @@ func usersDomainsFromModels(users []UserModel) []domain.User {
 		userDomains[i] = domain.NewUser(
 			user.ID,
 			user.Version,
-			user.Login,
+			user.Email,
+			user.CreatedAt,
 			user.Password,
 			user.FullName,
-			user.PhoneNumber,
 		)
 	}
 

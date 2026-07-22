@@ -29,9 +29,34 @@ func (s *ThemeUserService) GetThemesUser(
 		)
 	}
 
-	themesUser, err := s.themeUserRepository.GetThemesUser(ctx, userID, themeID, first, last)
+	lim := 0
+	off := 0
+	if first != nil {
+		lim = *first
+	}
+	if last != nil {
+		off = *last
+	}
+
+	cacheKey := fmt.Sprintf("themes_user:limit:%d:offset:%d", lim, off)
+
+	if cached, err := s.themeUserRepositoryRedis.GetThemesUser(ctx, cacheKey); err == nil {
+		return cached, nil
+	}
+
+	themesUser, err := s.themeUserRepositoryPostgres.GetThemesUser(
+		ctx,
+		userID,
+		themeID,
+		first,
+		last,
+	)
 	if err != nil {
-		return []domain.ThemeUser{}, fmt.Errorf("get themes_user from repository: %w", err)
+		return nil, fmt.Errorf("get themes_user from repository: %w", err)
+	}
+
+	if err := s.themeUserRepositoryRedis.SaveThemesUser(ctx, cacheKey, themesUser); err != nil {
+		return nil, fmt.Errorf("failed save to cache the themes: %w", err)
 	}
 
 	return themesUser, nil

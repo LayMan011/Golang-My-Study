@@ -8,24 +8,24 @@ import (
 )
 
 type Theme struct {
-	ID      int
-	Version int
+	ID      int `redis:"id"`
+	Version int `redis:"version"`
 
-	Title           string
-	Description     *string
-	CreatedAt       time.Time
-	Subject         string
-	Rating          *float64
-	AllRatings      int
-	NumberOfRatings int
-	NumberOfUsers   int
-	Price           int
+	Title           string    `redis:"title"`
+	Description     *string   `redis:"description"`
+	CreatedAt       time.Time `redis:"created_at"`
+	Subject         string    `redis:"subject"`
+	Rating          *float64  `redis:"rating"`
+	AllRatings      int       `redis:"all_ratings"`
+	NumberOfRatings int       `redis:"number_of_ratings"`
+	NumberOfUsers   int       `redis:"number_of_users"`
+	Price           int       `redis:"price"`
 
-	Level    string
-	Duration string
-	Format   string
+	Level    string `redis:"level"`
+	Duration string `redis:"duration"`
+	Format   string `redis:"format"`
 
-	AuthorUserID int
+	AuthorUserID int `redis:"author_user_id"`
 }
 
 func NewTheme(

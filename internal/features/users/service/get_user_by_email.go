@@ -7,11 +7,11 @@ import (
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 )
 
-func (s *UserService) GetUserByLogin(
+func (s *UserService) GetUserByEmail(
 	ctx context.Context,
-	login string,
+	email string,
 ) (domain.User, error) {
-	user, err := s.userRepositoryPostgres.GetUserByLogin(ctx, login)
+	user, err := s.userRepositoryPostgres.GetUserByEmail(ctx, email)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("get user from repository: %w", err)
 	}

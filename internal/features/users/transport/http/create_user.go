@@ -2,6 +2,7 @@ package users_transport_http
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
@@ -11,10 +12,9 @@ import (
 )
 
 type CreateUserRequest struct {
-	Login       string  `json:"login" validate:"reqiured,min=4,max=50" example:"Ivan123"`
-	Password    string  `json:"password" validate:"reqiured,min=8,max=70" example:"12345678"`
-	FullName    string  `json:"full_name" validate:"required,min=3,max=100" example:"Ivan Ivanov"`
-	PhoneNumber *string `json:"phone_number" validate:"omitempty,min=10,max=15,startswith=+" example:"+79998887766"`
+	Email    string `json:"email" validate:"required,email,min=4,max=100" example:"example@gmail.com"`
+	Password string `json:"password" validate:"required,min=8,max=70" example:"12345678"`
+	FullName string `json:"full_name" validate:"required,min=3,max=100" example:"Ivan Ivanov"`
 }
 
 type CreateUserResponse UserDTOResponse
@@ -47,11 +47,34 @@ func (h *UsersHTTPHandler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	userDomain, err := domainFromDTO(request)
 	if err != nil {
 		responseHandler.ErrorResponse(err, "failed to hash the password")
+
+		return
 	}
 
 	userDomain, err = h.userService.CreateUser(ctx, userDomain)
 	if err != nil {
 		responseHandler.ErrorResponse(err, "failed to create user")
+
+		return
+	}
+
+	pair, err := h.userService.GenerateTokenPair(ctx, request.Email)
+	if err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"could not create tokens",
+		)
+
+		return
+	}
+
+	if err := h.userService.Login(ctx, userDomain.ID, pair); err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"failed to write the token",
+		)
+
+		return
 	}
 
 	response := CreateUserResponse(userDTOFromDomain(userDomain))
@@ -65,5 +88,5 @@ func domainFromDTO(dto CreateUserRequest) (domain.User, error) {
 		return domain.User{}, err
 	}
 
-	return domain.NewUserUninitailized(dto.Login, hash, dto.FullName, dto.PhoneNumber), nil
+	return domain.NewUserUninitailized(dto.Email, time.Now(), hash, dto.FullName), nil
 }

@@ -2,30 +2,38 @@ package users_redis_repository
 
 import (
 	"context"
-	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
 )
 
-func (r *UserRepository) SaveUserToHash(ctx context.Context, user domain.User) error {
-	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
-	defer cancel()
+func (r *UserRepository) SaveUser(ctx context.Context, key string, value domain.User) error {
+	val := reflect.ValueOf(value)
 
-	if err := r.pool.DoError(ctx, "SELECT", 0); err != nil {
-		return fmt.Errorf("db switch error: %w", err)
+	setter := func(p core_redis_pool.Pipeline) error {
+		for i := 0; i < val.NumField(); i++ {
+			field := val.Type().Field(i)
+			tag := field.Tag.Get("redis")
+			if tag == "" {
+				continue
+			}
+
+			if err := p.HSet(ctx, key, tag, val.Field(i).Interface()); err != nil {
+				return err
+			}
+		}
+
+		if err := p.Expire(ctx, key, 1*time.Hour); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	key := fmt.Sprintf("user:%s", user.Login)
-
-	err := r.pool.HSet(ctx, key, user)
-	if err != nil {
-		return fmt.Errorf("failed to save user to Redis: %w", err)
-	}
-
-	err = r.pool.Expire(ctx, key, time.Hour)
-	if err != nil {
-		return fmt.Errorf("failed to set TTL: %w", err)
+	if _, err := r.pool.Pipelined(ctx, setter); err != nil {
+		return err
 	}
 
 	return nil

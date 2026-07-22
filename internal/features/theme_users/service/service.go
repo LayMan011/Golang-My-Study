@@ -7,10 +7,46 @@ import (
 )
 
 type ThemeUserService struct {
-	themeUserRepository ThemeUserRepository
+	themeUserRepositoryPostgres ThemeUserRepositoryPostgres
+	themeUserRepositoryRedis    ThemeUserRepositoryRedis
 }
 
-type ThemeUserRepository interface {
+type ThemeUserRepositoryRedis interface {
+	SaveThemeUser(
+		ctx context.Context,
+		key string,
+		value domain.ThemeUser,
+	) error
+
+	GetThemeUser(
+		ctx context.Context,
+		key string,
+	) (domain.ThemeUser, error)
+
+	DeleteThemeUser(
+		ctx context.Context,
+		key string,
+	) error
+
+	PatchThemeUser(
+		ctx context.Context,
+		id int,
+		patch domain.ThemeUserPatch,
+	) error
+
+	SaveThemesUser(
+		ctx context.Context,
+		key string,
+		themesUser []domain.ThemeUser,
+	) error
+
+	GetThemesUser(
+		ctx context.Context,
+		key string,
+	) ([]domain.ThemeUser, error)
+}
+
+type ThemeUserRepositoryPostgres interface {
 	CreateThemeUser(
 		ctx context.Context,
 		themeUser domain.ThemeUser,
@@ -29,6 +65,11 @@ type ThemeUserRepository interface {
 		id int,
 	) (domain.ThemeUser, error)
 
+	GetThemeUserByUserID(
+		ctx context.Context,
+		id int,
+	) (domain.ThemeUser, error)
+
 	DeleteThemeUser(
 		ctx context.Context,
 		themeUserID int,
@@ -42,9 +83,11 @@ type ThemeUserRepository interface {
 }
 
 func NewThemeUserService(
-	themeUserRepository ThemeUserRepository,
+	themeUserRepositoryPostgres ThemeUserRepositoryPostgres,
+	themeUserRepositoryRedis ThemeUserRepositoryRedis,
 ) *ThemeUserService {
 	return &ThemeUserService{
-		themeUserRepository: themeUserRepository,
+		themeUserRepositoryPostgres: themeUserRepositoryPostgres,
+		themeUserRepositoryRedis:    themeUserRepositoryRedis,
 	}
 }

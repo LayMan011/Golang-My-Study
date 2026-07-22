@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Mail, Lock, User, Calendar, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
 
 export const Registration = ({
     handleRegister,
@@ -12,9 +12,6 @@ export const Registration = ({
 
     emailValid,
     validateEmail,
-
-    birthDate,
-    setBirthDate,
 
     registerPassword,
     setRegisterPassword,
@@ -44,9 +41,6 @@ export const Registration = ({
 
     emailValid: boolean | null,
     validateEmail: (email: string) => boolean,
-
-    birthDate: string,
-    setBirthDate: React.Dispatch<React.SetStateAction<string>>,
 
     registerPassword: string,
     setRegisterPassword: React.Dispatch<React.SetStateAction<string>>,
@@ -142,24 +136,6 @@ export const Registration = ({
             {emailValid === false && (
             <p className="text-xs text-red-500 mt-1">Введите корректный email</p>
             )}
-        </div>
-
-        {/* Birth Date */}
-        <div>
-            <label htmlFor="birth-date" className="block text-sm font-medium text-foreground mb-2">
-            Дата рождения
-            </label>
-            <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-                id="birth-date"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-primary focus:outline-none transition-colors"
-                required
-            />
-            </div>
         </div>
 
         {/* Password */}

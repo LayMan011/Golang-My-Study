@@ -14,8 +14,51 @@ type UserService struct {
 type UserRepositoryRedis interface {
 	SaveToken(
 		ctx context.Context,
-		login string,
+		key string,
 		pair *domain.TokenPair,
+	) error
+
+	DeleteToken(
+		ctx context.Context,
+		key string,
+	) error
+
+	GenerateTokenPair(
+		ctx context.Context,
+		login string,
+	) (*domain.TokenPair, error)
+
+	SaveUser(
+		ctx context.Context,
+		key string,
+		value domain.User,
+	) error
+
+	GetUser(
+		ctx context.Context,
+		key string,
+	) (domain.User, error)
+
+	DeleteUser(
+		ctx context.Context,
+		key string,
+	) error
+
+	SaveUsers(
+		ctx context.Context,
+		key string,
+		users []domain.User,
+	) error
+
+	GetUsers(
+		ctx context.Context,
+		key string,
+	) ([]domain.User, error)
+
+	PatchUser(
+		ctx context.Context,
+		id int,
+		patch domain.UserPatch,
 	) error
 }
 
@@ -36,9 +79,9 @@ type UserRepositoryPostgres interface {
 		id int,
 	) (domain.User, error)
 
-	GetUserByLogin(
+	GetUserByEmail(
 		ctx context.Context,
-		login string,
+		email string,
 	) (domain.User, error)
 
 	DeleteUser(
@@ -54,9 +97,11 @@ type UserRepositoryPostgres interface {
 }
 
 func NewUsersService(
-	userRepository UserRepositoryPostgres,
+	userRepositoryPostgres UserRepositoryPostgres,
+	userRepositoryRedis UserRepositoryRedis,
 ) *UserService {
 	return &UserService{
-		userRepositoryPostgres: userRepository,
+		userRepositoryPostgres: userRepositoryPostgres,
+		userRepositoryRedis:    userRepositoryRedis,
 	}
 }

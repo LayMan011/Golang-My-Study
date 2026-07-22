@@ -16,10 +16,16 @@ func (s *ThemeUserService) CreateThemeUser(
 		return domain.ThemeUser{}, fmt.Errorf("validate themeUser domain: %w", err)
 	}
 
-	themeDomain, err := s.themeUserRepository.CreateThemeUser(ctx, themeUser)
+	themeUserDomain, err := s.themeUserRepositoryPostgres.CreateThemeUser(ctx, themeUser)
 	if err != nil {
 		return domain.ThemeUser{}, fmt.Errorf("create themeUser: %w", err)
 	}
 
-	return themeDomain, nil
+	key := fmt.Sprintf("theme_user:%d", themeUser.ID)
+
+	if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUser); err != nil {
+		return domain.ThemeUser{}, fmt.Errorf("failed to cache the theme_user: %w", err)
+	}
+
+	return themeUserDomain, nil
 }

@@ -8,16 +8,16 @@ import (
 )
 
 type ThemeUser struct {
-	ID               int
-	Version          int
-	Completed        bool
-	AdditionAt       time.Time
-	CompletedAt      *time.Time
-	Percentages      int
-	TotalLessons     int
-	CompletedLessons int
-	ThemeID          int
-	UserID           int
+	ID               int        `redis:"id"`
+	Version          int        `redis:"version"`
+	Completed        bool       `redis:"completed"`
+	AdditionAt       time.Time  `redis:"addition_at"`
+	CompletedAt      *time.Time `redis:"completed_at"`
+	Percentages      int        `redis:"percentages"`
+	TotalLessons     int        `redis:"total_lessons"`
+	CompletedLessons int        `redis:"completed_lessons"`
+	ThemeID          int        `redis:"theme_id"`
+	UserID           int        `redis:"user_id"`
 }
 
 func NewThemeUser(

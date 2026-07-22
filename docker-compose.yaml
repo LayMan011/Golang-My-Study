@@ -15,6 +15,10 @@ services:
          - LOGGER_LEVEL=${LOGGER_LEVEL}
          - TIME_ZONE=${TIME_ZONE}
          - LOGGER_FOLDER=/app/out/logs
+         - REDIS_ADDR=${REDIS_ADDR}
+         - REDIS_PASSWORD=${REDIS_PASSWORD}
+         - REDIS_DB=${REDIS_DB}
+         - REDIS_TIMEOUT=${REDIS_TIMEOUT}
         volumes:
          - ${PROJECT_ROOT}/out/logs:/app/out/logs
         ports:
@@ -33,13 +37,13 @@ services:
         restart: always 
 
     project-redis:
-        image: redis:7-alpine
+        image: redis:8.6-alpine
         container_name: project-redis
         ports:
         - "6379:6379"
         volumes:
         - redis-data:/data
-        command: redis-server --requirepass my_secure_password
+        command: redis-server --requirepass ${REDIS_PASSWORD}
         restart: unless-stopped
     
     project-postgres-migrate:
@@ -66,4 +70,5 @@ services:
         volumes:
          - ${PROJECT_ROOT}:/code
 
-    
+volumes:
+  redis-data:    

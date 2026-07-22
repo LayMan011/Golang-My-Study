@@ -22,19 +22,18 @@ export interface Course_User {
     lastActivity: number,
 }
 
-export interface inProgressCourses {
-    id: number;
-    subject: string;
-    title: string;
-    percentages: number;
-    totalLessons: number;
-    completedLessons: number;
-    lastActivity: string;
-}
-
-export interface completedCourses {
-    id: number;
-    subject: string;
-    title: string;
-    completedDate: string;
-}
+export type UserCourseProgress = {
+  id: string;
+  version: number;
+  completed: boolean;
+  addition_at: string;            
+  completed_at: string | null; 
+  percentages: number;         
+  theme_id: string;
+  user_id: string;
+  total_lessons: number;
+  completed_lessons: number;   
+  
+  title: string;
+  subject: string;
+};
