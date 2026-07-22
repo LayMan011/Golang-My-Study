@@ -11,15 +11,19 @@ import (
 	core_config "github.com/LayMan011/Golang-My-Study/internal/core/config"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	core_pgx_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool/pgx"
+	core_goredis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool/goredis"
 	core_http_middleware "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/middleware"
 	core_http_server "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/server"
 	themes_user_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/repository/postgres"
+	themes_user_redis_repository "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/repository/redis"
 	themes_user_service "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/service"
 	themes_user_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/transport/http"
 	themes_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/themes/repository/postgres"
+	themes_redis_repository "github.com/LayMan011/Golang-My-Study/internal/features/themes/repository/redis"
 	themes_service "github.com/LayMan011/Golang-My-Study/internal/features/themes/service"
 	themes_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/themes/transport/http"
 	users_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/postgres"
+	users_redis_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/redis"
 	users_service "github.com/LayMan011/Golang-My-Study/internal/features/users/service"
 	users_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/users/transport/http"
 	"go.uber.org/zap"
@@ -61,14 +65,22 @@ func main() {
 	}
 	defer pool.Close()
 
+	logger.Debug("initiazling redis connection pool")
+
+	redisConfig := core_goredis_pool.MustGetRedisConfig()
+	redisClient := core_goredis_pool.CreateRedisClientMust(redisConfig)
+	defer redisClient.Close()
+
 	logger.Debug("initializing feature", zap.String("feature", "users"))
-	usersRepository := users_postgres_repository.NewUsersRepository(pool)
-	usersService := users_service.NewUsersService(usersRepository)
+	usersRepositoryPostgres := users_postgres_repository.NewUsersRepository(pool)
+	usersRepositoryRedis := users_redis_repository.NewUsersRepository(redisClient)
+	usersService := users_service.NewUsersService(usersRepositoryPostgres, usersRepositoryRedis)
 	usersTranspostHTTP := users_transport_http.NewUsersHTTPHandler(usersService)
 
 	logger.Debug("initializing feature", zap.String("feature", "themes"))
-	themesRepository := themes_postgres_repository.NewThemeRepository(pool)
-	themesService := themes_service.NewThemeService(themesRepository)
+	themesRepositoryPostgres := themes_postgres_repository.NewThemeRepository(pool)
+	themesRepositoryRedis := themes_redis_repository.NewThemesRepository(redisClient)
+	themesService := themes_service.NewThemeService(themesRepositoryPostgres, themesRepositoryRedis)
 	themesTransportHTTP := themes_transport_http.NewThemesHTTPHandler(themesService)
 
 	// logger.Debug("initializing feature", zap.String("feature", "statistics"))
@@ -78,7 +90,8 @@ func main() {
 
 	logger.Debug("initializing feature", zap.String("feature", "themes_user"))
 	themesUserRepository := themes_user_postgres_repository.NewThemeUserRepository(pool)
-	themesUserService := themes_user_service.NewThemeUserService(themesUserRepository)
+	themesUserRepositoryRedis := themes_user_redis_repository.NewThemesUserRepository(redisClient)
+	themesUserService := themes_user_service.NewThemeUserService(themesUserRepository, themesUserRepositoryRedis)
 	themesUserTransportHTTP := themes_user_transport_http.NewThemeUserHTTPHandler(themesUserService)
 
 	logger.Debug("initializing HTTP server")

@@ -3,7 +3,6 @@ package users_transport_http
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
@@ -13,8 +12,8 @@ import (
 )
 
 type PatchUserRequest struct {
-	FullName    core_http_types.Nullable[string] `json:"full_name" swaggertype:"string" example:"Максим Максимович"`
-	PhoneNumber core_http_types.Nullable[string] `json:"phone_number" swaggertype:"string" example:"+79998887766"`
+	Password core_http_types.Nullable[[]byte] `json:"password" swaggertype:"string" format:"base64"`
+	FullName core_http_types.Nullable[string] `json:"full_name" swaggertype:"string" example:"Максим Максимович"`
 }
 
 // PatchUser 	godoc
@@ -48,17 +47,14 @@ func (r *PatchUserRequest) Validate() error {
 		}
 	}
 
-	if r.PhoneNumber.Set {
-		if r.PhoneNumber.Value != nil {
-			phoneNumberLen := len([]rune(*r.PhoneNumber.Value))
+	if r.Password.Set {
+		if r.Password.Value == nil {
+			return fmt.Errorf("'Password' can't be NULL")
+		}
 
-			if phoneNumberLen < 10 || phoneNumberLen > 15 {
-				return fmt.Errorf("'PhoneNumber' must be between 10 and 15 symbol")
-			}
-
-			if !strings.HasPrefix(*r.PhoneNumber.Value, "+") {
-				return fmt.Errorf("'PhoneNumber' must startswith '+' symbol")
-			}
+		passwordLen := len([]rune(string(*r.Password.Value)))
+		if passwordLen < 8 || passwordLen > 70 {
+			return fmt.Errorf("'Password' must be between 8 and 70 symbol")
 		}
 	}
 
@@ -111,7 +107,7 @@ func (h *UsersHTTPHandler) PatchUser(rw http.ResponseWriter, r *http.Request) {
 
 func userPatchFromRequest(request PatchUserRequest) domain.UserPatch {
 	return domain.NewUserPatch(
+		request.Password.ToDomain(),
 		request.FullName.ToDomain(),
-		request.PhoneNumber.ToDomain(),
 	)
 }

@@ -13,6 +13,10 @@ type CreateThemeRequest struct {
 	Title       string  `json:"title" validate:"required,min=1,max=100" example:"Подготовка к ЕГЭ по русскому языку"`
 	Description *string `json:"description" validate:"omitempty,min=1,max=1000" example:"Подготовка к ЕГЭ по русскому языку за 3 месяца"`
 	Subject     string  `json:"subject" validate:"required,min=1,max=1000" example:"Русский язык"`
+	Price       int     `json:"price" validate:"required" example:"5000"`
+	Level       string  `json:"level" validate:"required,min=1,max=40" example:"beginner"`
+	Duration    string  `json:"duration" validate:"required,min=1,max=40" example:"3 месяца"`
+	Format      string  `json:"format" validate:"required,min=1,max=40" example:"text"`
 
 	AuthorUserID int `json:"author_user_id" validate:"required" example:"1"`
 }
@@ -50,6 +54,10 @@ func (h *ThemeHTTPHandler) CreateTheme(rw http.ResponseWriter, r *http.Request) 
 		request.Title,
 		request.Description,
 		request.Subject,
+		request.Price,
+		request.Level,
+		request.Duration,
+		request.Format,
 		request.AuthorUserID,
 	)
 

@@ -18,9 +18,9 @@ func (r *ThemeUserRepository) CreateThemeUser(
 	defer cancel()
 
 	query := `
-	INSERT INTO progress.themes_user (completed, addition_at, completed_at, percentages, theme_id, user_id)
-	VALUES ($1, $2, $3, $4, $5, $6)
-	RETURNING id, version, completed, addition_at, completed_at, percentages, theme_id, user_id;
+	INSERT INTO progress.themes_user (completed, addition_at, completed_at, percentages, total_lessons, completed_lessons, theme_id, user_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	RETURNING id, version, completed, addition_at, completed_at, percentages, total_lessons, completed_lessons, theme_id, user_id;
 	`
 
 	row := r.pool.QueryRow(
@@ -30,6 +30,8 @@ func (r *ThemeUserRepository) CreateThemeUser(
 		themeUser.AdditionAt,
 		themeUser.CompletedAt,
 		themeUser.Percentages,
+		themeUser.TotalLessons,
+		themeUser.CompletedLessons,
 		themeUser.ThemeID,
 		themeUser.UserID,
 	)
@@ -42,6 +44,8 @@ func (r *ThemeUserRepository) CreateThemeUser(
 		&themeUserModel.AdditionAt,
 		&themeUserModel.CompletedAt,
 		&themeUserModel.Percentages,
+		&themeUserModel.TotalLessons,
+		&themeUserModel.CompletedLessons,
 		&themeUserModel.ThemeID,
 		&themeUserModel.UserID,
 	)

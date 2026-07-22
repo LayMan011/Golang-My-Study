@@ -3,45 +3,73 @@ package domain
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 type User struct {
-	ID      int
-	Version int
+	ID      int `redis:"id"`
+	Version int `redis:"version"`
 
-	FullName    string
-	PhoneNumber *string
+	Email     string    `redis:"email"`
+	CreatedAt time.Time `redis:"created_at"`
+	Password  []byte    `redis:"password"`
+	FullName  string    `redis:"full_name"`
 }
 
 func NewUser(
 	id int,
 	version int,
+	email string,
+	createdAt time.Time,
+	password []byte,
 	fullName string,
-	phoneNumber *string,
 ) User {
 	return User{
-		ID:          id,
-		Version:     version,
-		FullName:    fullName,
-		PhoneNumber: phoneNumber,
+		ID:        id,
+		Version:   version,
+		Email:     email,
+		CreatedAt: createdAt,
+		Password:  password,
+		FullName:  fullName,
 	}
 }
 
 func NewUserUninitailized(
+	email string,
+	createdAt time.Time,
+	password []byte,
 	fullName string,
-	phoneNumber *string,
 ) User {
 	return NewUser(
 		UninitailizedID,
 		UninitailizedVersion,
+		email,
+		createdAt,
+		password,
 		fullName,
-		phoneNumber,
 	)
 }
 
 func (u *User) Validate() error {
+	basicEmailRegex := regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+	if !basicEmailRegex.MatchString(u.Email) {
+		return fmt.Errorf(
+			"invalid 'email': %w",
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	passwordLength := len(u.Password)
+	if passwordLength < 8 || passwordLength > 70 {
+		return fmt.Errorf(
+			"invalid 'password' len: %d: %w",
+			passwordLength,
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
 	fullNameLength := len([]rune(u.FullName))
 	if fullNameLength < 3 || fullNameLength > 100 {
 		return fmt.Errorf(
@@ -51,42 +79,21 @@ func (u *User) Validate() error {
 		)
 	}
 
-	if u.PhoneNumber != nil {
-		phoneNumberLength := len([]rune(*u.PhoneNumber))
-		if phoneNumberLength < 10 || phoneNumberLength > 15 {
-			return fmt.Errorf(
-				"invalid 'PhoneNumber' len: %d: %w",
-				phoneNumberLength,
-				core_errors.ErrInvalidArgument,
-			)
-		}
-
-		re := regexp.MustCompile(`^\+[0-9]+$`)
-
-		if !re.MatchString(*u.PhoneNumber) {
-			return fmt.Errorf(
-				"invalid 'fullName' len: %d: %w",
-				fullNameLength,
-				core_errors.ErrInvalidArgument,
-			)
-		}
-	}
-
 	return nil
 }
 
 type UserPatch struct {
-	FullName    Nullable[string]
-	PhoneNumber Nullable[string]
+	Password Nullable[[]byte]
+	FullName Nullable[string]
 }
 
 func NewUserPatch(
+	password Nullable[[]byte],
 	fullName Nullable[string],
-	phoneNumber Nullable[string],
 ) UserPatch {
 	return UserPatch{
-		FullName:    fullName,
-		PhoneNumber: phoneNumber,
+		Password: password,
+		FullName: fullName,
 	}
 }
 
@@ -94,6 +101,13 @@ func (p *UserPatch) Validate() error {
 	if p.FullName.Set && p.FullName.Value == nil {
 		return fmt.Errorf(
 			"'fullName' can't be patched to NULL: %w",
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	if p.Password.Set && p.Password.Value == nil {
+		return fmt.Errorf(
+			"'password' can't be patched to NULL: %w",
 			core_errors.ErrInvalidArgument,
 		)
 	}
@@ -112,8 +126,8 @@ func (u *User) ApplyPatch(patch UserPatch) error {
 		tmp.FullName = *patch.FullName.Value
 	}
 
-	if patch.PhoneNumber.Set {
-		tmp.PhoneNumber = patch.PhoneNumber.Value
+	if patch.Password.Set {
+		tmp.Password = *patch.Password.Value
 	}
 
 	if err := tmp.Validate(); err != nil {

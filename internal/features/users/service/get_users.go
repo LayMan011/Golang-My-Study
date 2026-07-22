@@ -27,13 +27,32 @@ func (s *UserService) GetUsers(
 		)
 	}
 
-	users, err := s.userRepository.GetUsers(
+	lim := 0
+	off := 0
+	if limit != nil {
+		lim = *limit
+	}
+	if offset != nil {
+		off = *offset
+	}
+
+	cacheKey := fmt.Sprintf("users:limit:%d:offset:%d", lim, off)
+
+	if cached, err := s.userRepositoryRedis.GetUsers(ctx, cacheKey); err == nil {
+		return cached, nil
+	}
+
+	users, err := s.userRepositoryPostgres.GetUsers(
 		ctx,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get users from repository: %w", err)
+	}
+
+	if err := s.userRepositoryRedis.SaveUsers(ctx, cacheKey, users); err != nil {
+		return nil, fmt.Errorf("failed save to cache the users: %w", err)
 	}
 
 	return users, nil

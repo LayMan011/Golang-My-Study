@@ -40,7 +40,7 @@ func (h *ThemeUserHTTPHandler) GetThemeUser(rw http.ResponseWriter, r *http.Requ
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,
-			"failed ro get theme_user",
+			"failed to get theme_user",
 		)
 
 		return

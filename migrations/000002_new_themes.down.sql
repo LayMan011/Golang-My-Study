@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS progress.themes_for_user;
+DROP TABLE IF EXISTS progress.themes_user;
 
 ALTER TABLE progress.themes
     DROP COLUMN IF EXISTS subject,
@@ -6,7 +6,10 @@ ALTER TABLE progress.themes
     DROP COLUMN IF EXISTS all_ratings,
     DROP COLUMN IF EXISTS number_of_ratings,
     DROP COLUMN IF EXISTS number_of_users,
-    DROP COLUMN IF EXISTS price;
+    DROP COLUMN IF EXISTS price,
+    DROP COLUMN IF EXISTS level,
+    DROP COLUMN IF EXISTS duration,
+    DROP COLUMN IF EXISTS format;
 
 ALTER TABLE progress.themes
     ADD COLUMN IF NOT EXISTS completed BOOLEAN NOT NULL DEFAULT FALSE,

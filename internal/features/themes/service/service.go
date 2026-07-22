@@ -7,10 +7,46 @@ import (
 )
 
 type ThemeService struct {
-	themeRepository ThemeRepository
+	themeRepositoryPostgres ThemeRepositoryPostgres
+	themeRepositoryRedis    ThemeRepositoryRedis
 }
 
-type ThemeRepository interface {
+type ThemeRepositoryRedis interface {
+	SaveTheme(
+		ctx context.Context,
+		key string,
+		value domain.Theme,
+	) error
+
+	GetTheme(
+		ctx context.Context,
+		key string,
+	) (domain.Theme, error)
+
+	DeleteTheme(
+		ctx context.Context,
+		key string,
+	) error
+
+	SaveThemes(
+		ctx context.Context,
+		key string,
+		themes []domain.Theme,
+	) error
+
+	GetThemes(
+		ctx context.Context,
+		key string,
+	) ([]domain.Theme, error)
+
+	PatchTheme(
+		ctx context.Context,
+		id int,
+		patch domain.ThemePatch,
+	) error
+}
+
+type ThemeRepositoryPostgres interface {
 	CreateTheme(
 		ctx context.Context,
 		theme domain.Theme,
@@ -41,9 +77,11 @@ type ThemeRepository interface {
 }
 
 func NewThemeService(
-	themeRepository ThemeRepository,
+	themeRepositoryPostgres ThemeRepositoryPostgres,
+	themeRepositoryRedis ThemeRepositoryRedis,
 ) *ThemeService {
 	return &ThemeService{
-		themeRepository: themeRepository,
+		themeRepositoryPostgres: themeRepositoryPostgres,
+		themeRepositoryRedis:    themeRepositoryRedis,
 	}
 }

@@ -15,9 +15,15 @@ func (s *UserService) CreateUser(
 		return domain.User{}, fmt.Errorf("validate user domain: %w", err)
 	}
 
-	user, err := s.userRepository.CreateUser(ctx, user)
+	user, err := s.userRepositoryPostgres.CreateUser(ctx, user)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("create user: %w", err)
+	}
+
+	key := fmt.Sprintf("user:%d", user.ID)
+
+	if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil {
+		return domain.User{}, fmt.Errorf("failed to cache the user: %w", err)
 	}
 
 	return user, nil

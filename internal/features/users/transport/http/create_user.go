@@ -2,16 +2,19 @@ package users_transport_http
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	core_http_request "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/request"
 	core_http_response "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/response"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type CreateUserRequest struct {
-	FullName    string  `json:"full_name" validate:"required,min=3,max=100" example:"Ivan Ivanov"`
-	PhoneNumber *string `json:"phone_number" validate:"omitempty,min=10,max=15,startswith=+" example:"+79998887766"`
+	Email    string `json:"email" validate:"required,email,min=4,max=100" example:"example@gmail.com"`
+	Password string `json:"password" validate:"required,min=8,max=70" example:"12345678"`
+	FullName string `json:"full_name" validate:"required,min=3,max=100" example:"Ivan Ivanov"`
 }
 
 type CreateUserResponse UserDTOResponse
@@ -41,11 +44,37 @@ func (h *UsersHTTPHandler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDomain := domainFromDTO(request)
+	userDomain, err := domainFromDTO(request)
+	if err != nil {
+		responseHandler.ErrorResponse(err, "failed to hash the password")
 
-	userDomain, err := h.userService.CreateUser(ctx, userDomain)
+		return
+	}
+
+	userDomain, err = h.userService.CreateUser(ctx, userDomain)
 	if err != nil {
 		responseHandler.ErrorResponse(err, "failed to create user")
+
+		return
+	}
+
+	pair, err := h.userService.GenerateTokenPair(ctx, request.Email)
+	if err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"could not create tokens",
+		)
+
+		return
+	}
+
+	if err := h.userService.Login(ctx, userDomain.ID, pair); err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"failed to write the token",
+		)
+
+		return
 	}
 
 	response := CreateUserResponse(userDTOFromDomain(userDomain))
@@ -53,6 +82,11 @@ func (h *UsersHTTPHandler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	responseHandler.JSONResponse(response, http.StatusCreated)
 }
 
-func domainFromDTO(dto CreateUserRequest) domain.User {
-	return domain.NewUserUninitailized(dto.FullName, dto.PhoneNumber)
+func domainFromDTO(dto CreateUserRequest) (domain.User, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	return domain.NewUserUninitailized(dto.Email, time.Now(), hash, dto.FullName), nil
 }

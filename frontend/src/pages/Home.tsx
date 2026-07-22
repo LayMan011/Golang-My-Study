@@ -1,4 +1,4 @@
-import { Started, Icons, About } from "@/components/ui/Home"
+import { Started, Icons, About, PopularCurses } from "@/components/ui/Home"
 
 export const Home = () => {
     return (
@@ -6,6 +6,7 @@ export const Home = () => {
             <Started />
             <Icons />
             <About />
+            <PopularCurses />
         </div>
     )
 }

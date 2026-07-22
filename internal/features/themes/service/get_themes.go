@@ -10,7 +10,7 @@ import (
 
 func (s *ThemeService) GetThemes(
 	ctx context.Context,
-	userID *int,
+	themeID *int,
 	limit *int,
 	offset *int,
 ) ([]domain.Theme, error) {
@@ -28,9 +28,33 @@ func (s *ThemeService) GetThemes(
 		)
 	}
 
-	themes, err := s.themeRepository.GetThemes(ctx, userID, limit, offset)
+	lim := 0
+	off := 0
+	if limit != nil {
+		lim = *limit
+	}
+	if offset != nil {
+		off = *offset
+	}
+
+	cacheKey := fmt.Sprintf("themes:limit:%d:offset:%d", lim, off)
+
+	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil {
+		return cached, nil
+	}
+
+	themes, err := s.themeRepositoryPostgres.GetThemes(
+		ctx,
+		themeID,
+		limit,
+		offset,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("get themes from repository: %w", err)
+	}
+
+	if err := s.themeRepositoryRedis.SaveThemes(ctx, cacheKey, themes); err != nil {
+		return nil, fmt.Errorf("failed save to cache the themes: %w", err)
 	}
 
 	return themes, nil

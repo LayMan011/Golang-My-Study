@@ -29,6 +29,11 @@ type UserService interface {
 		id int,
 	) (domain.User, error)
 
+	GetUserByEmail(
+		ctx context.Context,
+		email string,
+	) (domain.User, error)
+
 	DeleteUser(
 		ctx context.Context,
 		id int,
@@ -39,6 +44,17 @@ type UserService interface {
 		id int,
 		patch domain.UserPatch,
 	) (domain.User, error)
+
+	Login(
+		ctx context.Context,
+		id int,
+		pair *domain.TokenPair,
+	) error
+
+	GenerateTokenPair(
+		ctx context.Context,
+		login string,
+	) (*domain.TokenPair, error)
 }
 
 func NewUsersHTTPHandler(
@@ -78,6 +94,11 @@ func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 			Method:  http.MethodPatch,
 			Path:    "/users/{id}",
 			Handler: h.PatchUser,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/users/login",
+			Handler: h.LoginUser,
 		},
 	}
 }

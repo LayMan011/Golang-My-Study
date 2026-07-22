@@ -15,6 +15,9 @@ type PatchThemeRequest struct {
 	Title       core_http_types.Nullable[string] `json:"title" swaggertype:"string" example:"Биология"`
 	Description core_http_types.Nullable[string] `json:"description" swaggertype:"string" example:"Подготовка к ЕГЭ по Биологии"`
 	Subject     core_http_types.Nullable[string] `json:"subject" swaggertype:"string" example:"Биология"`
+	Level       core_http_types.Nullable[string] `json:"level" swaggertype:"string" example:"beginner"`
+	Duration    core_http_types.Nullable[string] `json:"duration" swaggertype:"string" example:"3 месяца"`
+	Format      core_http_types.Nullable[string] `json:"format" swaggertype:"string" example:"video"`
 }
 
 func (r *PatchThemeRequest) Validate() error {
@@ -46,6 +49,35 @@ func (r *PatchThemeRequest) Validate() error {
 		subjectLen := len([]rune(*r.Subject.Value))
 		if subjectLen < 1 || subjectLen > 1000 {
 			return fmt.Errorf("'Subject' must be between 1 and 1000 symbols")
+		}
+	}
+
+	if r.Level.Set {
+		if r.Level.Value == nil {
+			return fmt.Errorf("'Level' can't be NULL")
+		}
+
+		if *r.Level.Value != "beginner" && *r.Level.Value != "advanced" && *r.Level.Value != "intermediate" {
+			return fmt.Errorf("'Level' must be 'beginner' or 'advanced' or 'intermediate'")
+		}
+	}
+
+	if r.Duration.Set {
+		if r.Duration.Value != nil {
+			durationLen := len([]rune(*r.Duration.Value))
+			if durationLen < 1 || durationLen > 40 {
+				return fmt.Errorf("'Duration' must be between 1 and 40 symbols")
+			}
+		}
+	}
+
+	if r.Format.Set {
+		if r.Format.Value == nil {
+			return fmt.Errorf("'Format' can't be NULL")
+		}
+
+		if *r.Format.Value != "video" && *r.Format.Value != "text" && *r.Format.Value != "mixed" {
+			return fmt.Errorf("'Format' must be 'video' or 'text' or 'mixed'")
 		}
 	}
 
@@ -120,5 +152,8 @@ func themePatchFromRequest(request PatchThemeRequest) domain.ThemePatch {
 		request.Title.ToDomain(),
 		request.Description.ToDomain(),
 		request.Subject.ToDomain(),
+		request.Level.ToDomain(),
+		request.Duration.ToDomain(),
+		request.Format.ToDomain(),
 	)
 }

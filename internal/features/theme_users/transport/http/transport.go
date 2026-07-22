@@ -31,6 +31,11 @@ type ThemeUserService interface {
 		id int,
 	) (domain.ThemeUser, error)
 
+	GetThemeUserByUserID(
+		ctx context.Context,
+		id int,
+	) (domain.ThemeUser, error)
+
 	DeleteThemeUser(
 		ctx context.Context,
 		themeUserID int,
@@ -62,6 +67,11 @@ func (h *ThemeUserHTTPHandler) Routes() []core_http_server.Route {
 			Method:  http.MethodGet,
 			Path:    "/themes_user",
 			Handler: h.GetThemesUser,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/themes_user/user/{id}",
+			Handler: h.GetThemeUserByUserID,
 		},
 		{
 			Method:  http.MethodDelete,

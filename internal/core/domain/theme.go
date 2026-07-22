@@ -8,20 +8,24 @@ import (
 )
 
 type Theme struct {
-	ID      int
-	Version int
+	ID      int `redis:"id"`
+	Version int `redis:"version"`
 
-	Title           string
-	Description     *string
-	CreatedAt       time.Time
-	Subject         string
-	Rating          *float64
-	AllRatings      int
-	NumberOfRatings int
-	NumberOfUsers   int
-	Price           int
+	Title           string    `redis:"title"`
+	Description     *string   `redis:"description"`
+	CreatedAt       time.Time `redis:"created_at"`
+	Subject         string    `redis:"subject"`
+	Rating          *float64  `redis:"rating"`
+	AllRatings      int       `redis:"all_ratings"`
+	NumberOfRatings int       `redis:"number_of_ratings"`
+	NumberOfUsers   int       `redis:"number_of_users"`
+	Price           int       `redis:"price"`
 
-	AuthorUserID int
+	Level    string `redis:"level"`
+	Duration string `redis:"duration"`
+	Format   string `redis:"format"`
+
+	AuthorUserID int `redis:"author_user_id"`
 }
 
 func NewTheme(
@@ -36,6 +40,9 @@ func NewTheme(
 	numberOfRating int,
 	numberOfUsers int,
 	price int,
+	level string,
+	duration string,
+	format string,
 	authorUserID int,
 ) Theme {
 	return Theme{
@@ -50,6 +57,9 @@ func NewTheme(
 		NumberOfRatings: numberOfRating,
 		NumberOfUsers:   numberOfUsers,
 		Price:           price,
+		Level:           level,
+		Duration:        duration,
+		Format:          format,
 		AuthorUserID:    authorUserID,
 	}
 }
@@ -58,6 +68,10 @@ func NewThemeUnitialized(
 	title string,
 	description *string,
 	subject string,
+	price int,
+	level string,
+	duration string,
+	format string,
 	authorIserID int,
 ) Theme {
 	return NewTheme(
@@ -71,7 +85,10 @@ func NewThemeUnitialized(
 		0,
 		0,
 		0,
-		0,
+		price,
+		level,
+		duration,
+		format,
 		authorIserID,
 	)
 }
@@ -116,6 +133,39 @@ func (t *Theme) Validate() error {
 		}
 	}
 
+	if t.Price < 0 {
+		return fmt.Errorf(
+			"invalid 'Price' meaning: %d: %w",
+			t.Price,
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	if t.Level != "beginner" && t.Level != "advanced" && t.Level != "intermediate" {
+		return fmt.Errorf(
+			"invalid 'Level' meaning: %s: %w",
+			t.Level,
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	durationLen := len([]rune(t.Duration))
+	if durationLen < 1 || durationLen > 40 {
+		return fmt.Errorf(
+			"invalida 'Duration' meaning: %d: %w",
+			durationLen,
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	if t.Format != "video" && t.Format != "text" && t.Format != "mixed" {
+		return fmt.Errorf(
+			"invalid 'Format' meaning: %s: %w",
+			t.Format,
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
 	return nil
 }
 
@@ -123,17 +173,26 @@ type ThemePatch struct {
 	Title       Nullable[string]
 	Description Nullable[string]
 	Subject     Nullable[string]
+	Level       Nullable[string]
+	Duration    Nullable[string]
+	Format      Nullable[string]
 }
 
 func NewThemePatch(
 	title Nullable[string],
 	description Nullable[string],
 	subject Nullable[string],
+	level Nullable[string],
+	duration Nullable[string],
+	format Nullable[string],
 ) ThemePatch {
 	return ThemePatch{
 		Title:       title,
 		Description: description,
 		Subject:     subject,
+		Level:       level,
+		Duration:    duration,
+		Format:      format,
 	}
 }
 
@@ -144,6 +203,18 @@ func (p *ThemePatch) Validate() error {
 
 	if p.Subject.Set && p.Subject.Value == nil {
 		return fmt.Errorf("'Subject' can't be patched to NULL: %w", core_errors.ErrInvalidArgument)
+	}
+
+	if p.Level.Set && p.Level.Value == nil {
+		return fmt.Errorf("'Level' can't be patched to NULL: %w", core_errors.ErrInvalidArgument)
+	}
+
+	if p.Duration.Set && p.Duration.Value == nil {
+		return fmt.Errorf("'Duration' can't be patched to NULL: %w", core_errors.ErrInvalidArgument)
+	}
+
+	if p.Format.Set && p.Format.Value == nil {
+		return fmt.Errorf("'Format' can't be patched to NULL: %w", core_errors.ErrInvalidArgument)
 	}
 
 	return nil
@@ -166,6 +237,18 @@ func (t *Theme) ApplyPatch(patch ThemePatch) error {
 
 	if patch.Subject.Set {
 		tmp.Subject = *patch.Subject.Value
+	}
+
+	if patch.Level.Set {
+		tmp.Level = *patch.Level.Value
+	}
+
+	if patch.Duration.Set {
+		tmp.Duration = *patch.Duration.Value
+	}
+
+	if patch.Format.Set {
+		tmp.Format = *patch.Format.Value
 	}
 
 	if err := tmp.Validate(); err != nil {

@@ -7,14 +7,16 @@ import (
 )
 
 type ThemeUserModel struct {
-	ID          int
-	Version     int
-	Completed   bool
-	AdditionAt  time.Time
-	CompletedAt *time.Time
-	Percentages int
-	ThemeID     int
-	UserID      int
+	ID               int
+	Version          int
+	Completed        bool
+	AdditionAt       time.Time
+	CompletedAt      *time.Time
+	Percentages      int
+	TotalLessons     int
+	CompletedLessons int
+	ThemeID          int
+	UserID           int
 }
 
 func themesUserDomainFromModels(themeModels []ThemeUserModel) []domain.ThemeUser {
@@ -34,6 +36,8 @@ func themeUserDomainFromModel(themeModel ThemeUserModel) domain.ThemeUser {
 		themeModel.AdditionAt,
 		themeModel.CompletedAt,
 		themeModel.Percentages,
+		themeModel.TotalLessons,
+		themeModel.CompletedLessons,
 		themeModel.ThemeID,
 		themeModel.UserID,
 	)
