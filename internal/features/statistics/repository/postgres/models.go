@@ -11,9 +11,14 @@ type ThemeModel struct {
 	Version      int
 	Title        string
 	Description  *string
-	Completed    bool
 	CreatedAt    time.Time
+	Subject      string
+	Price        int
+	Completed    bool
 	CompletedAt  *time.Time
+	Level        string
+	Duration     string
+	Format       string
 	Percentages  int
 	AuthorUserID int
 }
@@ -33,10 +38,16 @@ func themeDomainFromModel(themeModel ThemeModel) domain.Theme {
 		themeModel.Version,
 		themeModel.Title,
 		themeModel.Description,
-		themeModel.Completed,
-		themeModel.CreatedAt,
-		themeModel.CompletedAt,
-		themeModel.Percentages,
+		*themeModel.CompletedAt,
+		themeModel.Subject,
+		new(float64),
+		0,
+		0,
+		0,
+		themeModel.Price,
+		themeModel.Level,
+		themeModel.Duration,
+		themeModel.Format,
 		themeModel.AuthorUserID,
 	)
 }

@@ -43,16 +43,16 @@ func calcStatistics(themes []domain.Theme) domain.Statistics {
 
 	themesCompleted := 0
 	var totalCompletionDuration time.Duration
-	for _, theme := range themes {
-		if theme.Completed == true {
-			themesCompleted++
-		}
+	// for _, theme := range themes {
+	// 	if theme.Completed == true {
+	// 		themesCompleted++
+	// 	}
 
-		completionDuration := theme.CompletionDuration()
-		if completionDuration != nil {
-			totalCompletionDuration += *completionDuration
-		}
-	}
+	// 	completionDuration := theme.CompletionDuration()
+	// 	if completionDuration != nil {
+	// 		totalCompletionDuration += *completionDuration
+	// 	}
+	// }
 
 	themesCompletedRate := float64(themesCompleted) / float64(themesCreated) * 100
 
