@@ -36,6 +36,8 @@ const toasterError = (errorMessage: string) => {
 const filtersForError = (errorMessage: string) => {
   if (errorMessage === "failed to decode and validate HTTP request") return "Некорректный ввод данных"
   if (errorMessage === "incorrect password entered") return "Неверный пароль"
+  if (errorMessage === "failed to create user") return "Данный email уже зарегистрирован, войдите в аккаунт с этой почтой или используйте другую для регистрации"
+  if (errorMessage === "failed to get users") return "Введен неверный email"
   return errorMessage
 }
 

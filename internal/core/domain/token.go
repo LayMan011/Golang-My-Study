@@ -23,13 +23,11 @@ func NewTokenPair(accessToken string, refreshToken string) *TokenPair {
 }
 
 type Claims struct {
-	ID string `json:"id"`
 	jwt.RegisteredClaims
 }
 
 func NewClaims(id string, nameJTI string, TTL time.Duration) Claims {
 	return Claims{
-		ID: id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   id,
 			ID:        nameJTI,

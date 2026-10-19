@@ -27,9 +27,12 @@ export const Started = () => {
                   Начать бесплатно
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                <button className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-card border-2 border-border text-foreground font-semibold hover:bg-muted transition-colors">
+                <Link 
+                  to="/courses"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-card border-2 border-border text-foreground font-semibold hover:bg-muted transition-colors"
+                >
                   Смотреть курсы
-                </button>
+                </Link>
               </div>
             </motion.div>
           </div>

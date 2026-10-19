@@ -95,3 +95,33 @@ swagger-gen:
 
 ps:
 	@docker compose ps
+
+test:
+	@go test -bench . -benchmem
+
+make-memprofile:
+	@if [ -z "$(action)" ]; then \
+		echo "Отсутствует необходимый параметр action. Пример: make make-memprofile action='mem_profile'"; \
+		exit 1; \
+	fi; \
+	go test -bench . -benchmem -memprofile=$(action).pprof
+
+tool-pprof:
+	@if [ -z "$(action)" ]; then \
+		echo "Отсутствует необходимый параметр action. Пример: make tool-pprof action='mem_profile'"; \
+		exit 1; \
+	fi; \
+	go tool pprof $(action).pprof
+
+tool-trace:
+	@if [ -z "$(action)" ]; then \
+		echo "Отсутствует необходимый параметр action. Пример: make tool-trace action='trace_old'"; \
+		exit 1; \
+	fi; \
+	go tool trace $(action).log
+
+.PHONY: cover
+cover:
+	@go test -short -count=1 -race -coverprofile=coverage.out ./... && \
+	go tool cover -html=coverage.out && \
+	rm coverage.out
