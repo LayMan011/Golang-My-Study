@@ -12,10 +12,10 @@ import (
 )
 
 type GetstatisticsResponse struct {
-	ThemesCreated               int      `json:"themes_created"`
-	ThemesCompleted             int      `json:"themes_completed"`
-	ThemesCompletedRate         *float64 `json:"themes_completed_rate"`
-	ThemesAverageCompletionTime *string  `json:"themes_average_completion_time"`
+	ThemesCreated               int      `json:"themes_created" example:"1"`
+	ThemesCompleted             int      `json:"themes_completed" example:"1"`
+	ThemesCompletedRate         *float64 `json:"themes_completed_rate" example:"100"`
+	ThemesAverageCompletionTime *string  `json:"themes_average_completion_time" example:"1m37.110886s"`
 }
 
 func toDTOFromDomain(statistics domain.Statistics) GetstatisticsResponse {
@@ -33,6 +33,18 @@ func toDTOFromDomain(statistics domain.Statistics) GetstatisticsResponse {
 	}
 }
 
+// GetStatistics 	godoc
+// @Summary 		Получить статистику
+// @Description 	Возвращает статистику по созданным учеником сессиям в курсе, пройденным курсам, доле выполненных сессий и среднему времени прохождения курса.
+// @Tags 			statistics
+// @Produce 		json
+// @Param 			user_id query int false "ID ученика"
+// @Param 			from query string false "Начальная дата периода в формате YYYY-MM-DD"
+// @Param 			to query string false "Конечная дата периода в формате YYYY-MM-DD"
+// @Success 		200 {object} GetstatisticsResponse "Статистика успешно получена"
+// @Failure 		400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure 		500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router 			/statistics [get]
 func (h *StatisticsHTTPHandler) GetStatistics(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)

@@ -25,6 +25,12 @@ env-port-forward:
 env-port-close:
 	@docker compose down port-forwarder
 
+redis-up:
+	@docker compose up -d project-redis
+
+redis-down:
+	@docker compose down project-redis
+
 migrate-create:
 	@if [ -z "$(seq)" ]; then \
 		echo "Отсутствует необходимый параметр seq. Пример: make migrate-create seq=init"; \
