@@ -42,7 +42,7 @@ func (r *ThemeRepository) GetTheme(ctx context.Context, key string) (domain.Them
 		}
 
 		switch fv.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		case reflect.Int:
 			n, convErr := strconv.ParseInt(raw, 10, 64)
 			if convErr != nil {
 				return domain.Theme{}, fmt.Errorf("field %s: parse int from %q: %w", field.Name, raw, convErr)
@@ -77,7 +77,6 @@ func (r *ThemeRepository) GetTheme(ctx context.Context, key string) (domain.Them
 		case reflect.Struct:
 			if fv.Type() == reflect.TypeOf(time.Time{}) {
 				// ВАЖНО: layout должен совпадать с тем, как ты сохраняешь CreatedAt в Redis при SaveTheme.
-				const layout = "2026-02-26T10:30:00Z"
 				tm, convErr := time.Parse(time.RFC3339Nano, raw)
 				if convErr != nil {
 					return domain.Theme{}, fmt.Errorf("field %s: parse time from %q: %w", field.Name, raw, convErr)
