@@ -15,6 +15,58 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/statistics": {
+            "get": {
+                "description": "Возвращает статистику по созданным учеником сессиям в курсе, пройденным курсам, доле выполненных сессий и среднему времени прохождения курса.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "Получить статистику",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID ученика",
+                        "name": "user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Начальная дата периода в формате YYYY-MM-DD",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конечная дата периода в формате YYYY-MM-DD",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Статистика успешно получена",
+                        "schema": {
+                            "$ref": "#/definitions/internal_features_statistics_transport_http.GetstatisticsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_LayMan011_Golang-My-Study_internal_core_transport_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/themes": {
             "get": {
                 "description": "Получение списка тем с опциональной пагинацией",
@@ -785,6 +837,9 @@ const docTemplate = `{
                 "completedAt": {
                     "type": "string"
                 },
+                "completedLessons": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -792,6 +847,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "themeID": {
+                    "type": "integer"
+                },
+                "totalLessons": {
                     "type": "integer"
                 },
                 "userID": {
@@ -823,6 +881,27 @@ const docTemplate = `{
                 },
                 "value": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_features_statistics_transport_http.GetstatisticsResponse": {
+            "type": "object",
+            "properties": {
+                "themes_average_completion_time": {
+                    "type": "string",
+                    "example": "1m37.110886s"
+                },
+                "themes_completed": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "themes_completed_rate": {
+                    "type": "number",
+                    "example": 100
+                },
+                "themes_created": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -858,6 +937,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "null"
                 },
+                "completed_lessons": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer",
                     "example": 1
@@ -869,6 +951,10 @@ const docTemplate = `{
                 "theme_id": {
                     "type": "integer",
                     "example": 3
+                },
+                "total_lessons": {
+                    "type": "integer",
+                    "example": 50
                 },
                 "user_id": {
                     "type": "integer",
@@ -895,6 +981,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "null"
                 },
+                "completed_lessons": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer",
                     "example": 1
@@ -906,6 +995,10 @@ const docTemplate = `{
                 "theme_id": {
                     "type": "integer",
                     "example": 3
+                },
+                "total_lessons": {
+                    "type": "integer",
+                    "example": 50
                 },
                 "user_id": {
                     "type": "integer",
@@ -935,6 +1028,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "null"
                 },
+                "completed_lessons": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer",
                     "example": 1
@@ -946,6 +1042,10 @@ const docTemplate = `{
                 "theme_id": {
                     "type": "integer",
                     "example": 3
+                },
+                "total_lessons": {
+                    "type": "integer",
+                    "example": 50
                 },
                 "user_id": {
                     "type": "integer",
@@ -961,6 +1061,10 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "author_user_id",
+                "duration",
+                "format",
+                "level",
+                "price",
                 "subject",
                 "title"
             ],
@@ -974,6 +1078,28 @@ const docTemplate = `{
                     "maxLength": 1000,
                     "minLength": 1,
                     "example": "Подготовка к ЕГЭ по русскому языку за 3 месяца"
+                },
+                "duration": {
+                    "type": "string",
+                    "maxLength": 40,
+                    "minLength": 1,
+                    "example": "3 месяца"
+                },
+                "format": {
+                    "type": "string",
+                    "maxLength": 40,
+                    "minLength": 1,
+                    "example": "text"
+                },
+                "level": {
+                    "type": "string",
+                    "maxLength": 40,
+                    "minLength": 1,
+                    "example": "beginner"
+                },
+                "price": {
+                    "type": "integer",
+                    "example": 5000
                 },
                 "subject": {
                     "type": "string",
@@ -1008,9 +1134,21 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Подготовка к ЕГЭ по профильной математике"
                 },
+                "duration": {
+                    "type": "string",
+                    "example": "3 месяца"
+                },
+                "format": {
+                    "type": "string",
+                    "example": "text"
+                },
                 "id": {
                     "type": "integer",
                     "example": 13
+                },
+                "level": {
+                    "type": "string",
+                    "example": "beginner"
                 },
                 "number_of_ratings": {
                     "type": "integer",
@@ -1023,6 +1161,10 @@ const docTemplate = `{
                 "price": {
                     "type": "integer",
                     "example": 50
+                },
+                "rating": {
+                    "type": "number",
+                    "example": 4.9
                 },
                 "subject": {
                     "type": "string",
@@ -1057,9 +1199,21 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Подготовка к ЕГЭ по профильной математике"
                 },
+                "duration": {
+                    "type": "string",
+                    "example": "3 месяца"
+                },
+                "format": {
+                    "type": "string",
+                    "example": "text"
+                },
                 "id": {
                     "type": "integer",
                     "example": 13
+                },
+                "level": {
+                    "type": "string",
+                    "example": "beginner"
                 },
                 "number_of_ratings": {
                     "type": "integer",
@@ -1072,6 +1226,10 @@ const docTemplate = `{
                 "price": {
                     "type": "integer",
                     "example": 50
+                },
+                "rating": {
+                    "type": "number",
+                    "example": 4.9
                 },
                 "subject": {
                     "type": "string",
@@ -1093,6 +1251,18 @@ const docTemplate = `{
                 "description": {
                     "type": "string",
                     "example": "Подготовка к ЕГЭ по Биологии"
+                },
+                "duration": {
+                    "type": "string",
+                    "example": "3 месяца"
+                },
+                "format": {
+                    "type": "string",
+                    "example": "video"
+                },
+                "level": {
+                    "type": "string",
+                    "example": "beginner"
                 },
                 "subject": {
                     "type": "string",
@@ -1123,9 +1293,21 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Подготовка к ЕГЭ по профильной математике"
                 },
+                "duration": {
+                    "type": "string",
+                    "example": "3 месяца"
+                },
+                "format": {
+                    "type": "string",
+                    "example": "text"
+                },
                 "id": {
                     "type": "integer",
                     "example": 13
+                },
+                "level": {
+                    "type": "string",
+                    "example": "beginner"
                 },
                 "number_of_ratings": {
                     "type": "integer",
@@ -1138,6 +1320,10 @@ const docTemplate = `{
                 "price": {
                     "type": "integer",
                     "example": 50
+                },
+                "rating": {
+                    "type": "number",
+                    "example": 4.9
                 },
                 "subject": {
                     "type": "string",
@@ -1172,9 +1358,21 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Подготовка к ЕГЭ по профильной математике"
                 },
+                "duration": {
+                    "type": "string",
+                    "example": "3 месяца"
+                },
+                "format": {
+                    "type": "string",
+                    "example": "text"
+                },
                 "id": {
                     "type": "integer",
                     "example": 13
+                },
+                "level": {
+                    "type": "string",
+                    "example": "beginner"
                 },
                 "number_of_ratings": {
                     "type": "integer",
@@ -1187,6 +1385,10 @@ const docTemplate = `{
                 "price": {
                     "type": "integer",
                     "example": 50
+                },
+                "rating": {
+                    "type": "number",
+                    "example": 4.9
                 },
                 "subject": {
                     "type": "string",
@@ -1205,26 +1407,42 @@ const docTemplate = `{
         "internal_features_users_transport_http.CreateUserRequest": {
             "type": "object",
             "required": [
-                "full_name"
+                "email",
+                "full_name",
+                "password"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 4,
+                    "example": "example@gmail.com"
+                },
                 "full_name": {
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 3,
                     "example": "Ivan Ivanov"
                 },
-                "phone_number": {
+                "password": {
                     "type": "string",
-                    "maxLength": 15,
-                    "minLength": 10,
-                    "example": "+79998887766"
+                    "maxLength": 70,
+                    "minLength": 8,
+                    "example": "12345678"
                 }
             }
         },
         "internal_features_users_transport_http.CreateUserResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-02-26T10:30:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "example@gmail.com"
+                },
                 "full_name": {
                     "type": "string",
                     "example": "Ivan Ivanov"
@@ -1233,9 +1451,11 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 10
                 },
-                "phone_number": {
-                    "type": "string",
-                    "example": "+79998887766"
+                "password": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "version": {
                     "type": "integer",
@@ -1246,6 +1466,14 @@ const docTemplate = `{
         "internal_features_users_transport_http.GetUserResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-02-26T10:30:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "example@gmail.com"
+                },
                 "full_name": {
                     "type": "string",
                     "example": "Ivan Ivanov"
@@ -1254,9 +1482,11 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 10
                 },
-                "phone_number": {
-                    "type": "string",
-                    "example": "+79998887766"
+                "password": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "version": {
                     "type": "integer",
@@ -1271,15 +1501,23 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Максим Максимович"
                 },
-                "phone_number": {
+                "password": {
                     "type": "string",
-                    "example": "+79998887766"
+                    "format": "base64"
                 }
             }
         },
         "internal_features_users_transport_http.PatchUserResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-02-26T10:30:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "example@gmail.com"
+                },
                 "full_name": {
                     "type": "string",
                     "example": "Ivan Ivanov"
@@ -1288,9 +1526,11 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 10
                 },
-                "phone_number": {
-                    "type": "string",
-                    "example": "+79998887766"
+                "password": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "version": {
                     "type": "integer",
@@ -1301,6 +1541,14 @@ const docTemplate = `{
         "internal_features_users_transport_http.UserDTOResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-02-26T10:30:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "example@gmail.com"
+                },
                 "full_name": {
                     "type": "string",
                     "example": "Ivan Ivanov"
@@ -1309,9 +1557,11 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 10
                 },
-                "phone_number": {
-                    "type": "string",
-                    "example": "+79998887766"
+                "password": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "version": {
                     "type": "integer",

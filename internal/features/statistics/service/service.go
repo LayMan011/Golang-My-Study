@@ -12,12 +12,12 @@ type StatisticsService struct {
 }
 
 type StatisticsRepository interface {
-	GetThemes(
+	GetThemeUsers(
 		ctx context.Context,
 		userID *int,
 		from *time.Time,
 		to *time.Time,
-	) ([]domain.Theme, error)
+	) ([]domain.ThemeUser, error)
 }
 
 func NewStatisticsService(

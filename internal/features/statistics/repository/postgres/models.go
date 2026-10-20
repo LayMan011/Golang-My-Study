@@ -6,48 +6,39 @@ import (
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 )
 
-type ThemeModel struct {
-	ID           int
-	Version      int
-	Title        string
-	Description  *string
-	CreatedAt    time.Time
-	Subject      string
-	Price        int
-	Completed    bool
-	CompletedAt  *time.Time
-	Level        string
-	Duration     string
-	Format       string
-	Percentages  int
-	AuthorUserID int
+type ThemeUserModel struct {
+	ID               int
+	Version          int
+	Completed        bool
+	AdditionAt       time.Time
+	CompletedAt      *time.Time
+	Percentages      int
+	TotalLessons     int
+	CompletedLessons int
+	ThemeID          int
+	UserID           int
 }
 
-func themesDomainFromModels(themeModels []ThemeModel) []domain.Theme {
-	domains := make([]domain.Theme, len(themeModels))
+func themesUserDomainFromModels(themeModels []ThemeUserModel) []domain.ThemeUser {
+	domains := make([]domain.ThemeUser, len(themeModels))
 	for i, model := range themeModels {
-		domains[i] = themeDomainFromModel(model)
+		domains[i] = themeUserDomainFromModel(model)
 	}
 
 	return domains
 }
 
-func themeDomainFromModel(themeModel ThemeModel) domain.Theme {
-	return domain.NewTheme(
+func themeUserDomainFromModel(themeModel ThemeUserModel) domain.ThemeUser {
+	return domain.NewThemeUser(
 		themeModel.ID,
 		themeModel.Version,
-		themeModel.Title,
-		themeModel.Description,
-		*themeModel.CompletedAt,
-		themeModel.Subject,
-		new(float64),
-		0,
-		0,
-		0,
-		themeModel.Price,
-		themeModel.Level,
-		themeModel.Duration,
-		themeModel.Format,
-		themeModel.AuthorUserID,
+		themeModel.Completed,
+		themeModel.AdditionAt,
+		themeModel.CompletedAt,
+		themeModel.Percentages,
+		themeModel.TotalLessons,
+		themeModel.CompletedLessons,
+		themeModel.ThemeID,
+		themeModel.UserID,
 	)
 }
