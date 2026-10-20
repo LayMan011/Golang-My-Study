@@ -8,10 +8,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type CustomStringCmd struct {
-	*redis.StringCmd
-}
-
 type CustomStatusCmd struct {
 	*redis.StatusCmd
 }
@@ -33,10 +29,6 @@ func (c CustomIntCmd) Result() (int64, error) {
 		return 0, fmt.Errorf("nil IntCmd")
 	}
 	return c.IntCmd.Result()
-}
-
-func (cmd *CustomStringCmd) Result() (string, error) {
-	return cmd.StringCmd.Result()
 }
 
 func (status *CustomStatusCmd) Err() error {

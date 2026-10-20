@@ -45,20 +45,20 @@ func CreateRedisClientMust(config RedisConfig) *RedisClient {
 	return client
 }
 
-func (r *RedisClient) Ping(ctx context.Context) core_redis_pool.CustomStatusCmd {
-	return &CustomStatusCmd{r.Client.Ping(ctx)}
-}
+// func (r *RedisClient) Ping(ctx context.Context) core_redis_pool.CustomStatusCmd {
+// 	return &CustomStatusCmd{r.Client.Ping(ctx)}
+// }
 
-func (r *RedisClient) GetResult(ctx context.Context, key string) (*string, error) {
-	data, err := r.Client.Get(ctx, key).Result()
-	if err != nil {
-		if err == redis.Nil {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to get key %s: %w", key, err)
-	}
-	return &data, nil
-}
+// func (r *RedisClient) GetResult(ctx context.Context, key string) (*string, error) {
+// 	data, err := r.Client.Get(ctx, key).Result()
+// 	if err != nil {
+// 		if err == redis.Nil {
+// 			return nil, nil
+// 		}
+// 		return nil, fmt.Errorf("failed to get key %s: %w", key, err)
+// 	}
+// 	return &data, nil
+// }
 
 func (r *RedisClient) Set(ctx context.Context, key string, value any, expiration time.Duration) core_redis_pool.CustomStatusCmd {
 	return &CustomStatusCmd{r.Client.Set(ctx, key, value, expiration)}
@@ -88,15 +88,6 @@ func (r *RedisClient) HGetAll(ctx context.Context, key string) (map[string]strin
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hash from Redis: %w", err)
 	}
-	return data, nil
-}
-
-func (r *RedisClient) HGetAllResult(ctx context.Context, login string) (map[string]string, error) {
-	data, err := r.Client.HGetAll(ctx, login).Result()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user to Redis: %w", err)
-	}
-
 	return data, nil
 }
 
@@ -139,6 +130,6 @@ func (r *RedisClient) Close() error {
 	return r.Client.Close()
 }
 
-func (p *RedisClient) OpTimeout() time.Duration {
-	return p.opTimeout
-}
+// func (p *RedisClient) OpTimeout() time.Duration {
+// 	return p.opTimeout
+// }
