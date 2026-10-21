@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeUserService) PatchThemeUser(
@@ -12,7 +14,7 @@ func (s *ThemeUserService) PatchThemeUser(
 	themeUserID int,
 	themeUserPatch domain.ThemeUserPatch,
 ) (domain.ThemeUser, error) {
-	theme, err := s.themeUserRepositoryPostgres.GetThemeUser(ctx, themeUserID)
+	theme, err := s.GetThemeUser(ctx, themeUserID)
 	if err != nil {
 		return domain.ThemeUser{}, fmt.Errorf("get theme: %w", err)
 	}
@@ -27,7 +29,8 @@ func (s *ThemeUserService) PatchThemeUser(
 	}
 
 	if err := s.themeUserRepositoryRedis.PatchThemeUser(ctx, patchedTheme.ID, themeUserPatch); err != nil {
-		return domain.ThemeUser{}, fmt.Errorf("patch theme to cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("patch theme to cache", zap.Error(err))
 	}
 
 	return patchedTheme, nil
