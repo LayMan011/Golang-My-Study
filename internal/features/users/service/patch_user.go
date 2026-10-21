@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *UserService) PatchUser(
@@ -12,7 +14,7 @@ func (s *UserService) PatchUser(
 	id int,
 	patch domain.UserPatch,
 ) (domain.User, error) {
-	user, err := s.userRepositoryPostgres.GetUser(ctx, id)
+	user, err := s.GetUser(ctx, id)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("get user: %w", err)
 	}
@@ -27,7 +29,8 @@ func (s *UserService) PatchUser(
 	}
 
 	if err := s.userRepositoryRedis.PatchUser(ctx, patchedUser.ID, patch); err != nil {
-		return domain.User{}, fmt.Errorf("patch user to cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("patch user to cache", zap.Error(err))
 	}
 
 	return patchedUser, nil
