@@ -43,7 +43,7 @@ func (s *ThemeUserService) GetThemesUser(
 
 	cacheKey := fmt.Sprintf("themes_user:list:version:%duser_id:%dtheme_id:%dlimit:%d:offset:%d", version, result[0], result[1], result[2], result[3])
 
-	if cached, err := s.themeUserRepositoryRedis.GetThemesUser(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
+	if cached, err := s.themeUserRepositoryRedis.GetThemesUser(ctx, cacheKey); err == nil {
 		return cached, nil
 	}
 
