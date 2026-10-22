@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeUserService) PatchThemeUser(
@@ -26,8 +28,14 @@ func (s *ThemeUserService) PatchThemeUser(
 		return domain.ThemeUser{}, fmt.Errorf("patch theme: %w", err)
 	}
 
+	key := fmt.Sprintf("theme_user:%d", patchedTheme.ID)
+	clear(s.hash_many)
+
 	if err := s.themeUserRepositoryRedis.PatchThemeUser(ctx, patchedTheme.ID, themeUserPatch); err != nil {
-		return domain.ThemeUser{}, fmt.Errorf("patch theme to cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("patch theme to cache", zap.Error(err))
+	} else {
+		s.hash_once[key] = false
 	}
 
 	return patchedTheme, nil

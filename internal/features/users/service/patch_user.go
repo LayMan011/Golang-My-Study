@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *UserService) PatchUser(
@@ -26,8 +28,14 @@ func (s *UserService) PatchUser(
 		return domain.User{}, fmt.Errorf("patch user: %w", err)
 	}
 
+	key := fmt.Sprintf("theme:%d", patchedUser.ID)
+	clear(s.hash_many)
+
 	if err := s.userRepositoryRedis.PatchUser(ctx, patchedUser.ID, patch); err != nil {
-		return domain.User{}, fmt.Errorf("patch user to cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("patch user to cache", zap.Error(err))
+	} else {
+		s.hash_once[key] = false
 	}
 
 	return patchedUser, nil
