@@ -18,7 +18,7 @@ func (s *UserService) GetUser(
 	key := fmt.Sprintf("user:%d", id)
 
 	user, err := s.userRepositoryRedis.GetUser(ctx, key)
-	if err == nil {
+	if err == nil && s.hash_once[key] {
 		return user, nil
 	}
 
@@ -35,6 +35,8 @@ func (s *UserService) GetUser(
 	if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to cache the user", zap.Error(err))
+	} else {
+		s.hash_once[key] = true
 	}
 
 	return user, nil

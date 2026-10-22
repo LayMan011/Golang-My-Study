@@ -2,15 +2,17 @@ package themes_user_service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 type postgresRepoStub struct {
-	theme_user domain.ThemeUser
-	err        error
-	calls      int
+	theme_user  domain.ThemeUser
+	themes_user []domain.ThemeUser
+	err         error
+	calls       int
 }
 
 func (r *postgresRepoStub) GetThemesUser(
@@ -20,7 +22,7 @@ func (r *postgresRepoStub) GetThemesUser(
 	first *int,
 	last *int,
 ) ([]domain.ThemeUser, error) {
-	return []domain.ThemeUser{}, nil
+	return r.themes_user, nil
 }
 
 func (r *postgresRepoStub) GetThemeUser(
@@ -41,15 +43,27 @@ func (r *postgresRepoStub) DeleteThemeUser(
 	ctx context.Context,
 	themeUserID int,
 ) error {
-	return nil
+	if len(r.themes_user) > 0 {
+		r.themes_user = r.themes_user[1:]
+		return nil
+	}
+
+	return errors.New("failed to delete themes_user")
 }
 
 func (r *postgresRepoStub) PatchThemeUser(
 	ctx context.Context,
 	id int,
-	themeUser domain.ThemeUser,
+	patch domain.ThemeUser,
 ) (domain.ThemeUser, error) {
-	return domain.ThemeUser{}, nil
+	for i, theme_user := range r.themes_user {
+		if theme_user.ID == id {
+			r.themes_user[i] = patch
+			return patch, nil
+		}
+	}
+
+	return domain.ThemeUser{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) CreateThemeUser(
@@ -60,6 +74,8 @@ func (r *postgresRepoStub) CreateThemeUser(
 	if r.err != nil {
 		return domain.ThemeUser{}, r.err
 	}
+
+	r.themes_user = append(r.themes_user, themeUser)
 	return r.theme_user, nil
 }
 

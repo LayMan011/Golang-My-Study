@@ -12,7 +12,7 @@ import (
 
 func (s *ThemeService) GetThemes(
 	ctx context.Context,
-	themeID *int,
+	userID *int,
 	limit *int,
 	offset *int,
 ) ([]domain.Theme, error) {
@@ -30,8 +30,8 @@ func (s *ThemeService) GetThemes(
 		)
 	}
 
-	lim := 0
-	off := 0
+	lim := -1
+	off := -1
 	if limit != nil {
 		lim = *limit
 	}
@@ -41,13 +41,13 @@ func (s *ThemeService) GetThemes(
 
 	cacheKey := fmt.Sprintf("themes:limit:%d:offset:%d", lim, off)
 
-	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil {
+	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
 		return cached, nil
 	}
 
 	themes, err := s.themeRepositoryPostgres.GetThemes(
 		ctx,
-		themeID,
+		userID,
 		limit,
 		offset,
 	)
@@ -58,6 +58,8 @@ func (s *ThemeService) GetThemes(
 	if err := s.themeRepositoryRedis.SaveThemes(ctx, cacheKey, themes); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed save to cache the themes", zap.Error(err))
+	} else {
+		s.hash_many[cacheKey] = true
 	}
 
 	return themes, nil

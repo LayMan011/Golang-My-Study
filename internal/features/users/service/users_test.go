@@ -33,6 +33,9 @@ func Begin() (context.Context, *UserService, domain.User) {
 	redis := &redisRepoStub{err: redisErr}
 
 	service := &UserService{
+		hash_once:              make(map[string]bool),
+		hash_many:              make(map[string]bool),
+		hash_token:             make(map[string]bool),
 		userRepositoryPostgres: postgres,
 		userRepositoryRedis:    redis,
 	}
@@ -52,7 +55,12 @@ func TestUserService_CreateUser(t *testing.T) {
 func TestUserService_DeleteUser(t *testing.T) {
 	ctx, service, inputUser := Begin()
 
-	err := service.DeleteUser(ctx, inputUser.ID)
+	_, err := service.CreateUser(ctx, inputUser)
+	if err != nil {
+		t.Fatalf("CreateUser() returned unexpected error: %v", err)
+	}
+
+	err = service.DeleteUser(ctx, inputUser.ID)
 	if err != nil {
 		t.Fatalf("DeleteUser() returned unexpected error: %v", err)
 	}
@@ -79,6 +87,11 @@ func TestUserService_GetUsers(t *testing.T) {
 func TestUserService_PatchUser(t *testing.T) {
 	ctx, service, user := Begin()
 
+	created, err := service.CreateUser(ctx, user)
+	if err != nil {
+		t.Fatalf("CreateUser() returned unexpected error: %v", err)
+	}
+
 	password := []byte("123456789")
 	fullname := "123"
 	patch := domain.UserPatch{
@@ -92,7 +105,7 @@ func TestUserService_PatchUser(t *testing.T) {
 		},
 	}
 
-	_, err := service.PatchUser(ctx, user.ID, patch)
+	_, err = service.PatchUser(ctx, created.ID, patch)
 	if err != nil {
 		t.Fatalf("PatchUsers() returned unexpected error: %v", err)
 	}

@@ -2,15 +2,17 @@ package themes_service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 type postgresRepoStub struct {
-	theme domain.Theme
-	err   error
-	calls int
+	theme  domain.Theme
+	themes []domain.Theme
+	err    error
+	calls  int
 }
 
 func (r *postgresRepoStub) GetThemes(
@@ -19,7 +21,7 @@ func (r *postgresRepoStub) GetThemes(
 	limit *int,
 	offset *int,
 ) ([]domain.Theme, error) {
-	return []domain.Theme{}, nil
+	return r.themes, nil
 }
 
 func (r *postgresRepoStub) GetTheme(
@@ -33,15 +35,27 @@ func (r *postgresRepoStub) DeleteTheme(
 	ctx context.Context,
 	id int,
 ) error {
-	return nil
+	if len(r.themes) > 0 {
+		r.themes = r.themes[1:]
+		return nil
+	}
+
+	return errors.New("failed to delete themes")
 }
 
 func (r *postgresRepoStub) PatchTheme(
 	ctx context.Context,
 	id int,
-	theme domain.Theme,
+	patch domain.Theme,
 ) (domain.Theme, error) {
-	return domain.Theme{}, nil
+	for i, theme := range r.themes {
+		if theme.ID == id {
+			r.themes[i] = patch
+			return patch, nil
+		}
+	}
+
+	return domain.Theme{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) CreateTheme(
@@ -52,7 +66,9 @@ func (r *postgresRepoStub) CreateTheme(
 	if r.err != nil {
 		return domain.Theme{}, r.err
 	}
-	return r.theme, nil
+
+	r.themes = append(r.themes, theme)
+	return theme, nil
 }
 
 type redisRepoStub struct {

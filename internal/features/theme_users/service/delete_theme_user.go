@@ -17,6 +17,8 @@ func (s *ThemeUserService) DeleteThemeUser(
 	}
 
 	key := fmt.Sprintf("theme_user:%d", themeUserID)
+	s.hash_once[key] = false
+	clear(s.hash_many)
 
 	if err := s.themeUserRepositoryRedis.DeleteThemeUser(ctx, key); err != nil {
 		log := core_logger.FromContext(ctx)

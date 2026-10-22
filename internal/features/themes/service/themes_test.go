@@ -42,6 +42,8 @@ func Begin() (context.Context, *ThemeService, domain.Theme) {
 	redis := &redisRepoStub{err: redisErr}
 
 	service := &ThemeService{
+		hash_once:               make(map[string]bool),
+		hash_many:               make(map[string]bool),
 		themeRepositoryPostgres: postgres,
 		themeRepositoryRedis:    redis,
 	}
@@ -61,7 +63,12 @@ func TestThemeService_CreateTheme(t *testing.T) {
 func TestThemeService_DeleteTheme(t *testing.T) {
 	ctx, service, inputTheme := Begin()
 
-	err := service.DeleteTheme(ctx, inputTheme.ID)
+	_, err := service.CreateTheme(ctx, inputTheme)
+	if err != nil {
+		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+	}
+
+	err = service.DeleteTheme(ctx, inputTheme.ID)
 	if err != nil {
 		t.Fatalf("DeleteTheme() returned unexpected error: %v", err)
 	}
@@ -87,6 +94,11 @@ func TestThemeService_GetThemes(t *testing.T) {
 
 func TestThemeService_PatchTheme(t *testing.T) {
 	ctx, service, theme := Begin()
+
+	_, err := service.CreateTheme(ctx, theme)
+	if err != nil {
+		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+	}
 
 	subject := "beginner"
 	patch := domain.ThemePatch{
@@ -116,7 +128,7 @@ func TestThemeService_PatchTheme(t *testing.T) {
 		},
 	}
 
-	_, err := service.PatchTheme(ctx, theme.ID, patch)
+	_, err = service.PatchTheme(ctx, theme.ID, patch)
 	if err != nil {
 		t.Fatalf("PatchThemes() returned unexpected error: %v", err)
 	}

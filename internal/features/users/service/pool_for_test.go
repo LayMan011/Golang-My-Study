@@ -2,6 +2,7 @@ package users_service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
@@ -9,6 +10,7 @@ import (
 
 type postgresRepoStub struct {
 	user  domain.User
+	users []domain.User
 	err   error
 	calls int
 }
@@ -18,7 +20,7 @@ func (r *postgresRepoStub) GetUsers(
 	limit *int,
 	offset *int,
 ) ([]domain.User, error) {
-	return []domain.User{}, nil
+	return r.users, nil
 }
 
 func (r *postgresRepoStub) GetUser(
@@ -39,15 +41,27 @@ func (r *postgresRepoStub) DeleteUser(
 	ctx context.Context,
 	id int,
 ) error {
-	return nil
+	if len(r.users) > 0 {
+		r.users = r.users[1:]
+		return nil
+	}
+
+	return errors.New("failed to delete users")
 }
 
 func (r *postgresRepoStub) PatchUser(
 	ctx context.Context,
 	id int,
-	user domain.User,
+	patch domain.User,
 ) (domain.User, error) {
-	return domain.User{}, nil
+	for i, user := range r.users {
+		if user.ID == id {
+			r.users[i] = patch
+			return patch, nil
+		}
+	}
+
+	return domain.User{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) CreateUser(
@@ -58,7 +72,9 @@ func (r *postgresRepoStub) CreateUser(
 	if r.err != nil {
 		return domain.User{}, r.err
 	}
-	return r.user, nil
+
+	r.users = append(r.users, user)
+	return user, nil
 }
 
 type redisRepoStub struct {

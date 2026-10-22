@@ -18,7 +18,7 @@ func (s *ThemeService) GetTheme(
 	key := fmt.Sprintf("theme:%d", themeID)
 
 	theme, err := s.themeRepositoryRedis.GetTheme(ctx, key)
-	if err == nil {
+	if err == nil && s.hash_once[key] {
 		return theme, nil
 	}
 
@@ -35,6 +35,8 @@ func (s *ThemeService) GetTheme(
 	if err := s.themeRepositoryRedis.SaveTheme(ctx, key, theme); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to cache the theme", zap.Error(err))
+	} else {
+		s.hash_once[key] = true
 	}
 
 	return theme, nil

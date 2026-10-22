@@ -28,9 +28,14 @@ func (s *UserService) PatchUser(
 		return domain.User{}, fmt.Errorf("patch user: %w", err)
 	}
 
+	key := fmt.Sprintf("theme:%d", patchedUser.ID)
+	clear(s.hash_many)
+
 	if err := s.userRepositoryRedis.PatchUser(ctx, patchedUser.ID, patch); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("patch user to cache", zap.Error(err))
+	} else {
+		s.hash_once[key] = false
 	}
 
 	return patchedUser, nil
