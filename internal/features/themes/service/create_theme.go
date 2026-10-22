@@ -13,7 +13,6 @@ func (s *ThemeService) CreateTheme(
 	ctx context.Context,
 	theme domain.Theme,
 ) (domain.Theme, error) {
-
 	if err := theme.Validate(); err != nil {
 		return domain.Theme{}, fmt.Errorf("validate theme domain: %w", err)
 	}
