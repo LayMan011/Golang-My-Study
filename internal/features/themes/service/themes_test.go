@@ -63,6 +63,8 @@ func Begin(redisErr error) (context.Context, *ThemeService, domain.Theme) {
 	}
 
 	service := &ThemeService{
+		hash_once:               make(map[string]bool),
+		hash_many:               make(map[string]bool),
 		themeRepositoryPostgres: postgres,
 		themeRepositoryRedis:    redis,
 	}
@@ -284,6 +286,11 @@ func TestPatchTheme_TwiceInRow(t *testing.T) {
 	ctx, service, theme := Begin(ErrNotGoToCache)
 
 	created, err := service.CreateTheme(ctx, theme)
+	if err != nil {
+		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+	}
+
+	_, err = service.CreateTheme(ctx, theme)
 	if err != nil {
 		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
 	}
