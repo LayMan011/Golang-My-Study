@@ -13,6 +13,7 @@ func (s *UserService) Login(
 	pair *domain.TokenPair,
 ) error {
 	key := fmt.Sprintf("token:%d", id)
+	s.hash_token[key] = true
 
 	err := s.userRepositoryRedis.SaveToken(ctx, key, pair)
 	if err != nil {
