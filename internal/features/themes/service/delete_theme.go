@@ -17,6 +17,8 @@ func (s *ThemeService) DeleteTheme(
 	}
 
 	key := fmt.Sprintf("theme:%d", id)
+	s.hash_once[key] = false
+	clear(s.hash_many)
 
 	if err := s.themeRepositoryRedis.DeleteTheme(ctx, key); err != nil {
 		log := core_logger.FromContext(ctx)
