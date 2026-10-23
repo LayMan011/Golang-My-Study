@@ -7,6 +7,8 @@ import (
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeUserService) GetThemeUser(
@@ -16,12 +18,16 @@ func (s *ThemeUserService) GetThemeUser(
 	key := fmt.Sprintf("theme_user:%d", id)
 
 	themeUser, err := s.themeUserRepositoryRedis.GetThemeUser(ctx, key)
-	if err == nil {
+	if err == nil && s.hash_once[key] {
 		return themeUser, nil
+	} else if err != nil {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {
-		return domain.ThemeUser{}, fmt.Errorf("failed to retrieve theme_user from cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to retrieve theme_user from cache", zap.Error(err))
 	}
 
 	themeUser, err = s.themeUserRepositoryPostgres.GetThemeUser(ctx, id)
@@ -30,7 +36,10 @@ func (s *ThemeUserService) GetThemeUser(
 	}
 
 	if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUser); err != nil {
-		return domain.ThemeUser{}, fmt.Errorf("failed to cache the theme_user: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to cache the theme_user", zap.Error(err))
+	} else {
+		s.hash_once[key] = true
 	}
 
 	return themeUser, nil

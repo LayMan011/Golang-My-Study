@@ -281,21 +281,21 @@
 				
 				<option value="file112">github.com/LayMan011/Golang-My-Study/internal/features/users/repository/redis/save_users.go (0.0%)</option>
 				
-				<option value="file113">github.com/LayMan011/Golang-My-Study/internal/features/users/service/create_users.go (0.0%)</option>
+				<option value="file113">github.com/LayMan011/Golang-My-Study/internal/features/users/service/create_users.go (80.0%)</option>
 				
-				<option value="file114">github.com/LayMan011/Golang-My-Study/internal/features/users/service/delete_user.go (0.0%)</option>
+				<option value="file114">github.com/LayMan011/Golang-My-Study/internal/features/users/service/delete_user.go (90.0%)</option>
 				
 				<option value="file115">github.com/LayMan011/Golang-My-Study/internal/features/users/service/generate_token.go (0.0%)</option>
 				
-				<option value="file116">github.com/LayMan011/Golang-My-Study/internal/features/users/service/get_user.go (0.0%)</option>
+				<option value="file116">github.com/LayMan011/Golang-My-Study/internal/features/users/service/get_user.go (71.4%)</option>
 				
 				<option value="file117">github.com/LayMan011/Golang-My-Study/internal/features/users/service/get_user_by_email.go (0.0%)</option>
 				
-				<option value="file118">github.com/LayMan011/Golang-My-Study/internal/features/users/service/get_users.go (0.0%)</option>
+				<option value="file118">github.com/LayMan011/Golang-My-Study/internal/features/users/service/get_users.go (60.0%)</option>
 				
 				<option value="file119">github.com/LayMan011/Golang-My-Study/internal/features/users/service/login.go (0.0%)</option>
 				
-				<option value="file120">github.com/LayMan011/Golang-My-Study/internal/features/users/service/patch_user.go (0.0%)</option>
+				<option value="file120">github.com/LayMan011/Golang-My-Study/internal/features/users/service/patch_user.go (75.0%)</option>
 				
 				<option value="file121">github.com/LayMan011/Golang-My-Study/internal/features/users/service/service.go (0.0%)</option>
 				
@@ -5316,6 +5316,8 @@ import (
         "fmt"
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeUserService) CreateThemeUser(
@@ -5335,7 +5337,8 @@ func (s *ThemeUserService) CreateThemeUser(
         <span class="cov0" title="0">key := fmt.Sprintf("theme_user:%d", themeUser.ID)
 </span>
         <span class="cov0" title="0">if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUser); err != nil </span>{
-                <span class="cov0" title="0">return domain.ThemeUser{}, fmt.Errorf("failed to cache the theme_user: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to cache the theme_user", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return themeUserDomain, nil</span>
@@ -5347,6 +5350,9 @@ func (s *ThemeUserService) CreateThemeUser(
 import (
         "context"
         "fmt"
+
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeUserService) DeleteThemeUser(
@@ -5354,13 +5360,14 @@ func (s *ThemeUserService) DeleteThemeUser(
         themeUserID int,
 ) error {
         <span class="cov0" title="0">if err := s.themeUserRepositoryPostgres.DeleteThemeUser(ctx, themeUserID); err != nil </span>{
-                <span class="cov0" title="0">return fmt.Errorf("delete themeUser from repository: %w", err)
+                <span class="cov0" title="0">return fmt.Errorf("failed to delete theme_user from repository: %w", err)
 </span>        }
 
         <span class="cov0" title="0">key := fmt.Sprintf("theme_user:%d", themeUserID)
 </span>
         <span class="cov0" title="0">if err := s.themeUserRepositoryRedis.DeleteThemeUser(ctx, key); err != nil </span>{
-                <span class="cov0" title="0">return fmt.Errorf("delete theme_user to cache: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to delete theme_user from cache", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return nil</span>
@@ -5376,6 +5383,8 @@ import (
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
         core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeUserService) GetThemeUser(
@@ -5390,7 +5399,8 @@ func (s *ThemeUserService) GetThemeUser(
 </span>        }
 
         <span class="cov0" title="0">if !errors.Is(err, core_errors.ErrNotFound) </span>{
-                <span class="cov0" title="0">return domain.ThemeUser{}, fmt.Errorf("failed to retrieve theme_user from cache: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to retrieve theme_user from cache", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">themeUser, err = s.themeUserRepositoryPostgres.GetThemeUser(ctx, id)
@@ -5399,7 +5409,8 @@ func (s *ThemeUserService) GetThemeUser(
 </span>        }
 
         <span class="cov0" title="0">if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUser); err != nil </span>{
-                <span class="cov0" title="0">return domain.ThemeUser{}, fmt.Errorf("failed to cache the theme_user: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to cache the theme_user", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return themeUser, nil</span>
@@ -5436,6 +5447,8 @@ import (
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
         core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeUserService) GetThemesUser(
@@ -5486,7 +5499,8 @@ func (s *ThemeUserService) GetThemesUser(
 </span>        }
 
         <span class="cov0" title="0">if err := s.themeUserRepositoryRedis.SaveThemesUser(ctx, cacheKey, themesUser); err != nil </span>{
-                <span class="cov0" title="0">return nil, fmt.Errorf("failed save to cache the themes: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed save to cache the themes", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return themesUser, nil</span>
@@ -5500,6 +5514,8 @@ import (
         "fmt"
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeUserService) PatchThemeUser(
@@ -5507,7 +5523,7 @@ func (s *ThemeUserService) PatchThemeUser(
         themeUserID int,
         themeUserPatch domain.ThemeUserPatch,
 ) (domain.ThemeUser, error) {
-        <span class="cov0" title="0">theme, err := s.themeUserRepositoryPostgres.GetThemeUser(ctx, themeUserID)
+        <span class="cov0" title="0">theme, err := s.GetThemeUser(ctx, themeUserID)
         if err != nil </span>{
                 <span class="cov0" title="0">return domain.ThemeUser{}, fmt.Errorf("get theme: %w", err)
 </span>        }
@@ -5522,7 +5538,8 @@ func (s *ThemeUserService) PatchThemeUser(
 </span>        }
 
         <span class="cov0" title="0">if err := s.themeUserRepositoryRedis.PatchThemeUser(ctx, patchedTheme.ID, themeUserPatch); err != nil </span>{
-                <span class="cov0" title="0">return domain.ThemeUser{}, fmt.Errorf("patch theme to cache: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("patch theme to cache", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return patchedTheme, nil</span>
@@ -6937,13 +6954,14 @@ import (
         "fmt"
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeService) CreateTheme(
         ctx context.Context,
         theme domain.Theme,
 ) (domain.Theme, error) {
-
         <span class="cov0" title="0">if err := theme.Validate(); err != nil </span>{
                 <span class="cov0" title="0">return domain.Theme{}, fmt.Errorf("validate theme domain: %w", err)
 </span>        }
@@ -6956,7 +6974,8 @@ func (s *ThemeService) CreateTheme(
         <span class="cov0" title="0">key := fmt.Sprintf("theme:%d", theme.ID)
 </span>
         <span class="cov0" title="0">if err := s.themeRepositoryRedis.SaveTheme(ctx, key, theme); err != nil </span>{
-                <span class="cov0" title="0">return domain.Theme{}, fmt.Errorf("failed to cache the theme: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to cache the theme", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return theme, nil</span>
@@ -6968,6 +6987,9 @@ func (s *ThemeService) CreateTheme(
 import (
         "context"
         "fmt"
+
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeService) DeleteTheme(
@@ -6975,13 +6997,14 @@ func (s *ThemeService) DeleteTheme(
         id int,
 ) error {
         <span class="cov0" title="0">if err := s.themeRepositoryPostgres.DeleteTheme(ctx, id); err != nil </span>{
-                <span class="cov0" title="0">return fmt.Errorf("delete theme from repository: %w", err)
+                <span class="cov0" title="0">return fmt.Errorf("failed to delete theme from repository: %w", err)
 </span>        }
 
         <span class="cov0" title="0">key := fmt.Sprintf("theme:%d", id)
 </span>
         <span class="cov0" title="0">if err := s.themeRepositoryRedis.DeleteTheme(ctx, key); err != nil </span>{
-                <span class="cov0" title="0">return fmt.Errorf("delete theme to cache: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to delete theme from cache", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return nil</span>
@@ -6997,6 +7020,8 @@ import (
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
         core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeService) GetTheme(
@@ -7011,7 +7036,8 @@ func (s *ThemeService) GetTheme(
 </span>        }
 
         <span class="cov0" title="0">if !errors.Is(err, core_errors.ErrNotFound) </span>{
-                <span class="cov0" title="0">return domain.Theme{}, fmt.Errorf("failed to retrieve theme from cache: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to retrieve theme from cache", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">theme, err = s.themeRepositoryPostgres.GetTheme(ctx, themeID)
@@ -7020,7 +7046,8 @@ func (s *ThemeService) GetTheme(
 </span>        }
 
         <span class="cov0" title="0">if err := s.themeRepositoryRedis.SaveTheme(ctx, key, theme); err != nil </span>{
-                <span class="cov0" title="0">return domain.Theme{}, fmt.Errorf("failed to cache the theme: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to cache the theme", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return theme, nil</span>
@@ -7035,6 +7062,8 @@ import (
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
         core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeService) GetThemes(
@@ -7083,7 +7112,8 @@ func (s *ThemeService) GetThemes(
 </span>        }
 
         <span class="cov0" title="0">if err := s.themeRepositoryRedis.SaveThemes(ctx, cacheKey, themes); err != nil </span>{
-                <span class="cov0" title="0">return nil, fmt.Errorf("failed save to cache the themes: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed save to cache the themes", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return themes, nil</span>
@@ -7097,6 +7127,8 @@ import (
         "fmt"
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *ThemeService) PatchTheme(
@@ -7104,7 +7136,7 @@ func (s *ThemeService) PatchTheme(
         id int,
         patch domain.ThemePatch,
 ) (domain.Theme, error) {
-        <span class="cov0" title="0">theme, err := s.themeRepositoryPostgres.GetTheme(ctx, id)
+        <span class="cov0" title="0">theme, err := s.GetTheme(ctx, id)
         if err != nil </span>{
                 <span class="cov0" title="0">return domain.Theme{}, fmt.Errorf("get theme: %w", err)
 </span>        }
@@ -7119,7 +7151,8 @@ func (s *ThemeService) PatchTheme(
 </span>        }
 
         <span class="cov0" title="0">if err := s.themeRepositoryRedis.PatchTheme(ctx, patchedTheme.ID, patch); err != nil </span>{
-                <span class="cov0" title="0">return domain.Theme{}, fmt.Errorf("patch theme to cache: %w", err)
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("patch theme to cache", zap.Error(err))
 </span>        }
 
         <span class="cov0" title="0">return patchedTheme, nil</span>
@@ -8679,28 +8712,31 @@ import (
         "fmt"
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *UserService) CreateUser(
         ctx context.Context,
         user domain.User,
 ) (domain.User, error) {
-        <span class="cov0" title="0">if err := user.Validate(); err != nil </span>{
+        <span class="cov8" title="1">if err := user.Validate(); err != nil </span>{
                 <span class="cov0" title="0">return domain.User{}, fmt.Errorf("validate user domain: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">user, err := s.userRepositoryPostgres.CreateUser(ctx, user)
+        <span class="cov8" title="1">user, err := s.userRepositoryPostgres.CreateUser(ctx, user)
         if err != nil </span>{
                 <span class="cov0" title="0">return domain.User{}, fmt.Errorf("create user: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">key := fmt.Sprintf("user:%d", user.ID)
+        <span class="cov8" title="1">key := fmt.Sprintf("user:%d", user.ID)
 </span>
-        <span class="cov0" title="0">if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil </span>{
-                <span class="cov0" title="0">return domain.User{}, fmt.Errorf("failed to cache the user: %w", err)
+        <span class="cov8" title="1">if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil </span>{
+                <span class="cov8" title="1">log := core_logger.FromContext(ctx)
+                log.Warn("failed to cache the user", zap.Error(err))
 </span>        }
 
-        <span class="cov0" title="0">return user, nil</span>
+        <span class="cov8" title="1">return user, nil</span>
 }
 </pre>
 		
@@ -8709,29 +8745,34 @@ func (s *UserService) CreateUser(
 import (
         "context"
         "fmt"
+
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *UserService) DeleteUser(
         ctx context.Context,
         id int,
 ) error {
-        <span class="cov0" title="0">if err := s.userRepositoryPostgres.DeleteUser(ctx, id); err != nil </span>{
-                <span class="cov0" title="0">return fmt.Errorf("delete user: %w", err)
-</span>        }
-
-        <span class="cov0" title="0">key := fmt.Sprintf("user:%d", id)
+        <span class="cov8" title="1">log := core_logger.FromContext(ctx)
 </span>
-        <span class="cov0" title="0">if err := s.userRepositoryRedis.DeleteUser(ctx, key); err != nil </span>{
-                <span class="cov0" title="0">return fmt.Errorf("delete user to cache: %w", err)
+        <span class="cov8" title="1">if err := s.userRepositoryPostgres.DeleteUser(ctx, id); err != nil </span>{
+                <span class="cov0" title="0">return fmt.Errorf("failed to delete user from repository: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">key = fmt.Sprintf("token:%d", id)
+        <span class="cov8" title="1">key := fmt.Sprintf("user:%d", id)
 </span>
-        <span class="cov0" title="0">if err := s.userRepositoryRedis.DeleteToken(ctx, key); err != nil </span>{
-                <span class="cov0" title="0">return fmt.Errorf("delete token to cache: %w", err)
+        <span class="cov8" title="1">if err := s.userRepositoryRedis.DeleteUser(ctx, key); err != nil </span>{
+                <span class="cov8" title="1">log.Warn("failed to delete user from cache", zap.Error(err))
 </span>        }
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov8" title="1">key = fmt.Sprintf("token:%d", id)
+</span>
+        <span class="cov8" title="1">if err := s.userRepositoryRedis.DeleteToken(ctx, key); err != nil </span>{
+                <span class="cov8" title="1">log.Warn("failed to delete token from cache", zap.Error(err))
+</span>        }
+
+        <span class="cov8" title="1">return nil</span>
 }
 </pre>
 		
@@ -8766,33 +8807,37 @@ import (
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
         core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *UserService) GetUser(
         ctx context.Context,
         id int,
 ) (domain.User, error) {
-        <span class="cov0" title="0">key := fmt.Sprintf("user:%d", id)
+        <span class="cov10" title="2">key := fmt.Sprintf("user:%d", id)
 </span>
-        <span class="cov0" title="0">user, err := s.userRepositoryRedis.GetUser(ctx, key)
+        <span class="cov10" title="2">user, err := s.userRepositoryRedis.GetUser(ctx, key)
         if err == nil </span>{
                 <span class="cov0" title="0">return user, nil
 </span>        }
 
-        <span class="cov0" title="0">if !errors.Is(err, core_errors.ErrNotFound) </span>{
-                <span class="cov0" title="0">return domain.User{}, fmt.Errorf("failed to retrieve user from cache: %w", err)
+        <span class="cov10" title="2">if !errors.Is(err, core_errors.ErrNotFound) </span>{
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed to retrieve user from cache", zap.Error(err))
 </span>        }
 
-        <span class="cov0" title="0">user, err = s.userRepositoryPostgres.GetUser(ctx, id)
+        <span class="cov10" title="2">user, err = s.userRepositoryPostgres.GetUser(ctx, id)
         if err != nil </span>{
                 <span class="cov0" title="0">return domain.User{}, fmt.Errorf("get user from repository: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil </span>{
-                <span class="cov0" title="0">return domain.User{}, fmt.Errorf("failed to cache the user: %w", err)
+        <span class="cov10" title="2">if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil </span>{
+                <span class="cov10" title="2">log := core_logger.FromContext(ctx)
+                log.Warn("failed to cache the user", zap.Error(err))
 </span>        }
 
-        <span class="cov0" title="0">return user, nil</span>
+        <span class="cov10" title="2">return user, nil</span>
 }
 </pre>
 		
@@ -8826,6 +8871,8 @@ import (
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
         core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *UserService) GetUsers(
@@ -8833,36 +8880,36 @@ func (s *UserService) GetUsers(
         limit *int,
         offset *int,
 ) ([]domain.User, error) {
-        <span class="cov0" title="0">if limit != nil &amp;&amp; *limit &lt; 0 </span>{
+        <span class="cov8" title="1">if limit != nil &amp;&amp; *limit &lt; 0 </span>{
                 <span class="cov0" title="0">return nil, fmt.Errorf(
                         "limit must be non-negative: %w",
                         core_errors.ErrInvalidArgument,
                 )
 </span>        }
 
-        <span class="cov0" title="0">if offset != nil &amp;&amp; *offset &lt; 0 </span>{
+        <span class="cov8" title="1">if offset != nil &amp;&amp; *offset &lt; 0 </span>{
                 <span class="cov0" title="0">return nil, fmt.Errorf(
                         "offset must be non-negative: %w",
                         core_errors.ErrInvalidArgument,
                 )
 </span>        }
 
-        <span class="cov0" title="0">lim := 0
+        <span class="cov8" title="1">lim := 0
         off := 0
         if limit != nil </span>{
                 <span class="cov0" title="0">lim = *limit
 </span>        }
-        <span class="cov0" title="0">if offset != nil </span>{
+        <span class="cov8" title="1">if offset != nil </span>{
                 <span class="cov0" title="0">off = *offset
 </span>        }
 
-        <span class="cov0" title="0">cacheKey := fmt.Sprintf("users:limit:%d:offset:%d", lim, off)
+        <span class="cov8" title="1">cacheKey := fmt.Sprintf("users:limit:%d:offset:%d", lim, off)
 </span>
-        <span class="cov0" title="0">if cached, err := s.userRepositoryRedis.GetUsers(ctx, cacheKey); err == nil </span>{
+        <span class="cov8" title="1">if cached, err := s.userRepositoryRedis.GetUsers(ctx, cacheKey); err == nil </span>{
                 <span class="cov0" title="0">return cached, nil
 </span>        }
 
-        <span class="cov0" title="0">users, err := s.userRepositoryPostgres.GetUsers(
+        <span class="cov8" title="1">users, err := s.userRepositoryPostgres.GetUsers(
                 ctx,
                 limit,
                 offset,
@@ -8871,11 +8918,12 @@ func (s *UserService) GetUsers(
                 <span class="cov0" title="0">return nil, fmt.Errorf("get users from repository: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">if err := s.userRepositoryRedis.SaveUsers(ctx, cacheKey, users); err != nil </span>{
-                <span class="cov0" title="0">return nil, fmt.Errorf("failed save to cache the users: %w", err)
+        <span class="cov8" title="1">if err := s.userRepositoryRedis.SaveUsers(ctx, cacheKey, users); err != nil </span>{
+                <span class="cov0" title="0">log := core_logger.FromContext(ctx)
+                log.Warn("failed save to cache the users", zap.Error(err))
 </span>        }
 
-        <span class="cov0" title="0">return users, nil</span>
+        <span class="cov8" title="1">return users, nil</span>
 }
 </pre>
 		
@@ -8911,6 +8959,8 @@ import (
         "fmt"
 
         "github.com/LayMan011/Golang-My-Study/internal/core/domain"
+        core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+        "go.uber.org/zap"
 )
 
 func (s *UserService) PatchUser(
@@ -8918,25 +8968,26 @@ func (s *UserService) PatchUser(
         id int,
         patch domain.UserPatch,
 ) (domain.User, error) {
-        <span class="cov0" title="0">user, err := s.userRepositoryPostgres.GetUser(ctx, id)
+        <span class="cov8" title="1">user, err := s.GetUser(ctx, id)
         if err != nil </span>{
                 <span class="cov0" title="0">return domain.User{}, fmt.Errorf("get user: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">if err := user.ApplyPatch(patch); err != nil </span>{
+        <span class="cov8" title="1">if err := user.ApplyPatch(patch); err != nil </span>{
                 <span class="cov0" title="0">return domain.User{}, fmt.Errorf("apply user patch: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">patchedUser, err := s.userRepositoryPostgres.PatchUser(ctx, id, user)
+        <span class="cov8" title="1">patchedUser, err := s.userRepositoryPostgres.PatchUser(ctx, id, user)
         if err != nil </span>{
                 <span class="cov0" title="0">return domain.User{}, fmt.Errorf("patch user: %w", err)
 </span>        }
 
-        <span class="cov0" title="0">if err := s.userRepositoryRedis.PatchUser(ctx, patchedUser.ID, patch); err != nil </span>{
-                <span class="cov0" title="0">return domain.User{}, fmt.Errorf("patch user to cache: %w", err)
+        <span class="cov8" title="1">if err := s.userRepositoryRedis.PatchUser(ctx, patchedUser.ID, patch); err != nil </span>{
+                <span class="cov8" title="1">log := core_logger.FromContext(ctx)
+                log.Warn("patch user to cache", zap.Error(err))
 </span>        }
 
-        <span class="cov0" title="0">return patchedUser, nil</span>
+        <span class="cov8" title="1">return patchedUser, nil</span>
 }
 </pre>
 		
