@@ -43,6 +43,8 @@ func (s *ThemeService) GetThemes(
 
 	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
 		return cached, nil
+	} else if err != nil {
+		s.hash_many[cacheKey] = false
 	}
 
 	themes, err := s.themeRepositoryPostgres.GetThemes(
