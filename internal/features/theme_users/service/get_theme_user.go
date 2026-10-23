@@ -20,6 +20,9 @@ func (s *ThemeUserService) GetThemeUser(
 	themeUser, err := s.themeUserRepositoryRedis.GetThemeUser(ctx, key)
 	if err == nil && s.hash_once[key] {
 		return themeUser, nil
+	} else if err != nil {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {

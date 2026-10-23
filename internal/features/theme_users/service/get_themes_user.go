@@ -44,6 +44,8 @@ func (s *ThemeUserService) GetThemesUser(
 
 	if cached, err := s.themeUserRepositoryRedis.GetThemesUser(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
 		return cached, nil
+	} else if err != nil {
+		s.hash_many[cacheKey] = false
 	}
 
 	themesUser, err := s.themeUserRepositoryPostgres.GetThemesUser(
