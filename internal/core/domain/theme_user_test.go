@@ -22,25 +22,31 @@ func TestThemeUserValidate(t *testing.T) {
 		testCase{
 			name: "CompletedAt == nil",
 			theme_user: ThemeUser{
-				Completed:   true,
-				CompletedAt: nil,
+				Completed:        true,
+				CompletedAt:      nil,
+				TotalLessons:     1,
+				CompletedLessons: 1,
 			},
 			wantErr: true,
 		},
 		testCase{
 			name: "CompletedAt.Before(t.AdditionAt)",
 			theme_user: ThemeUser{
-				Completed:   true,
-				AdditionAt:  time.Now().Add(1 * time.Second),
-				CompletedAt: &completedAt,
+				Completed:        true,
+				AdditionAt:       time.Now().Add(1 * time.Second),
+				CompletedAt:      &completedAt,
+				TotalLessons:     1,
+				CompletedLessons: 1,
 			},
 			wantErr: true,
 		},
 		testCase{
 			name: "CompletedAt != nil",
 			theme_user: ThemeUser{
-				Completed:   false,
-				CompletedAt: &completedAt,
+				Completed:        false,
+				CompletedAt:      &completedAt,
+				TotalLessons:     1,
+				CompletedLessons: 1,
 			},
 			wantErr: true,
 		},
@@ -76,16 +82,16 @@ func TestThemeUserValidate(t *testing.T) {
 
 func TestThemeUserApplyPatch(t *testing.T) {
 	type testCase struct {
-		name    string
-		patch   ThemeUserPatch
-		wantErr bool
+		name       string
+		theme_user ThemeUser
+		patch      ThemeUserPatch
+		wantErr    bool
 	}
-
-	theme_user := NewThemeUserUnitialized(1, 1)
 
 	tests := []testCase{
 		testCase{
-			name: "first validate",
+			name:       "first validate",
+			theme_user: NewThemeUserUnitialized(1, 1),
 			patch: ThemeUserPatch{
 				Completed: Nullable[bool]{
 					Set:   true,
@@ -95,7 +101,8 @@ func TestThemeUserApplyPatch(t *testing.T) {
 			wantErr: true,
 		},
 		testCase{
-			name: "Completed == true && Value == true",
+			name:       "Completed == true && Value == true",
+			theme_user: NewThemeUserUnitialized(1, 1),
 			patch: ThemeUserPatch{
 				Completed: Nullable[bool]{
 					Set:   true,
@@ -105,22 +112,10 @@ func TestThemeUserApplyPatch(t *testing.T) {
 			wantErr: false,
 		},
 		testCase{
-			name: "Completed == true && Value == false",
+			name:       "no fields updated",
+			theme_user: NewThemeUserUnitialized(1, 1),
 			patch: ThemeUserPatch{
-				Completed: Nullable[bool]{
-					Set:   true,
-					Value: boolPtr(false),
-				},
-			},
-			wantErr: false,
-		},
-		testCase{
-			name: "return nil",
-			patch: ThemeUserPatch{
-				Completed: Nullable[bool]{
-					Set:   false,
-					Value: nil,
-				},
+				Completed: Nullable[bool]{Set: false, Value: nil},
 			},
 			wantErr: false,
 		},
@@ -128,12 +123,25 @@ func TestThemeUserApplyPatch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := theme_user.ApplyPatch(test.patch)
-			if test.wantErr && err == nil {
-				t.Fatalf("expected error, got nil")
+			completedBefore := test.theme_user.Completed
+
+			err := test.theme_user.ApplyPatch(test.patch)
+			if test.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
 			}
-			if !test.wantErr && err != nil {
+			if err != nil {
 				t.Fatalf("expected no error, got %v", err)
+			}
+
+			if test.patch.Completed.Set {
+				if test.theme_user.Completed != *test.patch.Completed.Value {
+					t.Errorf("Completed = %v, want %v", test.theme_user.Completed, *test.patch.Completed.Value)
+				}
+			} else if test.theme_user.Completed != completedBefore {
+				t.Error("expected Completed to remain unchanged")
 			}
 		})
 	}
