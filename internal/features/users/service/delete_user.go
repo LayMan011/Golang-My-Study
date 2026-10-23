@@ -28,6 +28,9 @@ func (s *UserService) DeleteUser(
 	if err := s.userRepositoryRedis.DeleteUser(ctx, key); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to delete user from cache", zap.Error(err))
+	} else {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	key = fmt.Sprintf("token:%d", id)
@@ -36,6 +39,8 @@ func (s *UserService) DeleteUser(
 	if err := s.userRepositoryRedis.DeleteToken(ctx, key); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to delete token from cache", zap.Error(err))
+	} else {
+		s.hash_token[key] = false
 	}
 
 	return nil
