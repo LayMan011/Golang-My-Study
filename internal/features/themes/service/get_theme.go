@@ -20,6 +20,9 @@ func (s *ThemeService) GetTheme(
 	theme, err := s.themeRepositoryRedis.GetTheme(ctx, key)
 	if err == nil && s.hash_once[key] {
 		return theme, nil
+	} else if err != nil {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {

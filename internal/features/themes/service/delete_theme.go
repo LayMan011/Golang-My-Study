@@ -23,6 +23,9 @@ func (s *ThemeService) DeleteTheme(
 	if err := s.themeRepositoryRedis.DeleteTheme(ctx, key); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to delete theme from cache", zap.Error(err))
+	} else {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	return nil
