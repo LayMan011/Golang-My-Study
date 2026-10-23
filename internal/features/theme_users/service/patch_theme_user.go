@@ -29,6 +29,7 @@ func (s *ThemeUserService) PatchThemeUser(
 	}
 
 	key := fmt.Sprintf("theme_user:%d", patchedTheme.ID)
+	s.hash_once[key] = false
 	clear(s.hash_many)
 
 	if err := s.themeUserRepositoryRedis.PatchThemeUser(ctx, patchedTheme.ID, themeUserPatch); err != nil {
