@@ -3,6 +3,9 @@ package themes_service
 import (
 	"context"
 	"fmt"
+
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeService) DeleteTheme(
@@ -18,7 +21,11 @@ func (s *ThemeService) DeleteTheme(
 	clear(s.hash_many)
 
 	if err := s.themeRepositoryRedis.DeleteTheme(ctx, key); err != nil {
-		return fmt.Errorf("delete theme to cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to delete theme from cache", zap.Error(err))
+	} else {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	return nil

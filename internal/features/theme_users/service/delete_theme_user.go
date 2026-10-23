@@ -3,6 +3,9 @@ package themes_user_service
 import (
 	"context"
 	"fmt"
+
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeUserService) DeleteThemeUser(
@@ -18,7 +21,11 @@ func (s *ThemeUserService) DeleteThemeUser(
 	clear(s.hash_many)
 
 	if err := s.themeUserRepositoryRedis.DeleteThemeUser(ctx, key); err != nil {
-		return fmt.Errorf("delete theme_user to cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to delete theme_user from cache", zap.Error(err))
+	} else {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	return nil

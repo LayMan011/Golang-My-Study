@@ -20,6 +20,9 @@ func (s *UserService) GetUser(
 	user, err := s.userRepositoryRedis.GetUser(ctx, key)
 	if err == nil && s.hash_once[key] {
 		return user, nil
+	} else if err != nil {
+		s.hash_once[key] = false
+		clear(s.hash_many)
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {
