@@ -29,13 +29,12 @@ func (s *ThemeService) PatchTheme(
 	}
 
 	key := fmt.Sprintf("theme:%d", patchedTheme.ID)
+	s.hash_once[key] = false
 	clear(s.hash_many)
 
 	if err := s.themeRepositoryRedis.PatchTheme(ctx, patchedTheme.ID, patch); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("patch theme to cache", zap.Error(err))
-	} else {
-		s.hash_once[key] = false
 	}
 
 	return patchedTheme, nil
