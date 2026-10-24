@@ -448,7 +448,7 @@ func TestValidateThemePatch(t *testing.T) {
 	}
 }
 
-func TestValidateApplyPatch(t *testing.T) {
+func TestThemeValidateApplyPatch(t *testing.T) {
 	type testCase struct {
 		name        string
 		theme       Theme
@@ -519,6 +519,9 @@ func TestValidateApplyPatch(t *testing.T) {
 			if test.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")
+				}
+				if !reflect.DeepEqual(test.theme, before) {
+					t.Errorf("theme changed after failed ApplyPatch(): got %#v, want unchanged %#v", test.theme, before)
 				}
 				return
 			}

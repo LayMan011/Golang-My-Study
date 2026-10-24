@@ -239,16 +239,19 @@ func TestUserApplyPatch(t *testing.T) {
 				if err == nil {
 					t.Fatal("expected error, got nil")
 				}
+				if !bytes.Equal(test.user.Password, passwordBefore) || test.user.FullName != fullNameBefore {
+					t.Error("user changed after failed ApplyPatch()")
+				}
 				return
 			}
 			if err != nil {
 				t.Fatalf("expected no error, got %v", err)
 			}
 
-			passwordChanged := !bytes.Equal(test.user.Password, passwordBefore)
-			fullNameChanged := test.user.FullName != fullNameBefore
+			passwordChanged := bytes.Equal(test.user.Password, passwordBefore)
+			fullNameChanged := test.user.FullName == fullNameBefore
 
-			if !passwordChanged && !fullNameChanged {
+			if passwordChanged && fullNameChanged {
 				t.Error("expected at least one field to change, but none changed")
 			}
 		})

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
@@ -88,6 +89,12 @@ func TestThemeUserApplyPatch(t *testing.T) {
 		wantErr    bool
 	}
 
+	completedAt := time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)
+	userWithProgress := NewThemeUserUnitialized(1, 1)
+	userWithProgress.Completed = true
+	userWithProgress.Percentages = 75
+	userWithProgress.CompletedAt = &completedAt
+
 	tests := []testCase{
 		testCase{
 			name:       "first validate",
@@ -112,6 +119,17 @@ func TestThemeUserApplyPatch(t *testing.T) {
 			wantErr: false,
 		},
 		testCase{
+			name:       "Completed == true && Value == true",
+			theme_user: userWithProgress,
+			patch: ThemeUserPatch{
+				Completed: Nullable[bool]{
+					Set:   true,
+					Value: boolPtr(false),
+				},
+			},
+			wantErr: false,
+		},
+		testCase{
 			name:       "no fields updated",
 			theme_user: NewThemeUserUnitialized(1, 1),
 			patch: ThemeUserPatch{
@@ -123,12 +141,18 @@ func TestThemeUserApplyPatch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			completedBefore := test.theme_user.Completed
+			before := test.theme_user
+
+			percentagesBefore := test.theme_user.Percentages
+			completedAtBefore := test.theme_user.CompletedAt
 
 			err := test.theme_user.ApplyPatch(test.patch)
 			if test.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")
+				}
+				if !reflect.DeepEqual(test.theme_user, before) {
+					t.Errorf("theme_user changed after failed ApplyPatch(): got %#v, want unchanged %#v", test.theme_user, before)
 				}
 				return
 			}
@@ -138,10 +162,27 @@ func TestThemeUserApplyPatch(t *testing.T) {
 
 			if test.patch.Completed.Set {
 				if test.theme_user.Completed != *test.patch.Completed.Value {
-					t.Errorf("Completed = %v, want %v", test.theme_user.Completed, *test.patch.Completed.Value)
+					t.Errorf("Completed = %v, want %v",
+						test.theme_user.Completed, *test.patch.Completed.Value)
 				}
-			} else if test.theme_user.Completed != completedBefore {
-				t.Error("expected Completed to remain unchanged")
+
+				if test.patch.Completed.Value != nil && !*test.patch.Completed.Value {
+					if test.theme_user.Percentages != 0 {
+						t.Errorf("Percentages = %v, want 0", test.theme_user.Percentages)
+					}
+					if test.theme_user.CompletedAt != nil {
+						t.Errorf("CompletedAt = %v, want nil", test.theme_user.CompletedAt)
+					}
+				}
+			} else {
+				if test.theme_user.Percentages != percentagesBefore {
+					t.Errorf("Percentages = %v, want unchanged value %v",
+						test.theme_user.Percentages, percentagesBefore)
+				}
+				if test.theme_user.CompletedAt != completedAtBefore {
+					t.Errorf("CompletedAt = %v, want unchanged value %v",
+						test.theme_user.CompletedAt, completedAtBefore)
+				}
 			}
 		})
 	}
