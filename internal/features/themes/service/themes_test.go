@@ -3,6 +3,7 @@ package themes_service
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -10,6 +11,14 @@ import (
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	"go.uber.org/zap"
 )
+
+func generate_themes() []domain.Theme {
+	return []domain.Theme{
+		domain.NewThemeUnitialized("1234", nil, "Математика", 5000, "beginner", "3 месяца", "video", 1),
+		domain.NewThemeUnitialized("1234", nil, "Математика", 5000, "beginner", "3 месяца", "video", 1),
+		domain.NewThemeUnitialized("1234", nil, "Математика", 5000, "beginner", "3 месяца", "video", 1),
+	}
+}
 
 func Begin() (context.Context, *ThemeService, domain.Theme) {
 	ctx := core_logger.ToContext(
@@ -34,11 +43,10 @@ func Begin() (context.Context, *ThemeService, domain.Theme) {
 		Format:          "video",
 		AuthorUserID:    26,
 	}
-	createdTheme := inputTheme
 
 	redisErr := errors.New("redis unavailable")
 
-	postgres := &postgresRepoStub{theme: createdTheme}
+	postgres := &postgresRepoStub{themes: []domain.Theme{}}
 	redis := &redisRepoStub{err: redisErr}
 
 	service := &ThemeService{
@@ -54,21 +62,31 @@ func Begin() (context.Context, *ThemeService, domain.Theme) {
 func TestThemeService_CreateTheme(t *testing.T) {
 	ctx, service, inputTheme := Begin()
 
-	_, err := service.CreateTheme(ctx, inputTheme)
+	empty_theme := domain.Theme{}
+
+	created, err := service.CreateTheme(ctx, inputTheme)
 	if err != nil {
 		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+	}
+
+	if reflect.DeepEqual(created, empty_theme) {
+		t.Errorf("CreateTheme() = %v, want %v", created, empty_theme)
+	}
+
+	if !reflect.DeepEqual(created, inputTheme) {
+		t.Errorf("CreateTheme() = %v, want %v", created, inputTheme)
 	}
 }
 
 func TestThemeService_DeleteTheme(t *testing.T) {
 	ctx, service, inputTheme := Begin()
 
-	_, err := service.CreateTheme(ctx, inputTheme)
+	created, err := service.CreateTheme(ctx, inputTheme)
 	if err != nil {
 		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
 	}
 
-	err = service.DeleteTheme(ctx, inputTheme.ID)
+	err = service.DeleteTheme(ctx, created.ID)
 	if err != nil {
 		t.Fatalf("DeleteTheme() returned unexpected error: %v", err)
 	}
@@ -77,25 +95,59 @@ func TestThemeService_DeleteTheme(t *testing.T) {
 func TestThemeService_GetTheme(t *testing.T) {
 	ctx, service, inputTheme := Begin()
 
-	_, err := service.GetTheme(ctx, inputTheme.ID)
+	empty_theme := domain.Theme{}
+
+	created, err := service.CreateTheme(ctx, inputTheme)
+	if err != nil {
+		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+	}
+
+	get_theme, err := service.GetTheme(ctx, inputTheme.ID)
 	if err != nil {
 		t.Fatalf("GetTheme() returned unexpected error: %v", err)
+	}
+
+	if reflect.DeepEqual(get_theme, empty_theme) {
+		t.Errorf("GetTheme() = %v, want %v", get_theme, empty_theme)
+	}
+
+	if !reflect.DeepEqual(get_theme, created) {
+		t.Errorf("GetTheme() = %v, want %v", get_theme, created)
 	}
 }
 
 func TestThemeService_GetThemes(t *testing.T) {
 	ctx, service, _ := Begin()
 
-	_, err := service.GetThemes(ctx, nil, nil, nil)
+	empty_themes := []domain.ThemeUser{}
+
+	themes := generate_themes()
+
+	for _, theme := range themes {
+		_, err := service.CreateTheme(ctx, theme)
+		if err != nil {
+			t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+		}
+	}
+
+	get_themes, err := service.GetThemes(ctx, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("GetThemes() returned unexpected error: %v", err)
+	}
+
+	if reflect.DeepEqual(get_themes, empty_themes) {
+		t.Errorf("GetThemes() = %v, want %v", get_themes, empty_themes)
+	}
+
+	if !reflect.DeepEqual(get_themes, themes) {
+		t.Errorf("GetThemes() = %v, want %v", get_themes, themes)
 	}
 }
 
 func TestThemeService_PatchTheme(t *testing.T) {
 	ctx, service, theme := Begin()
 
-	_, err := service.CreateTheme(ctx, theme)
+	created, err := service.CreateTheme(ctx, theme)
 	if err != nil {
 		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
 	}
@@ -128,8 +180,12 @@ func TestThemeService_PatchTheme(t *testing.T) {
 		},
 	}
 
-	_, err = service.PatchTheme(ctx, theme.ID, patch)
+	theme_patch, err := service.PatchTheme(ctx, created.ID, patch)
 	if err != nil {
-		t.Fatalf("PatchThemes() returned unexpected error: %v", err)
+		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+	}
+
+	if theme_patch.Subject != subject {
+		t.Errorf("PatchTheme() Subject = %q, want %q", theme_patch.Subject, subject)
 	}
 }

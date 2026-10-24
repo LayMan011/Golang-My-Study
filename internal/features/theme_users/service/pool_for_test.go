@@ -9,7 +9,6 @@ import (
 )
 
 type postgresRepoStub struct {
-	theme_user  domain.ThemeUser
 	themes_user []domain.ThemeUser
 	err         error
 	calls       int
@@ -29,7 +28,13 @@ func (r *postgresRepoStub) GetThemeUser(
 	ctx context.Context,
 	id int,
 ) (domain.ThemeUser, error) {
-	return r.theme_user, nil
+	for _, theme_user := range r.themes_user {
+		if theme_user.ID == id {
+			return theme_user, nil
+		}
+	}
+
+	return domain.ThemeUser{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) GetThemeUserByUserID(
@@ -76,7 +81,7 @@ func (r *postgresRepoStub) CreateThemeUser(
 	}
 
 	r.themes_user = append(r.themes_user, themeUser)
-	return r.theme_user, nil
+	return themeUser, nil
 }
 
 type redisRepoStub struct {

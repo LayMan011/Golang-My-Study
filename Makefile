@@ -129,4 +129,4 @@ cover:
 	rm coverage.out
 
 test:
-	@go test -short -count=1 ./internal/core/domain
+	@go test -race ./...;

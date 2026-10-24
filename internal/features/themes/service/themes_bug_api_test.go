@@ -129,3 +129,46 @@ func TestBug14_C_PATCH(t *testing.T) {
 		t.Fatalf("PatchTheme with query params writes to the cache, just like for all themes")
 	}
 }
+
+func TestBug23(t *testing.T) {
+	ctx, service, theme := Begin()
+
+	created, err := service.CreateTheme(ctx, theme)
+	if err != nil {
+		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+	}
+
+	subject := "beginner"
+	patch := domain.ThemePatch{
+		Subject: domain.Nullable[string]{
+			Set:   true,
+			Value: &subject,
+		},
+	}
+
+	theme_patch, err := service.PatchTheme(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+	}
+
+	if theme_patch.Subject != subject {
+		t.Errorf("PatchTheme() Subject = %q, want %q", theme_patch.Subject, subject)
+	}
+
+	format := "mixed"
+	patch = domain.ThemePatch{
+		Format: domain.Nullable[string]{
+			Set:   true,
+			Value: &format,
+		},
+	}
+
+	theme_patch, err = service.PatchTheme(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+	}
+
+	if theme_patch.Format != format {
+		t.Errorf("PatchTheme() Format = %q, want %q", theme_patch.Format, format)
+	}
+}

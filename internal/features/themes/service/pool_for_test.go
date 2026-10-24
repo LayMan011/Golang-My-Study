@@ -9,7 +9,6 @@ import (
 )
 
 type postgresRepoStub struct {
-	theme  domain.Theme
 	themes []domain.Theme
 	err    error
 	calls  int
@@ -28,7 +27,13 @@ func (r *postgresRepoStub) GetTheme(
 	ctx context.Context,
 	id int,
 ) (domain.Theme, error) {
-	return r.theme, nil
+	for _, theme := range r.themes {
+		if theme.ID == id {
+			return theme, nil
+		}
+	}
+
+	return domain.Theme{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) DeleteTheme(

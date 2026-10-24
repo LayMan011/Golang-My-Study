@@ -9,7 +9,6 @@ import (
 )
 
 type postgresRepoStub struct {
-	user  domain.User
 	users []domain.User
 	err   error
 	calls int
@@ -27,7 +26,13 @@ func (r *postgresRepoStub) GetUser(
 	ctx context.Context,
 	id int,
 ) (domain.User, error) {
-	return r.user, nil
+	for _, user := range r.users {
+		if user.ID == id {
+			return user, nil
+		}
+	}
+
+	return domain.User{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) GetUserByEmail(

@@ -1,6 +1,7 @@
 package users_service
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
@@ -127,5 +128,48 @@ func TestBug14_C_PATCH(t *testing.T) {
 
 	if user_1_fullname == users_2_fullname {
 		t.Fatalf("PatchUser with query params writes to the cache, just like for all users")
+	}
+}
+
+func TestBug23(t *testing.T) {
+	ctx, service, user := Begin()
+
+	created, err := service.CreateUser(ctx, user)
+	if err != nil {
+		t.Fatalf("CreateUser() returned unexpected error: %v", err)
+	}
+
+	fullname := "123"
+	patch := domain.UserPatch{
+		FullName: domain.Nullable[string]{
+			Set:   true,
+			Value: &fullname,
+		},
+	}
+
+	user_patch, err := service.PatchUser(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchUser() returned unexpected error: %v", err)
+	}
+
+	if user_patch.FullName != fullname {
+		t.Errorf("PatchTheme() FullName = %q, want %q", user_patch.FullName, fullname)
+	}
+
+	password := []byte("123456789")
+	patch = domain.UserPatch{
+		Password: domain.Nullable[[]byte]{
+			Set:   true,
+			Value: &password,
+		},
+	}
+
+	user_patch, err = service.PatchUser(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchUser() returned unexpected error: %v", err)
+	}
+
+	if !reflect.DeepEqual(user_patch.Password, password) {
+		t.Errorf("PatchTheme() Password = %q, want %q", user_patch.Password, password)
 	}
 }
