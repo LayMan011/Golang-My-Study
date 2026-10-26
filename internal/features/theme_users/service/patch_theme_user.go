@@ -28,15 +28,9 @@ func (s *ThemeUserService) PatchThemeUser(
 		return domain.ThemeUser{}, fmt.Errorf("patch theme: %w", err)
 	}
 
-	key := fmt.Sprintf("theme_user:%d", patchedTheme.ID)
-	s.hash_once[key] = false
-	clear(s.hash_many)
-
 	if err := s.themeUserRepositoryRedis.PatchThemeUser(ctx, patchedTheme.ID, themeUserPatch); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("patch theme to cache", zap.Error(err))
-	} else {
-		s.hash_once[key] = false
 	}
 
 	return patchedTheme, nil

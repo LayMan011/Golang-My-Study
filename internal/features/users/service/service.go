@@ -7,9 +7,6 @@ import (
 )
 
 type UserService struct {
-	hash_once              map[string]bool
-	hash_many              map[string]bool
-	hash_token             map[string]bool
 	userRepositoryPostgres UserRepositoryPostgres
 	userRepositoryRedis    UserRepositoryRedis
 }
@@ -104,9 +101,6 @@ func NewUsersService(
 	userRepositoryRedis UserRepositoryRedis,
 ) *UserService {
 	return &UserService{
-		hash_once:              make(map[string]bool),
-		hash_many:              make(map[string]bool),
-		hash_token:             make(map[string]bool),
 		userRepositoryPostgres: userRepositoryPostgres,
 		userRepositoryRedis:    userRepositoryRedis,
 	}
