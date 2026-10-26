@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -17,110 +18,336 @@ func float64Ptr(s float64) *float64 {
 }
 
 func TestValidateTheme(t *testing.T) {
-	themes := []Theme{
-		Theme{
-			Title: "",
+	type testCase struct {
+		name    string
+		theme   Theme
+		wantErr bool
+	}
+
+	tests := []testCase{
+		testCase{
+			name: "Title is empty",
+			theme: Theme{
+				Title:       "",
+				Description: strPtr("0"),
+				Subject:     strings.Repeat("λ", 100),
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "intermediate",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "mixed",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title: strings.Repeat("0", 101),
+		testCase{
+			name: "LengthTitle = 101",
+			theme: Theme{
+				Title:       strings.Repeat("λ", 101),
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: nil,
+		testCase{
+			name: "LengthTitle = 100",
+			theme: Theme{
+				Title:       strings.Repeat("λ", 100),
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: false,
 		},
-		Theme{
-			Title:       "0",
-			Description: new(string),
+		testCase{
+			name: "Length Description = 0",
+			theme: Theme{
+				Title:       "0",
+				Description: new(string),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr(strings.Repeat("0", 1001)),
+		testCase{
+			name: "Length Description = 1001",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr(strings.Repeat("λ", 1001)),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "advanced",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "text",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "",
+		testCase{
+			name: "LengthTitle = 100",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr(strings.Repeat("λ", 1000)),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "advanced",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "text",
+			},
+			wantErr: false,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     strings.Repeat("0", 101),
+		testCase{
+			name: "Subject is empty",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "advanced",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "text",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      nil,
+		testCase{
+			name: "Length Subject = 101",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     strings.Repeat("λ", 101),
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "advanced",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "text",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      new(float64),
+		testCase{
+			name: "Length Subject = 100",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     strings.Repeat("λ", 100),
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "intermediate",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "mixed",
+			},
+			wantErr: false,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      float64Ptr(6),
+		testCase{
+			name: "Rating = -1",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(-1),
+				Price:       100,
+				Level:       "advanced",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "text",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      float64Ptr(5),
-			Price:       -1,
+		testCase{
+			name: "Rating = 0",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(0),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: false,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      float64Ptr(5),
-			Price:       100,
-			Level:       "",
+		testCase{
+			name: "Rating = 5",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: false,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      float64Ptr(5),
-			Price:       100,
-			Level:       "beginner",
-			Duration:    "",
+		testCase{
+			name: "Rating = 6",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(6),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      float64Ptr(5),
-			Price:       100,
-			Level:       "beginner",
-			Duration:    strings.Repeat("0", 50),
+		testCase{
+			name: "Price = -1",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       -1,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: true,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      float64Ptr(5),
-			Price:       100,
-			Level:       "beginner",
-			Duration:    strings.Repeat("0", 5),
-			Format:      "",
+		testCase{
+			name: "Price = 0",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       0,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: false,
 		},
-		Theme{
-			Title:       "0",
-			Description: strPtr("0"),
-			Subject:     "0",
-			Rating:      float64Ptr(5),
-			Price:       100,
-			Level:       "beginner",
-			Duration:    strings.Repeat("0", 5),
-			Format:      "video",
+		testCase{
+			name: "Level is empty",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: true,
+		},
+		testCase{
+			name: "Duration is empty",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    "",
+				Format:      "video",
+			},
+			wantErr: true,
+		},
+		testCase{
+			name: "Length Duration = 0",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    "0",
+				Format:      "video",
+			},
+			wantErr: false,
+		},
+		testCase{
+			name: "Length Duration = 41",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("0", 41),
+				Format:      "video",
+			},
+			wantErr: true,
+		},
+		testCase{
+			name: "Length Duration = 0",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("0", 40),
+				Format:      "video",
+			},
+			wantErr: false,
+		},
+		testCase{
+			name: "Format is empty",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("0", 5),
+				Format:      "",
+			},
+			wantErr: true,
+		},
+		testCase{
+			name: "Full valid",
+			theme: Theme{
+				Title:       "0",
+				Description: strPtr("0"),
+				Subject:     "0",
+				Rating:      float64Ptr(5),
+				Price:       100,
+				Level:       "beginner",
+				Duration:    strings.Repeat("λ", 5),
+				Format:      "video",
+			},
+			wantErr: false,
 		},
 	}
 
-	for _, theme := range themes {
-		theme.Validate()
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.theme.Validate()
+			if test.wantErr && err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+			if !test.wantErr && err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if test.wantErr && !errors.Is(err, core_errors.ErrInvalidArgument) {
+				t.Fatalf("expected ErrInvalidArgument, got %v", err)
+			}
+		})
 	}
 }
 
@@ -221,19 +448,22 @@ func TestValidateThemePatch(t *testing.T) {
 	}
 }
 
-func TestValidateApplyPatch(t *testing.T) {
+func TestThemeValidateApplyPatch(t *testing.T) {
 	type testCase struct {
-		name    string
-		patch   ThemePatch
-		wantErr bool
+		name        string
+		theme       Theme
+		patch       ThemePatch
+		wantErr     bool
+		wantChanged bool
 	}
 
 	description := "description"
-	theme := NewThemeUnitialized("title", &description, "00", 100, "beginner", "00", "video", 1)
+	newTitle := "new title"
 
 	tests := []testCase{
 		testCase{
-			name: "non validate",
+			name:  "invalid patch",
+			theme: NewThemeUnitialized("title", &description, "00", 100, "beginner", "00", "video", 1),
 			patch: ThemePatch{
 				Title: Nullable[string]{
 					Set:   true,
@@ -243,105 +473,66 @@ func TestValidateApplyPatch(t *testing.T) {
 			wantErr: true,
 		},
 		testCase{
-			name: "all rewies",
+			name:  "all fields updated with invalid values",
+			theme: NewThemeUnitialized("title", &description, "00", 100, "beginner", "00", "video", 1),
 			patch: ThemePatch{
-				Title: Nullable[string]{
-					Set:   true,
-					Value: &description,
-				},
-				Description: Nullable[string]{
-					Set:   true,
-					Value: &description,
-				},
-				Subject: Nullable[string]{
-					Set:   true,
-					Value: &description,
-				},
-				Level: Nullable[string]{
-					Set:   true,
-					Value: &description,
-				},
-				Duration: Nullable[string]{
-					Set:   true,
-					Value: &description,
-				},
-				Format: Nullable[string]{
-					Set:   true,
-					Value: &description,
-				},
+				Title:       Nullable[string]{Set: true, Value: &description},
+				Description: Nullable[string]{Set: true, Value: &description},
+				Subject:     Nullable[string]{Set: true, Value: &description},
+				Level:       Nullable[string]{Set: true, Value: &description},
+				Duration:    Nullable[string]{Set: true, Value: &description},
+				Format:      Nullable[string]{Set: true, Value: &description},
 			},
 			wantErr: true,
 		},
 		testCase{
-			name: "return nil",
+			name:  "update title",
+			theme: NewThemeUnitialized("title", &description, "00", 100, "beginner", "00", "video", 1),
 			patch: ThemePatch{
 				Title: Nullable[string]{
-					Set:   false,
-					Value: nil,
-				},
-				Description: Nullable[string]{
-					Set:   false,
-					Value: nil,
-				},
-				Subject: Nullable[string]{
-					Set:   false,
-					Value: nil,
-				},
-				Level: Nullable[string]{
-					Set:   false,
-					Value: nil,
-				},
-				Duration: Nullable[string]{
-					Set:   false,
-					Value: nil,
-				},
-				Format: Nullable[string]{
-					Set:   false,
-					Value: nil,
+					Set:   true,
+					Value: &newTitle,
 				},
 			},
-			wantErr: false,
+			wantChanged: true,
+		},
+		testCase{
+			name:  "no fields updated",
+			theme: NewThemeUnitialized("title", &description, "00", 100, "beginner", "00", "video", 1),
+			patch: ThemePatch{
+				Title:       Nullable[string]{Set: false},
+				Description: Nullable[string]{Set: false},
+				Subject:     Nullable[string]{Set: false},
+				Level:       Nullable[string]{Set: false},
+				Duration:    Nullable[string]{Set: false},
+				Format:      Nullable[string]{Set: false},
+			},
+			wantChanged: false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := theme.ApplyPatch(test.patch)
-			if test.wantErr && err == nil {
-				t.Fatalf("expected error, got nil")
+			before := test.theme
+
+			err := test.theme.ApplyPatch(test.patch)
+			if test.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !reflect.DeepEqual(test.theme, before) {
+					t.Errorf("theme changed after failed ApplyPatch(): got %#v, want unchanged %#v", test.theme, before)
+				}
+				return
 			}
-			if !test.wantErr && err != nil {
+			if err != nil {
 				t.Fatalf("expected no error, got %v", err)
+			}
+
+			changed := !reflect.DeepEqual(before, test.theme)
+			if changed != test.wantChanged {
+				t.Errorf("theme changed = %v, want %v", changed, test.wantChanged)
 			}
 		})
 	}
-}
-
-func TestThemePatch(t *testing.T) {
-	NewThemePatch(
-		Nullable[string]{
-			Set:   false,
-			Value: nil,
-		},
-		Nullable[string]{
-			Set:   false,
-			Value: nil,
-		},
-		Nullable[string]{
-			Set:   false,
-			Value: nil,
-		},
-		Nullable[string]{
-			Set:   false,
-			Value: nil,
-		},
-		Nullable[string]{
-			Set:   false,
-			Value: nil,
-		},
-		Nullable[string]{
-			Set:   false,
-			Value: nil,
-		},
-	)
 }
