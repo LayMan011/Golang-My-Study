@@ -41,7 +41,7 @@ func (s *ThemeService) GetThemes(
 
 	cacheKey := fmt.Sprintf("themes:list:version:%d:user_id:%d:limit:%d:offset:%d", version, result[0], result[1], result[2])
 
-	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
+	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil {
 		return cached, nil
 	}
 
@@ -58,8 +58,6 @@ func (s *ThemeService) GetThemes(
 	if err := s.themeRepositoryRedis.SaveThemes(ctx, cacheKey, themes); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed save to cache the themes", zap.Error(err))
-	} else {
-		s.hash_many[cacheKey] = true
 	}
 
 	return themes, nil
