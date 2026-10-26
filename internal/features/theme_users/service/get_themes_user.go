@@ -6,6 +6,8 @@ import (
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeUserService) GetThemesUser(
@@ -29,8 +31,8 @@ func (s *ThemeUserService) GetThemesUser(
 		)
 	}
 
-	lim := 0
-	off := 0
+	lim := -1
+	off := -1
 	if first != nil {
 		lim = *first
 	}
@@ -56,7 +58,8 @@ func (s *ThemeUserService) GetThemesUser(
 	}
 
 	if err := s.themeUserRepositoryRedis.SaveThemesUser(ctx, cacheKey, themesUser); err != nil {
-		return nil, fmt.Errorf("failed save to cache the themes: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed save to cache the themes", zap.Error(err))
 	}
 
 	return themesUser, nil

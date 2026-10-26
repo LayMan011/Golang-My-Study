@@ -11,7 +11,6 @@ func (s *ThemeUserService) CreateThemeUser(
 	ctx context.Context,
 	themeUser domain.ThemeUser,
 ) (domain.ThemeUser, error) {
-
 	if err := themeUser.Validate(); err != nil {
 		return domain.ThemeUser{}, fmt.Errorf("validate themeUser domain: %w", err)
 	}
