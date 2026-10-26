@@ -113,6 +113,10 @@ func (r *redisRepoStub) GetThemeUser(
 	ctx context.Context,
 	key string,
 ) (domain.ThemeUser, error) {
+	if r.err != nil {
+		return domain.ThemeUser{}, r.err
+	}
+
 	return domain.ThemeUser{}, core_errors.ErrNotFound
 }
 
@@ -135,6 +139,10 @@ func (r *redisRepoStub) GetThemesUser(
 	ctx context.Context,
 	key string,
 ) ([]domain.ThemeUser, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
 	return []domain.ThemeUser{}, core_errors.ErrNotFound
 }
 

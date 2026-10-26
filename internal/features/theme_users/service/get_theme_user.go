@@ -23,7 +23,8 @@ func (s *ThemeUserService) GetThemeUser(
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {
-		return domain.ThemeUser{}, fmt.Errorf("failed to retrieve theme_user from cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to retrieve theme_user from cache", zap.Error(err))
 	}
 
 	themeUser, err = s.themeUserRepositoryPostgres.GetThemeUser(ctx, id)

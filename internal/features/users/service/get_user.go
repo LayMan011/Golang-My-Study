@@ -23,7 +23,8 @@ func (s *UserService) GetUser(
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {
-		return domain.User{}, fmt.Errorf("failed to retrieve user from cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to retrieve user from cache", zap.Error(err))
 	}
 
 	user, err = s.userRepositoryPostgres.GetUser(ctx, id)

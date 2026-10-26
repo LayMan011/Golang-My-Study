@@ -23,7 +23,8 @@ func (s *ThemeService) GetTheme(
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {
-		return domain.Theme{}, fmt.Errorf("failed to retrieve theme from cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to retrieve theme from cache", zap.Error(err))
 	}
 
 	theme, err = s.themeRepositoryPostgres.GetTheme(ctx, themeID)
