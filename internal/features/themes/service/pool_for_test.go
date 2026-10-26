@@ -105,6 +105,10 @@ func (r *redisRepoStub) GetTheme(
 	ctx context.Context,
 	key string,
 ) (domain.Theme, error) {
+	if r.err != nil {
+		return domain.Theme{}, r.err
+	}
+
 	return domain.Theme{}, core_errors.ErrNotFound
 }
 
@@ -127,6 +131,10 @@ func (r *redisRepoStub) GetThemes(
 	ctx context.Context,
 	key string,
 ) ([]domain.Theme, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
 	return []domain.Theme{}, core_errors.ErrNotFound
 }
 
