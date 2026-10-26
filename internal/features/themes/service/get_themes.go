@@ -16,35 +16,15 @@ func (s *ThemeService) GetThemes(
 	limit *int,
 	offset *int,
 ) ([]domain.Theme, error) {
-	if limit != nil && *limit < 0 {
-		return nil, fmt.Errorf(
-			"'limit' must be non-negative: %w",
-			core_errors.ErrInvalidArgument,
-		)
+	result, err := getQueryParams(userID, limit, offset)
+	if err != nil {
+		return nil, err
 	}
 
-	if offset != nil && *offset < 0 {
-		return nil, fmt.Errorf(
-			"'offset' must be non-negative: %w",
-			core_errors.ErrInvalidArgument,
-		)
-	}
+	cacheKey := fmt.Sprintf("themes:user_id:%dlimit:%d:offset:%d", result[0], result[1], result[2])
 
-	lim := -1
-	off := -1
-	if limit != nil {
-		lim = *limit
-	}
-	if offset != nil {
-		off = *offset
-	}
-
-	cacheKey := fmt.Sprintf("themes:limit:%d:offset:%d", lim, off)
-
-	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
+	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil {
 		return cached, nil
-	} else if err != nil {
-		s.hash_many[cacheKey] = false
 	}
 
 	themes, err := s.themeRepositoryPostgres.GetThemes(
@@ -60,9 +40,45 @@ func (s *ThemeService) GetThemes(
 	if err := s.themeRepositoryRedis.SaveThemes(ctx, cacheKey, themes); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed save to cache the themes", zap.Error(err))
-	} else {
-		s.hash_many[cacheKey] = true
 	}
 
 	return themes, nil
+}
+
+func getQueryParams(userID *int, limit *int, offset *int) ([3]int, error) {
+	if limit != nil && *limit < 0 {
+		return [3]int{}, fmt.Errorf(
+			"'first' must be non-negative: %w",
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	if offset != nil && *offset < 0 {
+		return [3]int{}, fmt.Errorf(
+			"'last' must be non-negative: %w",
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	if userID != nil && *userID < 0 {
+		return [3]int{}, fmt.Errorf(
+			"'user_id' must be non-negative: %w",
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	lim := -1
+	off := -1
+	user_id := -1
+	if limit != nil {
+		lim = *limit
+	}
+	if offset != nil {
+		off = *offset
+	}
+	if userID != nil {
+		user_id = *userID
+	}
+
+	return [3]int{user_id, lim, off}, nil
 }
