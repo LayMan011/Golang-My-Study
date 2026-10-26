@@ -7,6 +7,8 @@ import (
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *UserService) GetUser(
@@ -30,7 +32,8 @@ func (s *UserService) GetUser(
 	}
 
 	if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil {
-		return domain.User{}, fmt.Errorf("failed to cache the user: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to cache the user", zap.Error(err))
 	}
 
 	return user, nil
