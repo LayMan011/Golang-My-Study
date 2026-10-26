@@ -89,6 +89,7 @@ func TestThemeUserApplyPatch(t *testing.T) {
 		wantErr    bool
 	}
 
+	fullPercentages := 100
 	completedAt := time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)
 	userWithProgress := NewThemeUserUnitialized(1, 1)
 	userWithProgress.Completed = true
@@ -119,7 +120,7 @@ func TestThemeUserApplyPatch(t *testing.T) {
 			wantErr: false,
 		},
 		testCase{
-			name:       "Completed == true && Value == true",
+			name:       "Completed == true && Value == false",
 			theme_user: userWithProgress,
 			patch: ThemeUserPatch{
 				Completed: Nullable[bool]{
@@ -172,6 +173,10 @@ func TestThemeUserApplyPatch(t *testing.T) {
 					}
 					if test.theme_user.CompletedAt != nil {
 						t.Errorf("CompletedAt = %v, want nil", test.theme_user.CompletedAt)
+					}
+				} else if test.patch.Completed.Value != nil && *test.patch.Completed.Value {
+					if test.theme_user.Percentages != fullPercentages {
+						t.Errorf("Percentages = %v, want %d", test.theme_user.Percentages, fullPercentages)
 					}
 				}
 			} else {
