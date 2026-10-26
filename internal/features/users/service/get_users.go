@@ -40,10 +40,8 @@ func (s *UserService) GetUsers(
 
 	cacheKey := fmt.Sprintf("users:limit:%d:offset:%d", lim, off)
 
-	if cached, err := s.userRepositoryRedis.GetUsers(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
+	if cached, err := s.userRepositoryRedis.GetUsers(ctx, cacheKey); err == nil {
 		return cached, nil
-	} else if err != nil {
-		s.hash_many[cacheKey] = false
 	}
 
 	users, err := s.userRepositoryPostgres.GetUsers(
@@ -58,8 +56,6 @@ func (s *UserService) GetUsers(
 	if err := s.userRepositoryRedis.SaveUsers(ctx, cacheKey, users); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed save to cache the users", zap.Error(err))
-	} else {
-		s.hash_many[cacheKey] = true
 	}
 
 	return users, nil
