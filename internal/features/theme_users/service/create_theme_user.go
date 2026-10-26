@@ -23,13 +23,10 @@ func (s *ThemeUserService) CreateThemeUser(
 	}
 
 	key := fmt.Sprintf("theme_user:%d", themeUserDomain.ID)
-	clear(s.hash_many)
 
 	if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUserDomain); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to cache the theme_user", zap.Error(err))
-	} else {
-		s.hash_once[key] = true
 	}
 
 	return themeUserDomain, nil

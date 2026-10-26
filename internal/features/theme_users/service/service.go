@@ -7,8 +7,6 @@ import (
 )
 
 type ThemeUserService struct {
-	hash_once                   map[string]bool
-	hash_many                   map[string]bool
 	themeUserRepositoryPostgres ThemeUserRepositoryPostgres
 	themeUserRepositoryRedis    ThemeUserRepositoryRedis
 }
@@ -89,8 +87,6 @@ func NewThemeUserService(
 	themeUserRepositoryRedis ThemeUserRepositoryRedis,
 ) *ThemeUserService {
 	return &ThemeUserService{
-		hash_once:                   make(map[string]bool),
-		hash_many:                   make(map[string]bool),
 		themeUserRepositoryPostgres: themeUserRepositoryPostgres,
 		themeUserRepositoryRedis:    themeUserRepositoryRedis,
 	}
