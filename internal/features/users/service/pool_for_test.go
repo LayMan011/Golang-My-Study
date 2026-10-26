@@ -126,6 +126,10 @@ func (r *redisRepoStub) GetUser(
 	ctx context.Context,
 	key string,
 ) (domain.User, error) {
+	if r.err != nil {
+		return domain.User{}, r.err
+	}
+
 	return domain.User{}, core_errors.ErrNotFound
 }
 
@@ -148,6 +152,10 @@ func (r *redisRepoStub) GetUsers(
 	ctx context.Context,
 	key string,
 ) ([]domain.User, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
 	return []domain.User{}, core_errors.ErrNotFound
 }
 

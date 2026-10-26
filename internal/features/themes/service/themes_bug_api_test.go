@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 func TestBug14_A(t *testing.T) {
-	ctx, service, _ := Begin()
+	ctx, service, _ := Begin(core_errors.ErrRedisUnavailable)
 
 	user_id := 1
 	themes_query, err := service.GetThemes(ctx, &user_id, nil, nil)
@@ -26,7 +27,7 @@ func TestBug14_A(t *testing.T) {
 }
 
 func TestBug14_B(t *testing.T) {
-	ctx, service, _ := Begin()
+	ctx, service, _ := Begin(core_errors.ErrRedisUnavailable)
 
 	limit := 0
 	themes_query, err := service.GetThemes(ctx, nil, &limit, nil)
@@ -45,7 +46,7 @@ func TestBug14_B(t *testing.T) {
 }
 
 func TestBug14_C_POST(t *testing.T) {
-	ctx, service, inputTheme := Begin()
+	ctx, service, inputTheme := Begin(core_errors.ErrRedisUnavailable)
 
 	themes_1, err := service.GetThemes(ctx, nil, nil, nil)
 	if err != nil {
@@ -68,7 +69,7 @@ func TestBug14_C_POST(t *testing.T) {
 }
 
 func TestBug14_C_DEL(t *testing.T) {
-	ctx, service, inputTheme := Begin()
+	ctx, service, inputTheme := Begin(core_errors.ErrRedisUnavailable)
 
 	created, err := service.CreateTheme(ctx, inputTheme)
 	if err != nil {
@@ -96,7 +97,7 @@ func TestBug14_C_DEL(t *testing.T) {
 }
 
 func TestBug14_C_PATCH(t *testing.T) {
-	ctx, service, inputTheme := Begin()
+	ctx, service, inputTheme := Begin(core_errors.ErrRedisUnavailable)
 
 	created, err := service.CreateTheme(ctx, inputTheme)
 	if err != nil {
@@ -131,7 +132,7 @@ func TestBug14_C_PATCH(t *testing.T) {
 }
 
 func TestBug23(t *testing.T) {
-	ctx, service, theme := Begin()
+	ctx, service, theme := Begin(core_errors.ErrRedisUnavailable)
 
 	created, err := service.CreateTheme(ctx, theme)
 	if err != nil {
