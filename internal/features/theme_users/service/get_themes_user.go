@@ -45,8 +45,6 @@ func (s *ThemeUserService) GetThemesUser(
 
 	if cached, err := s.themeUserRepositoryRedis.GetThemesUser(ctx, cacheKey); err == nil && s.hash_many[cacheKey] {
 		return cached, nil
-	} else if err != nil {
-		s.hash_many[cacheKey] = false
 	}
 
 	themesUser, err := s.themeUserRepositoryPostgres.GetThemesUser(
@@ -63,8 +61,6 @@ func (s *ThemeUserService) GetThemesUser(
 	if err := s.themeUserRepositoryRedis.SaveThemesUser(ctx, cacheKey, themesUser); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed save to cache the themes", zap.Error(err))
-	} else {
-		s.hash_many[cacheKey] = true
 	}
 
 	return themesUser, nil
