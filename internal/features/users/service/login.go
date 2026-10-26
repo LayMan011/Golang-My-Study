@@ -17,8 +17,6 @@ func (s *UserService) Login(
 	err := s.userRepositoryRedis.SaveToken(ctx, key, pair)
 	if err != nil {
 		return fmt.Errorf("set token from repository: %w", err)
-	} else {
-		s.hash_token[key] = true
 	}
 
 	return nil

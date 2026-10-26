@@ -18,11 +18,8 @@ func (s *ThemeUserService) GetThemeUser(
 	key := fmt.Sprintf("theme_user:%d", id)
 
 	themeUser, err := s.themeUserRepositoryRedis.GetThemeUser(ctx, key)
-	if err == nil && s.hash_once[key] {
+	if err == nil {
 		return themeUser, nil
-	} else if err != nil {
-		s.hash_once[key] = false
-		clear(s.hash_many)
 	}
 
 	if !errors.Is(err, core_errors.ErrNotFound) {
@@ -38,8 +35,6 @@ func (s *ThemeUserService) GetThemeUser(
 	if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUser); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to cache the theme_user", zap.Error(err))
-	} else {
-		s.hash_once[key] = true
 	}
 
 	return themeUser, nil

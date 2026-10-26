@@ -33,9 +33,6 @@ func Begin() (context.Context, *UserService, domain.User) {
 	redis := &redisRepoStub{err: redisErr}
 
 	service := &UserService{
-		hash_once:              make(map[string]bool),
-		hash_many:              make(map[string]bool),
-		hash_token:             make(map[string]bool),
 		userRepositoryPostgres: postgres,
 		userRepositoryRedis:    redis,
 	}

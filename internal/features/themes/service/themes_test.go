@@ -42,8 +42,6 @@ func Begin() (context.Context, *ThemeService, domain.Theme) {
 	redis := &redisRepoStub{err: redisErr}
 
 	service := &ThemeService{
-		hash_once:               make(map[string]bool),
-		hash_many:               make(map[string]bool),
 		themeRepositoryPostgres: postgres,
 		themeRepositoryRedis:    redis,
 	}

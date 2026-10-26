@@ -23,13 +23,10 @@ func (s *UserService) CreateUser(
 	}
 
 	key := fmt.Sprintf("user:%d", user.ID)
-	clear(s.hash_many)
 
 	if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to cache the user", zap.Error(err))
-	} else {
-		s.hash_once[key] = true
 	}
 
 	return user, nil
