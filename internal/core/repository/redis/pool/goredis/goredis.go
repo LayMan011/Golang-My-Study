@@ -114,3 +114,11 @@ func (r *RedisClient) DoError(ctx context.Context, str1 string, key int) error {
 func (r *RedisClient) Close() error {
 	return r.Client.Close()
 }
+
+func (r *RedisClient) Incr(ctx context.Context, key string) (int64, error) {
+	value, err := r.Client.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("increment redis key %q: %w", key, err)
+	}
+	return value, nil
+}
