@@ -2,6 +2,7 @@ package themes_user_service
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 	"time"
@@ -10,6 +11,11 @@ import (
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	"go.uber.org/zap"
+)
+
+var (
+	ErrRedisUnavailable       = errors.New("redis unavailable")
+	ErrRedisConnectionRefused = errors.New("connection refused")
 )
 
 func generate_themes_user() []domain.ThemeUser {
@@ -63,7 +69,7 @@ func TestThemeService_CreateTheme(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -96,7 +102,7 @@ func TestThemeService_DeleteTheme(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -129,7 +135,7 @@ func TestThemeService_GetTheme(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -167,7 +173,7 @@ func TestThemeService_GetThemes(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -207,7 +213,7 @@ func TestThemeService_PatchTheme(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -237,5 +243,48 @@ func TestThemeService_PatchTheme(t *testing.T) {
 				t.Errorf("PatchThemeUser() Completed = %t, want %t", got.Completed, completed)
 			}
 		})
+	}
+}
+
+func TestPatchThemeUser_TwiceInRow(t *testing.T) {
+	ctx, service, theme_user := Begin(ErrRedisUnavailable)
+
+	created, err := service.CreateThemeUser(ctx, theme_user)
+	if err != nil {
+		t.Fatalf("CreateThemeUser() returned unexpected error: %v", err)
+	}
+
+	completed := false
+	patch := domain.ThemeUserPatch{
+		Completed: domain.Nullable[bool]{
+			Set:   true,
+			Value: &completed,
+		},
+	}
+
+	theme_user_patch, err := service.PatchThemeUser(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+	}
+
+	if theme_user_patch.Completed != completed {
+		t.Errorf("PatchThemeUser() Completed = %t, want %t", theme_user_patch.Completed, completed)
+	}
+
+	completed = true
+	patch = domain.ThemeUserPatch{
+		Completed: domain.Nullable[bool]{
+			Set:   true,
+			Value: &completed,
+		},
+	}
+
+	theme_user_patch, err = service.PatchThemeUser(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+	}
+
+	if theme_user_patch.Completed != completed {
+		t.Errorf("PatchThemeUser() Completed = %t, want %t", theme_user_patch.Completed, completed)
 	}
 }

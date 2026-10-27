@@ -15,7 +15,7 @@ func (r *ThemeRepository) SaveThemes(ctx context.Context, key string, themes []d
 		return fmt.Errorf("marshal themes: %w", err)
 	}
 
-	if err := r.pool.Set(ctx, key, b, 1*time.Hour).Err(); err != nil {
+	if err := r.pool.Set(ctx, key, b, 10*time.Minute).Err(); err != nil {
 		return fmt.Errorf("save themes to redis: %w", err)
 	}
 

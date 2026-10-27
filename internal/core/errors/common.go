@@ -9,8 +9,3 @@ var (
 	ErrInvalidArgument = errors.New("invalid argument")
 	ErrConflict        = errors.New("conflict")
 )
-
-var (
-	ErrRedisUnavailable       = errors.New("redis unavailable")
-	ErrRedisConnectionRefused = errors.New("connection refused")
-)
