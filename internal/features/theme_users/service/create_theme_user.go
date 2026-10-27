@@ -22,6 +22,11 @@ func (s *ThemeUserService) CreateThemeUser(
 		return domain.ThemeUser{}, fmt.Errorf("create themeUser: %w", err)
 	}
 
+	if err := s.themeUserRepositoryRedis.BumpThemesUserListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate themes_user list cache", zap.Error(err))
+	}
+
 	key := fmt.Sprintf("theme_user:%d", themeUserDomain.ID)
 
 	if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUserDomain); err != nil {

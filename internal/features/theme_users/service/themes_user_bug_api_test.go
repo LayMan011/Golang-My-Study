@@ -1,10 +1,47 @@
 package themes_user_service
 
 import (
+	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
+
+func Begin() (context.Context, *ThemeUserService, domain.ThemeUser) {
+	ctx := core_logger.ToContext(
+		context.Background(),
+		&core_logger.Logger{Logger: zap.NewNop()},
+	)
+
+	inputTheme := domain.ThemeUser{
+		ID:               6,
+		Version:          2,
+		Completed:        false,
+		AdditionAt:       time.Now(),
+		CompletedAt:      nil,
+		Percentages:      100,
+		TotalLessons:     0,
+		CompletedLessons: 0,
+		ThemeID:          10,
+		UserID:           3,
+	}
+
+	redisErr := errors.New("redis unavailable")
+
+	postgres := &postgresRepoStub{}
+	redis := &redisRepoStub{err: redisErr}
+
+	service := &ThemeUserService{
+		themeUserRepositoryPostgres: postgres,
+		themeUserRepositoryRedis:    redis,
+	}
+
+	return ctx, service, inputTheme
+}
 
 func TestBug14_A(t *testing.T) {
 	ctx, service, _ := Begin()

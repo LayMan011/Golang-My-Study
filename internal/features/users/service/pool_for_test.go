@@ -2,14 +2,12 @@ package users_service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 type postgresRepoStub struct {
-	user  domain.User
 	users []domain.User
 	err   error
 	calls int
@@ -20,14 +18,43 @@ func (r *postgresRepoStub) GetUsers(
 	limit *int,
 	offset *int,
 ) ([]domain.User, error) {
-	return r.users, nil
+	r.calls++
+
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	start := 0
+	if offset != nil {
+		start = *offset
+	}
+
+	if start >= len(r.users) {
+		return []domain.User{}, nil
+	}
+
+	end := len(r.users)
+	if limit != nil && start+*limit < end {
+		end = start + *limit
+	}
+
+	result := make([]domain.User, end-start)
+	copy(result, r.users[start:end])
+
+	return result, nil
 }
 
 func (r *postgresRepoStub) GetUser(
 	ctx context.Context,
 	id int,
 ) (domain.User, error) {
-	return r.user, nil
+	for _, user := range r.users {
+		if user.ID == id {
+			return user, nil
+		}
+	}
+
+	return domain.User{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) GetUserByEmail(
@@ -41,12 +68,18 @@ func (r *postgresRepoStub) DeleteUser(
 	ctx context.Context,
 	id int,
 ) error {
-	if len(r.users) > 0 {
-		r.users = r.users[1:]
-		return nil
+	if r.err != nil {
+		return r.err
 	}
 
-	return errors.New("failed to delete users")
+	for i, user := range r.users {
+		if user.ID == id {
+			r.users = append(r.users[:i], r.users[i+1:]...)
+			return nil
+		}
+	}
+
+	return core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) PatchUser(
@@ -54,8 +87,13 @@ func (r *postgresRepoStub) PatchUser(
 	id int,
 	patch domain.User,
 ) (domain.User, error) {
+	if r.err != nil {
+		return domain.User{}, r.err
+	}
+
 	for i, user := range r.users {
 		if user.ID == id {
+			patch.ID = id
 			r.users[i] = patch
 			return patch, nil
 		}
@@ -82,6 +120,10 @@ type redisRepoStub struct {
 	calls int
 	key   string
 	user  domain.User
+
+	userCache   map[string]domain.User
+	usersCache  map[string][]domain.User
+	listVersion int64
 }
 
 func (r *redisRepoStub) SaveToken(
@@ -114,14 +156,72 @@ func (r *redisRepoStub) SaveUser(
 	r.calls++
 	r.key = key
 	r.user = user
-	return r.err
+
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.userCache == nil {
+		r.userCache = make(map[string]domain.User)
+	}
+	r.userCache[key] = user
+
+	return nil
 }
 
 func (r *redisRepoStub) GetUser(
 	ctx context.Context,
 	key string,
 ) (domain.User, error) {
-	return domain.User{}, core_errors.ErrNotFound
+	if r.err != nil {
+		return domain.User{}, r.err
+	}
+
+	user, ok := r.userCache[key]
+	if !ok {
+		return domain.User{}, core_errors.ErrNotFound
+	}
+
+	return user, nil
+}
+
+func (r *redisRepoStub) SaveUsers(
+	ctx context.Context,
+	key string,
+	users []domain.User,
+) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.usersCache == nil {
+		r.usersCache = make(map[string][]domain.User)
+	}
+
+	cached := make([]domain.User, len(users))
+	copy(cached, users)
+	r.usersCache[key] = cached
+
+	return nil
+}
+
+func (r *redisRepoStub) GetUsers(
+	ctx context.Context,
+	key string,
+) ([]domain.User, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	users, ok := r.usersCache[key]
+	if !ok {
+		return nil, core_errors.ErrNotFound
+	}
+
+	result := make([]domain.User, len(users))
+	copy(result, users)
+
+	return result, nil
 }
 
 func (r *redisRepoStub) DeleteUser(
@@ -131,25 +231,42 @@ func (r *redisRepoStub) DeleteUser(
 	return core_errors.ErrNotFound
 }
 
-func (r *redisRepoStub) SaveUsers(
-	ctx context.Context,
-	key string,
-	users []domain.User,
-) error {
-	return nil
-}
-
-func (r *redisRepoStub) GetUsers(
-	ctx context.Context,
-	key string,
-) ([]domain.User, error) {
-	return []domain.User{}, core_errors.ErrNotFound
-}
-
 func (r *redisRepoStub) PatchUser(
 	ctx context.Context,
 	id int,
 	patch domain.UserPatch,
 ) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	for key, user := range r.userCache {
+		if user.ID == id {
+			delete(r.userCache, key)
+			return nil
+		}
+	}
+
 	return core_errors.ErrNotFound
+}
+
+func (r *redisRepoStub) GetUsersListVersion(
+	ctx context.Context,
+) (int64, error) {
+	if r.err != nil {
+		return 0, r.err
+	}
+
+	return r.listVersion, nil
+}
+
+func (r *redisRepoStub) BumpUsersListVersion(
+	ctx context.Context,
+) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	r.listVersion++
+	return nil
 }

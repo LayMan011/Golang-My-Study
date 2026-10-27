@@ -2,17 +2,14 @@ package themes_service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 type postgresRepoStub struct {
-	theme  domain.Theme
 	themes []domain.Theme
 	err    error
-	calls  int
 }
 
 func (r *postgresRepoStub) GetThemes(
@@ -21,26 +18,64 @@ func (r *postgresRepoStub) GetThemes(
 	limit *int,
 	offset *int,
 ) ([]domain.Theme, error) {
-	return r.themes, nil
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	filtered := make([]domain.Theme, 0, len(r.themes))
+	for _, theme := range r.themes {
+		if userID != nil && theme.AuthorUserID != *userID {
+			continue
+		}
+
+		filtered = append(filtered, theme)
+	}
+
+	start := 0
+	if offset != nil {
+		start = *offset
+	}
+
+	if start >= len(filtered) {
+		return []domain.Theme{}, nil
+	}
+
+	end := len(filtered)
+	if limit != nil && start+*limit < end {
+		end = start + *limit
+	}
+
+	result := make([]domain.Theme, end-start)
+	copy(result, filtered[start:end])
+
+	return result, nil
 }
 
 func (r *postgresRepoStub) GetTheme(
 	ctx context.Context,
 	id int,
 ) (domain.Theme, error) {
-	return r.theme, nil
+	for _, theme := range r.themes {
+		if theme.ID == id {
+			return theme, nil
+		}
+	}
+
+	return domain.Theme{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) DeleteTheme(
 	ctx context.Context,
 	id int,
 ) error {
-	if len(r.themes) > 0 {
-		r.themes = r.themes[1:]
-		return nil
+	for i, theme := range r.themes {
+		if theme.ID == id {
+			r.themes = append(r.themes[:i], r.themes[i+1:]...)
+			return nil
+		}
 	}
 
-	return errors.New("failed to delete themes")
+	return core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) PatchTheme(
@@ -62,7 +97,6 @@ func (r *postgresRepoStub) CreateTheme(
 	ctx context.Context,
 	theme domain.Theme,
 ) (domain.Theme, error) {
-	r.calls++
 	if r.err != nil {
 		return domain.Theme{}, r.err
 	}
@@ -73,9 +107,12 @@ func (r *postgresRepoStub) CreateTheme(
 
 type redisRepoStub struct {
 	err   error
-	calls int
 	key   string
 	theme domain.Theme
+
+	themeCache  map[string]domain.Theme
+	themesCache map[string][]domain.Theme
+	listVersion int64
 }
 
 func (r *redisRepoStub) DeleteToken(
@@ -90,24 +127,51 @@ func (r *redisRepoStub) SaveTheme(
 	key string,
 	value domain.Theme,
 ) error {
-	r.calls++
 	r.key = key
 	r.theme = value
-	return r.err
+
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.themeCache == nil {
+		r.themeCache = make(map[string]domain.Theme)
+	}
+
+	r.themeCache[key] = value
+	return nil
 }
 
 func (r *redisRepoStub) GetTheme(
 	ctx context.Context,
 	key string,
 ) (domain.Theme, error) {
-	return domain.Theme{}, core_errors.ErrNotFound
+	if r.err != nil {
+		return domain.Theme{}, r.err
+	}
+
+	theme, ok := r.themeCache[key]
+	if !ok {
+		return domain.Theme{}, core_errors.ErrNotFound
+	}
+
+	return theme, nil
 }
 
 func (r *redisRepoStub) DeleteTheme(
 	ctx context.Context,
 	key string,
 ) error {
-	return core_errors.ErrNotFound
+	if r.err != nil {
+		return r.err
+	}
+
+	if _, ok := r.themeCache[key]; !ok {
+		return core_errors.ErrNotFound
+	}
+
+	delete(r.themeCache, key)
+	return nil
 }
 
 func (r *redisRepoStub) SaveThemes(
@@ -115,6 +179,18 @@ func (r *redisRepoStub) SaveThemes(
 	key string,
 	themes []domain.Theme,
 ) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.themesCache == nil {
+		r.themesCache = make(map[string][]domain.Theme)
+	}
+
+	cached := make([]domain.Theme, len(themes))
+	copy(cached, themes)
+	r.themesCache[key] = cached
+
 	return nil
 }
 
@@ -122,7 +198,19 @@ func (r *redisRepoStub) GetThemes(
 	ctx context.Context,
 	key string,
 ) ([]domain.Theme, error) {
-	return []domain.Theme{}, core_errors.ErrNotFound
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	themes, ok := r.themesCache[key]
+	if !ok {
+		return nil, core_errors.ErrNotFound
+	}
+
+	result := make([]domain.Theme, len(themes))
+	copy(result, themes)
+
+	return result, nil
 }
 
 func (r *redisRepoStub) PatchTheme(
@@ -131,4 +219,25 @@ func (r *redisRepoStub) PatchTheme(
 	patch domain.ThemePatch,
 ) error {
 	return core_errors.ErrNotFound
+}
+
+func (r *redisRepoStub) GetThemesListVersion(
+	ctx context.Context,
+) (int64, error) {
+	if r.err != nil {
+		return 0, r.err
+	}
+
+	return r.listVersion, nil
+}
+
+func (r *redisRepoStub) BumpThemesListVersion(
+	ctx context.Context,
+) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	r.listVersion++
+	return nil
 }

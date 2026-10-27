@@ -22,6 +22,11 @@ func (s *ThemeService) CreateTheme(
 		return domain.Theme{}, fmt.Errorf("create theme: %w", err)
 	}
 
+	if err := s.themeRepositoryRedis.BumpThemesListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate themes list cache", zap.Error(err))
+	}
+
 	key := fmt.Sprintf("theme:%d", theme.ID)
 
 	if err := s.themeRepositoryRedis.SaveTheme(ctx, key, theme); err != nil {

@@ -44,6 +44,14 @@ type ThemeRepositoryRedis interface {
 		id int,
 		patch domain.ThemePatch,
 	) error
+
+	GetThemesListVersion(
+		ctx context.Context,
+	) (int64, error)
+
+	BumpThemesListVersion(
+		ctx context.Context,
+	) error
 }
 
 type ThemeRepositoryPostgres interface {

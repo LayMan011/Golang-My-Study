@@ -28,6 +28,11 @@ func (s *ThemeUserService) PatchThemeUser(
 		return domain.ThemeUser{}, fmt.Errorf("patch theme: %w", err)
 	}
 
+	if err := s.themeUserRepositoryRedis.BumpThemesUserListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate themes_user list cache", zap.Error(err))
+	}
+
 	if err := s.themeUserRepositoryRedis.PatchThemeUser(ctx, patchedTheme.ID, themeUserPatch); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("patch theme to cache", zap.Error(err))

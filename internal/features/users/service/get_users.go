@@ -38,7 +38,13 @@ func (s *UserService) GetUsers(
 		off = *offset
 	}
 
-	cacheKey := fmt.Sprintf("users:limit:%d:offset:%d", lim, off)
+	version, err := s.userRepositoryRedis.GetUsersListVersion(ctx)
+	if err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to get users list version", zap.Error(err))
+	}
+
+	cacheKey := fmt.Sprintf("users:list:version:%d:limit:%d:offset:%d", version, lim, off)
 
 	if cached, err := s.userRepositoryRedis.GetUsers(ctx, cacheKey); err == nil {
 		return cached, nil

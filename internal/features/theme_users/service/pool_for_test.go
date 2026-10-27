@@ -2,14 +2,12 @@ package themes_user_service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 type postgresRepoStub struct {
-	theme_user  domain.ThemeUser
 	themes_user []domain.ThemeUser
 	err         error
 	calls       int
@@ -22,14 +20,65 @@ func (r *postgresRepoStub) GetThemesUser(
 	first *int,
 	last *int,
 ) ([]domain.ThemeUser, error) {
-	return r.themes_user, nil
+	r.calls++
+
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	filtered := make([]domain.ThemeUser, 0, len(r.themes_user))
+	for _, themeUser := range r.themes_user {
+		if userID != nil && themeUser.UserID != *userID {
+			continue
+		}
+
+		if themeID != nil && themeUser.ThemeID != *themeID {
+			continue
+		}
+
+		filtered = append(filtered, themeUser)
+	}
+
+	start := 0
+	if last != nil {
+		start = *last
+	}
+
+	if start < 0 {
+		return nil, core_errors.ErrInvalidArgument
+	}
+
+	if start >= len(filtered) {
+		return []domain.ThemeUser{}, nil
+	}
+
+	end := len(filtered)
+	if first != nil {
+		if *first < 0 {
+			return nil, core_errors.ErrInvalidArgument
+		}
+
+		if start+*first < end {
+			end = start + *first
+		}
+	}
+
+	result := make([]domain.ThemeUser, end-start)
+	copy(result, filtered[start:end])
+	return result, nil
 }
 
 func (r *postgresRepoStub) GetThemeUser(
 	ctx context.Context,
 	id int,
 ) (domain.ThemeUser, error) {
-	return r.theme_user, nil
+	for _, theme_user := range r.themes_user {
+		if theme_user.ID == id {
+			return theme_user, nil
+		}
+	}
+
+	return domain.ThemeUser{}, core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) GetThemeUserByUserID(
@@ -43,12 +92,18 @@ func (r *postgresRepoStub) DeleteThemeUser(
 	ctx context.Context,
 	themeUserID int,
 ) error {
-	if len(r.themes_user) > 0 {
-		r.themes_user = r.themes_user[1:]
-		return nil
+	if r.err != nil {
+		return r.err
 	}
 
-	return errors.New("failed to delete themes_user")
+	for i, themeUser := range r.themes_user {
+		if themeUser.ID == themeUserID {
+			r.themes_user = append(r.themes_user[:i], r.themes_user[i+1:]...)
+			return nil
+		}
+	}
+
+	return core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) PatchThemeUser(
@@ -56,8 +111,13 @@ func (r *postgresRepoStub) PatchThemeUser(
 	id int,
 	patch domain.ThemeUser,
 ) (domain.ThemeUser, error) {
-	for i, theme_user := range r.themes_user {
-		if theme_user.ID == id {
+	if r.err != nil {
+		return domain.ThemeUser{}, r.err
+	}
+
+	for i, themeUser := range r.themes_user {
+		if themeUser.ID == id {
+			patch.ID = id
 			r.themes_user[i] = patch
 			return patch, nil
 		}
@@ -76,7 +136,7 @@ func (r *postgresRepoStub) CreateThemeUser(
 	}
 
 	r.themes_user = append(r.themes_user, themeUser)
-	return r.theme_user, nil
+	return themeUser, nil
 }
 
 type redisRepoStub struct {
@@ -84,13 +144,10 @@ type redisRepoStub struct {
 	calls      int
 	key        string
 	theme_user domain.ThemeUser
-}
 
-func (r *redisRepoStub) DeleteToken(
-	ctx context.Context,
-	key string,
-) error {
-	return core_errors.ErrNotFound
+	themeUserCache  map[string]domain.ThemeUser
+	themesUserCache map[string][]domain.ThemeUser
+	listVersion     int64
 }
 
 func (r *redisRepoStub) SaveThemeUser(
@@ -101,21 +158,49 @@ func (r *redisRepoStub) SaveThemeUser(
 	r.calls++
 	r.key = key
 	r.theme_user = value
-	return r.err
+
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.themeUserCache == nil {
+		r.themeUserCache = make(map[string]domain.ThemeUser)
+	}
+	r.themeUserCache[key] = value
+
+	return nil
 }
 
 func (r *redisRepoStub) GetThemeUser(
 	ctx context.Context,
 	key string,
 ) (domain.ThemeUser, error) {
-	return domain.ThemeUser{}, core_errors.ErrNotFound
+	if r.err != nil {
+		return domain.ThemeUser{}, r.err
+	}
+
+	themeUser, ok := r.themeUserCache[key]
+	if !ok {
+		return domain.ThemeUser{}, core_errors.ErrNotFound
+	}
+
+	return themeUser, nil
 }
 
 func (r *redisRepoStub) DeleteThemeUser(
 	ctx context.Context,
 	key string,
 ) error {
-	return core_errors.ErrNotFound
+	if r.err != nil {
+		return r.err
+	}
+
+	if _, ok := r.themeUserCache[key]; !ok {
+		return core_errors.ErrNotFound
+	}
+
+	delete(r.themeUserCache, key)
+	return nil
 }
 
 func (r *redisRepoStub) SaveThemesUser(
@@ -123,6 +208,18 @@ func (r *redisRepoStub) SaveThemesUser(
 	key string,
 	themesUser []domain.ThemeUser,
 ) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.themesUserCache == nil {
+		r.themesUserCache = make(map[string][]domain.ThemeUser)
+	}
+
+	cached := make([]domain.ThemeUser, len(themesUser))
+	copy(cached, themesUser)
+	r.themesUserCache[key] = cached
+
 	return nil
 }
 
@@ -130,7 +227,19 @@ func (r *redisRepoStub) GetThemesUser(
 	ctx context.Context,
 	key string,
 ) ([]domain.ThemeUser, error) {
-	return []domain.ThemeUser{}, core_errors.ErrNotFound
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	themesUser, ok := r.themesUserCache[key]
+	if !ok {
+		return nil, core_errors.ErrNotFound
+	}
+
+	result := make([]domain.ThemeUser, len(themesUser))
+	copy(result, themesUser)
+
+	return result, nil
 }
 
 func (r *redisRepoStub) PatchThemeUser(
@@ -138,5 +247,37 @@ func (r *redisRepoStub) PatchThemeUser(
 	id int,
 	patch domain.ThemeUserPatch,
 ) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	for key, themeUser := range r.themeUserCache {
+		if themeUser.ID == id {
+			delete(r.themeUserCache, key)
+			return nil
+		}
+	}
+
 	return core_errors.ErrNotFound
+}
+
+func (r *redisRepoStub) GetThemesUserListVersion(
+	ctx context.Context,
+) (int64, error) {
+	if r.err != nil {
+		return 0, r.err
+	}
+
+	return r.listVersion, nil
+}
+
+func (r *redisRepoStub) BumpThemesUserListVersion(
+	ctx context.Context,
+) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	r.listVersion++
+	return nil
 }

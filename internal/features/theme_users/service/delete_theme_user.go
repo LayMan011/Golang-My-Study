@@ -16,6 +16,11 @@ func (s *ThemeUserService) DeleteThemeUser(
 		return fmt.Errorf("failed to delete theme_user from repository: %w", err)
 	}
 
+	if err := s.themeUserRepositoryRedis.BumpThemesUserListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate themes_user list cache", zap.Error(err))
+	}
+
 	key := fmt.Sprintf("theme_user:%d", themeUserID)
 
 	if err := s.themeUserRepositoryRedis.DeleteThemeUser(ctx, key); err != nil {

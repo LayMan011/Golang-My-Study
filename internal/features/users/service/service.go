@@ -60,6 +60,14 @@ type UserRepositoryRedis interface {
 		id int,
 		patch domain.UserPatch,
 	) error
+
+	GetUsersListVersion(
+		ctx context.Context,
+	) (int64, error)
+
+	BumpUsersListVersion(
+		ctx context.Context,
+	) error
 }
 
 type UserRepositoryPostgres interface {

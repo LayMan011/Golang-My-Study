@@ -28,6 +28,11 @@ func (s *UserService) PatchUser(
 		return domain.User{}, fmt.Errorf("patch user: %w", err)
 	}
 
+	if err := s.userRepositoryRedis.BumpUsersListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate users list cache", zap.Error(err))
+	}
+
 	if err := s.userRepositoryRedis.PatchUser(ctx, patchedUser.ID, patch); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("patch user to cache", zap.Error(err))

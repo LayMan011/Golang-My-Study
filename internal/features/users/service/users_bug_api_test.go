@@ -1,10 +1,43 @@
 package users_service
 
 import (
+	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
+
+func Begin() (context.Context, *UserService, domain.User) {
+	ctx := core_logger.ToContext(
+		context.Background(),
+		&core_logger.Logger{Logger: zap.NewNop()},
+	)
+
+	inputUser := domain.User{
+		ID:        42,
+		Version:   1,
+		Email:     "user@example.com",
+		CreatedAt: time.Now(),
+		Password:  []byte("c29tZV9wYXNzd29yZF9oYXNo"),
+		FullName:  "Иван Иванов Иванович",
+	}
+
+	redisErr := errors.New("redis unavailable")
+
+	postgres := &postgresRepoStub{}
+	redis := &redisRepoStub{err: redisErr}
+
+	service := &UserService{
+		userRepositoryPostgres: postgres,
+		userRepositoryRedis:    redis,
+	}
+
+	return ctx, service, inputUser
+}
 
 func TestBug14_A(t *testing.T) {
 	ctx, service, _ := Begin()
