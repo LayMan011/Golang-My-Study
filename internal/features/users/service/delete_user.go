@@ -16,6 +16,11 @@ func (s *UserService) DeleteUser(
 		return fmt.Errorf("delete user: %w", err)
 	}
 
+	if err := s.userRepositoryRedis.BumpUsersListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate users list cache", zap.Error(err))
+	}
+
 	key := fmt.Sprintf("user:%d", id)
 
 	if err := s.userRepositoryRedis.DeleteUser(ctx, key); err != nil {

@@ -24,7 +24,30 @@ func (r *postgresRepoStub) GetUsers(
 	limit *int,
 	offset *int,
 ) ([]domain.User, error) {
-	return r.users, nil
+	r.calls++
+
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	start := 0
+	if offset != nil {
+		start = *offset
+	}
+
+	if start >= len(r.users) {
+		return []domain.User{}, nil
+	}
+
+	end := len(r.users)
+	if limit != nil && start+*limit < end {
+		end = start + *limit
+	}
+
+	result := make([]domain.User, end-start)
+	copy(result, r.users[start:end])
+
+	return result, nil
 }
 
 func (r *postgresRepoStub) GetUser(
@@ -56,12 +79,18 @@ func (r *postgresRepoStub) DeleteUser(
 	ctx context.Context,
 	id int,
 ) error {
-	if len(r.users) > 0 {
-		r.users = r.users[1:]
-		return nil
+	if r.err != nil {
+		return r.err
 	}
 
-	return errors.New("failed to delete users")
+	for i, user := range r.users {
+		if user.ID == id {
+			r.users = append(r.users[:i], r.users[i+1:]...)
+			return nil
+		}
+	}
+
+	return core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) PatchUser(
@@ -69,8 +98,13 @@ func (r *postgresRepoStub) PatchUser(
 	id int,
 	patch domain.User,
 ) (domain.User, error) {
+	if r.err != nil {
+		return domain.User{}, r.err
+	}
+
 	for i, user := range r.users {
 		if user.ID == id {
+			patch.ID = id
 			r.users[i] = patch
 			return patch, nil
 		}
@@ -223,6 +257,17 @@ func (r *redisRepoStub) PatchUser(
 	id int,
 	patch domain.UserPatch,
 ) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	for key, user := range r.userCache {
+		if user.ID == id {
+			delete(r.userCache, key)
+			return nil
+		}
+	}
+
 	return core_errors.ErrNotFound
 }
 
@@ -236,7 +281,7 @@ func (r *redisRepoStub) GetUsersListVersion(
 	return r.listVersion, nil
 }
 
-func (r *redisRepoStub) BumpThemesListVersion(
+func (r *redisRepoStub) BumpUsersListVersion(
 	ctx context.Context,
 ) error {
 	if r.err != nil {

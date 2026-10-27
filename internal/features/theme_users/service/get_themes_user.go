@@ -22,7 +22,13 @@ func (s *ThemeUserService) GetThemesUser(
 		return nil, err
 	}
 
-	cacheKey := fmt.Sprintf("themes_user:user_id:%dtheme_id:%dlimit:%d:offset:%d", result[0], result[1], result[2], result[3])
+	version, err := s.themeUserRepositoryRedis.GetThemesUserListVersion(ctx)
+	if err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to get themes_user list version", zap.Error(err))
+	}
+
+	cacheKey := fmt.Sprintf("themes_user:list:version:%duser_id:%dtheme_id:%dlimit:%d:offset:%d", version, result[0], result[1], result[2], result[3])
 
 	if cached, err := s.themeUserRepositoryRedis.GetThemesUser(ctx, cacheKey); err == nil {
 		return cached, nil

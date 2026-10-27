@@ -26,7 +26,52 @@ func (r *postgresRepoStub) GetThemesUser(
 	first *int,
 	last *int,
 ) ([]domain.ThemeUser, error) {
-	return r.themes_user, nil
+	r.calls++
+
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	filtered := make([]domain.ThemeUser, 0, len(r.themes_user))
+	for _, themeUser := range r.themes_user {
+		if userID != nil && themeUser.UserID != *userID {
+			continue
+		}
+
+		if themeID != nil && themeUser.ThemeID != *themeID {
+			continue
+		}
+
+		filtered = append(filtered, themeUser)
+	}
+
+	start := 0
+	if last != nil {
+		start = *last
+	}
+
+	if start < 0 {
+		return nil, core_errors.ErrInvalidArgument
+	}
+
+	if start >= len(filtered) {
+		return []domain.ThemeUser{}, nil
+	}
+
+	end := len(filtered)
+	if first != nil {
+		if *first < 0 {
+			return nil, core_errors.ErrInvalidArgument
+		}
+
+		if start+*first < end {
+			end = start + *first
+		}
+	}
+
+	result := make([]domain.ThemeUser, end-start)
+	copy(result, filtered[start:end])
+	return result, nil
 }
 
 func (r *postgresRepoStub) GetThemeUser(
@@ -58,12 +103,18 @@ func (r *postgresRepoStub) DeleteThemeUser(
 	ctx context.Context,
 	themeUserID int,
 ) error {
-	if len(r.themes_user) > 0 {
-		r.themes_user = r.themes_user[1:]
-		return nil
+	if r.err != nil {
+		return r.err
 	}
 
-	return errors.New("failed to delete themes_user")
+	for i, themeUser := range r.themes_user {
+		if themeUser.ID == themeUserID {
+			r.themes_user = append(r.themes_user[:i], r.themes_user[i+1:]...)
+			return nil
+		}
+	}
+
+	return core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) PatchThemeUser(
@@ -71,8 +122,13 @@ func (r *postgresRepoStub) PatchThemeUser(
 	id int,
 	patch domain.ThemeUser,
 ) (domain.ThemeUser, error) {
-	for i, theme_user := range r.themes_user {
-		if theme_user.ID == id {
+	if r.err != nil {
+		return domain.ThemeUser{}, r.err
+	}
+
+	for i, themeUser := range r.themes_user {
+		if themeUser.ID == id {
+			patch.ID = id
 			r.themes_user[i] = patch
 			return patch, nil
 		}
@@ -104,13 +160,6 @@ type redisRepoStub struct {
 	themeUserCache  map[string]domain.ThemeUser
 	themesUserCache map[string][]domain.ThemeUser
 	listVersion     int64
-}
-
-func (r *redisRepoStub) DeleteToken(
-	ctx context.Context,
-	key string,
-) error {
-	return core_errors.ErrNotFound
 }
 
 func (r *redisRepoStub) SaveThemeUser(
@@ -214,10 +263,21 @@ func (r *redisRepoStub) PatchThemeUser(
 	id int,
 	patch domain.ThemeUserPatch,
 ) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	for key, themeUser := range r.themeUserCache {
+		if themeUser.ID == id {
+			delete(r.themeUserCache, key)
+			return nil
+		}
+	}
+
 	return core_errors.ErrNotFound
 }
 
-func (r *redisRepoStub) GetThemesListVersion(
+func (r *redisRepoStub) GetThemesUserListVersion(
 	ctx context.Context,
 ) (int64, error) {
 	if r.err != nil {
@@ -227,7 +287,7 @@ func (r *redisRepoStub) GetThemesListVersion(
 	return r.listVersion, nil
 }
 
-func (r *redisRepoStub) BumpThemesListVersion(
+func (r *redisRepoStub) BumpThemesUserListVersion(
 	ctx context.Context,
 ) error {
 	if r.err != nil {
