@@ -25,7 +25,7 @@ func (r *UserRepository) SaveUser(ctx context.Context, key string, value domain.
 			}
 		}
 
-		if err := p.Expire(ctx, key, 1*time.Hour); err != nil {
+		if err := p.Expire(ctx, key, 10*time.Minute); err != nil {
 			return err
 		}
 

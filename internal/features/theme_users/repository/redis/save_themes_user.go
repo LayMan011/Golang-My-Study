@@ -15,7 +15,7 @@ func (r *ThemeUserRepository) SaveThemesUser(ctx context.Context, key string, th
 		return fmt.Errorf("marshal themes_user: %w", err)
 	}
 
-	if err := r.pool.Set(ctx, key, b, 1*time.Hour).Err(); err != nil {
+	if err := r.pool.Set(ctx, key, b, 10*time.Minute).Err(); err != nil {
 		return fmt.Errorf("save themes_user to redis: %w", err)
 	}
 

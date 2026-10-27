@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
-	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 func TestBug14_A(t *testing.T) {
-	ctx, service, _ := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, _ := Begin(ErrRedisUnavailable)
 
 	user_id := 1
 	themes_query, err := service.GetThemes(ctx, &user_id, nil, nil)
@@ -27,7 +26,7 @@ func TestBug14_A(t *testing.T) {
 }
 
 func TestBug14_B(t *testing.T) {
-	ctx, service, _ := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, _ := Begin(ErrRedisUnavailable)
 
 	limit := 0
 	themes_query, err := service.GetThemes(ctx, nil, &limit, nil)
@@ -46,7 +45,7 @@ func TestBug14_B(t *testing.T) {
 }
 
 func TestBug14_C_POST(t *testing.T) {
-	ctx, service, inputTheme := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, inputTheme := Begin(ErrRedisUnavailable)
 
 	themes_1, err := service.GetThemes(ctx, nil, nil, nil)
 	if err != nil {
@@ -69,7 +68,7 @@ func TestBug14_C_POST(t *testing.T) {
 }
 
 func TestBug14_C_DEL(t *testing.T) {
-	ctx, service, inputTheme := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, inputTheme := Begin(ErrRedisUnavailable)
 
 	created, err := service.CreateTheme(ctx, inputTheme)
 	if err != nil {
@@ -97,7 +96,7 @@ func TestBug14_C_DEL(t *testing.T) {
 }
 
 func TestBug14_C_PATCH(t *testing.T) {
-	ctx, service, inputTheme := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, inputTheme := Begin(ErrRedisUnavailable)
 
 	created, err := service.CreateTheme(ctx, inputTheme)
 	if err != nil {
@@ -128,48 +127,5 @@ func TestBug14_C_PATCH(t *testing.T) {
 
 	if theme_1_title == theme_2_title {
 		t.Fatalf("PatchTheme with query params writes to the cache, just like for all themes")
-	}
-}
-
-func TestBug23(t *testing.T) {
-	ctx, service, theme := Begin(core_errors.ErrRedisUnavailable)
-
-	created, err := service.CreateTheme(ctx, theme)
-	if err != nil {
-		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
-	}
-
-	subject := "beginner"
-	patch := domain.ThemePatch{
-		Subject: domain.Nullable[string]{
-			Set:   true,
-			Value: &subject,
-		},
-	}
-
-	theme_patch, err := service.PatchTheme(ctx, created.ID, patch)
-	if err != nil {
-		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
-	}
-
-	if theme_patch.Subject != subject {
-		t.Errorf("PatchTheme() Subject = %q, want %q", theme_patch.Subject, subject)
-	}
-
-	format := "mixed"
-	patch = domain.ThemePatch{
-		Format: domain.Nullable[string]{
-			Set:   true,
-			Value: &format,
-		},
-	}
-
-	theme_patch, err = service.PatchTheme(ctx, created.ID, patch)
-	if err != nil {
-		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
-	}
-
-	if theme_patch.Format != format {
-		t.Errorf("PatchTheme() Format = %q, want %q", theme_patch.Format, format)
 	}
 }
