@@ -129,4 +129,4 @@ cover:
 	rm coverage.out
 
 test:
-	@go test -race ./...;
+	@go test -race ./...
