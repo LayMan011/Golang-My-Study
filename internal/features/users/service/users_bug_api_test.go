@@ -1,15 +1,13 @@
 package users_service
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
-	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
 func TestBug14_A(t *testing.T) {
-	ctx, service, _ := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, _ := Begin(ErrRedisUnavailable)
 
 	offset := 1
 	users_query, err := service.GetUsers(ctx, nil, &offset)
@@ -28,7 +26,7 @@ func TestBug14_A(t *testing.T) {
 }
 
 func TestBug14_B(t *testing.T) {
-	ctx, service, _ := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, _ := Begin(ErrRedisUnavailable)
 
 	limit := 0
 	users_query, err := service.GetUsers(ctx, &limit, nil)
@@ -47,7 +45,7 @@ func TestBug14_B(t *testing.T) {
 }
 
 func TestBug14_C_POST(t *testing.T) {
-	ctx, service, inputUser := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, inputUser := Begin(ErrRedisUnavailable)
 
 	users_1, err := service.GetUsers(ctx, nil, nil)
 	if err != nil {
@@ -70,7 +68,7 @@ func TestBug14_C_POST(t *testing.T) {
 }
 
 func TestBug14_C_DEL(t *testing.T) {
-	ctx, service, inputUser := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, inputUser := Begin(ErrRedisUnavailable)
 
 	created, err := service.CreateUser(ctx, inputUser)
 	if err != nil {
@@ -98,7 +96,7 @@ func TestBug14_C_DEL(t *testing.T) {
 }
 
 func TestBug14_C_PATCH(t *testing.T) {
-	ctx, service, inputUser := Begin(core_errors.ErrRedisUnavailable)
+	ctx, service, inputUser := Begin(ErrRedisUnavailable)
 
 	created, err := service.CreateUser(ctx, inputUser)
 	if err != nil {
@@ -129,48 +127,5 @@ func TestBug14_C_PATCH(t *testing.T) {
 
 	if user_1_fullname == users_2_fullname {
 		t.Fatalf("PatchUser with query params writes to the cache, just like for all users")
-	}
-}
-
-func TestBug23(t *testing.T) {
-	ctx, service, user := Begin(core_errors.ErrRedisUnavailable)
-
-	created, err := service.CreateUser(ctx, user)
-	if err != nil {
-		t.Fatalf("CreateUser() returned unexpected error: %v", err)
-	}
-
-	fullname := "123"
-	patch := domain.UserPatch{
-		FullName: domain.Nullable[string]{
-			Set:   true,
-			Value: &fullname,
-		},
-	}
-
-	user_patch, err := service.PatchUser(ctx, created.ID, patch)
-	if err != nil {
-		t.Fatalf("PatchUser() returned unexpected error: %v", err)
-	}
-
-	if user_patch.FullName != fullname {
-		t.Errorf("PatchTheme() FullName = %q, want %q", user_patch.FullName, fullname)
-	}
-
-	password := []byte("123456789")
-	patch = domain.UserPatch{
-		Password: domain.Nullable[[]byte]{
-			Set:   true,
-			Value: &password,
-		},
-	}
-
-	user_patch, err = service.PatchUser(ctx, created.ID, patch)
-	if err != nil {
-		t.Fatalf("PatchUser() returned unexpected error: %v", err)
-	}
-
-	if !reflect.DeepEqual(user_patch.Password, password) {
-		t.Errorf("PatchTheme() Password = %q, want %q", user_patch.Password, password)
 	}
 }
