@@ -25,7 +25,37 @@ func (r *postgresRepoStub) GetThemes(
 	limit *int,
 	offset *int,
 ) ([]domain.Theme, error) {
-	return r.themes, nil
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	filtered := make([]domain.Theme, 0, len(r.themes))
+	for _, theme := range r.themes {
+		if userID != nil && theme.AuthorUserID != *userID {
+			continue
+		}
+
+		filtered = append(filtered, theme)
+	}
+
+	start := 0
+	if offset != nil {
+		start = *offset
+	}
+
+	if start >= len(filtered) {
+		return []domain.Theme{}, nil
+	}
+
+	end := len(filtered)
+	if limit != nil && start+*limit < end {
+		end = start + *limit
+	}
+
+	result := make([]domain.Theme, end-start)
+	copy(result, filtered[start:end])
+
+	return result, nil
 }
 
 func (r *postgresRepoStub) GetTheme(
@@ -50,12 +80,14 @@ func (r *postgresRepoStub) DeleteTheme(
 	ctx context.Context,
 	id int,
 ) error {
-	if len(r.themes) > 0 {
-		r.themes = r.themes[1:]
-		return nil
+	for i, theme := range r.themes {
+		if theme.ID == id {
+			r.themes = append(r.themes[:i], r.themes[i+1:]...)
+			return nil
+		}
 	}
 
-	return errors.New("failed to delete themes")
+	return core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) PatchTheme(
@@ -77,7 +109,6 @@ func (r *postgresRepoStub) CreateTheme(
 	ctx context.Context,
 	theme domain.Theme,
 ) (domain.Theme, error) {
-	r.calls++
 	if r.err != nil {
 		return domain.Theme{}, r.err
 	}

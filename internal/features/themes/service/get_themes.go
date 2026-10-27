@@ -21,7 +21,13 @@ func (s *ThemeService) GetThemes(
 		return nil, err
 	}
 
-	cacheKey := fmt.Sprintf("themes:user_id:%dlimit:%d:offset:%d", result[0], result[1], result[2])
+	version, err := s.themeRepositoryRedis.GetThemesListVersion(ctx)
+	if err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to get themes list version", zap.Error(err))
+	}
+
+	cacheKey := fmt.Sprintf("themes:list:version:%d:user_id:%dlimit:%d:offset:%d", version, result[0], result[1], result[2])
 
 	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil {
 		return cached, nil
