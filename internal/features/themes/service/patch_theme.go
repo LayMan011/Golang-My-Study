@@ -28,6 +28,11 @@ func (s *ThemeService) PatchTheme(
 		return domain.Theme{}, fmt.Errorf("patch theme: %w", err)
 	}
 
+	if err := s.themeRepositoryRedis.BumpThemesListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate themes list cache", zap.Error(err))
+	}
+
 	if err := s.themeRepositoryRedis.PatchTheme(ctx, patchedTheme.ID, patch); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("patch theme to cache", zap.Error(err))

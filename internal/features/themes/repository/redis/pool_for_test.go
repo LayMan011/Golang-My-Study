@@ -2,6 +2,7 @@ package themes_redis_repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
@@ -81,6 +82,14 @@ func (p *testRedisPool) HDel(
 
 func (p *testRedisPool) Close() error {
 	return p.client.Close()
+}
+
+func (p *testRedisPool) Incr(ctx context.Context, key string) (int64, error) {
+	value, err := p.client.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("increment redis key %q: %w", key, err)
+	}
+	return value, nil
 }
 
 type testRedisPipeline struct {
