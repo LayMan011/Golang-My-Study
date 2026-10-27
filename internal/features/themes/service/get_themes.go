@@ -27,7 +27,7 @@ func (s *ThemeService) GetThemes(
 		log.Warn("failed to get themes list version", zap.Error(err))
 	}
 
-	cacheKey := fmt.Sprintf("themes:list:version:%d:user_id:%dlimit:%d:offset:%d", version, result[0], result[1], result[2])
+	cacheKey := fmt.Sprintf("themes:list:version:%d:user_id:%d:limit:%d:offset:%d", version, result[0], result[1], result[2])
 
 	if cached, err := s.themeRepositoryRedis.GetThemes(ctx, cacheKey); err == nil {
 		return cached, nil
