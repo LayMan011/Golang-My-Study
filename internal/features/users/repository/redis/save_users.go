@@ -15,7 +15,7 @@ func (r *UserRepository) SaveUsers(ctx context.Context, key string, users []doma
 		return fmt.Errorf("marshal users: %w", err)
 	}
 
-	if err := r.pool.Set(ctx, key, b, 1*time.Hour).Err(); err != nil {
+	if err := r.pool.Set(ctx, key, b, 10*time.Minute).Err(); err != nil {
 		return fmt.Errorf("save users to redis: %w", err)
 	}
 

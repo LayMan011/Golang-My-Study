@@ -2,6 +2,7 @@ package users_service
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 	"time"
@@ -10,6 +11,11 @@ import (
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	"go.uber.org/zap"
+)
+
+var (
+	ErrRedisUnavailable       = errors.New("redis unavailable")
+	ErrRedisConnectionRefused = errors.New("connection refused")
 )
 
 func generate_users() []domain.User {
@@ -59,7 +65,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -92,7 +98,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -125,7 +131,7 @@ func TestUserService_GetUser(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -163,7 +169,7 @@ func TestUserService_GetUsers(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -203,7 +209,7 @@ func TestUserService_PatchUser(t *testing.T) {
 		},
 		testCase{
 			name:     "redis error",
-			cacheErr: core_errors.ErrRedisConnectionRefused,
+			cacheErr: ErrRedisConnectionRefused,
 		},
 	}
 
@@ -237,5 +243,48 @@ func TestUserService_PatchUser(t *testing.T) {
 				t.Errorf("PatchUser() FullName = %q, want %q", got.FullName, fullName)
 			}
 		})
+	}
+}
+
+func TestPatchUser_TwiceInRow(t *testing.T) {
+	ctx, service, user := Begin(ErrRedisUnavailable)
+
+	created, err := service.CreateUser(ctx, user)
+	if err != nil {
+		t.Fatalf("CreateUser() returned unexpected error: %v", err)
+	}
+
+	fullname := "123"
+	patch := domain.UserPatch{
+		FullName: domain.Nullable[string]{
+			Set:   true,
+			Value: &fullname,
+		},
+	}
+
+	user_patch, err := service.PatchUser(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchUser() returned unexpected error: %v", err)
+	}
+
+	if user_patch.FullName != fullname {
+		t.Errorf("PatchTheme() FullName = %q, want %q", user_patch.FullName, fullname)
+	}
+
+	password := []byte("123456789")
+	patch = domain.UserPatch{
+		Password: domain.Nullable[[]byte]{
+			Set:   true,
+			Value: &password,
+		},
+	}
+
+	user_patch, err = service.PatchUser(ctx, created.ID, patch)
+	if err != nil {
+		t.Fatalf("PatchUser() returned unexpected error: %v", err)
+	}
+
+	if !reflect.DeepEqual(user_patch.Password, password) {
+		t.Errorf("PatchTheme() Password = %q, want %q", user_patch.Password, password)
 	}
 }
