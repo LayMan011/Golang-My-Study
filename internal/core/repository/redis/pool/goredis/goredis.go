@@ -122,7 +122,3 @@ func (r *RedisClient) Incr(ctx context.Context, key string) (int64, error) {
 	}
 	return value, nil
 }
-
-// func (p *RedisClient) OpTimeout() time.Duration {
-// 	return p.opTimeout
-// }
