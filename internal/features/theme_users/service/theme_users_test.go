@@ -16,6 +16,7 @@ import (
 var (
 	ErrRedisUnavailable       = errors.New("redis unavailable")
 	ErrRedisConnectionRefused = errors.New("connection refused")
+	ErrNotGoToCache           = errors.New("no cache")
 )
 
 func generate_themes_user() []domain.ThemeUser {
@@ -45,8 +46,17 @@ func Begin(redisErr error) (context.Context, *ThemeUserService, domain.ThemeUser
 		UserID:           3,
 	}
 
-	postgres := &postgresRepoStub{themes_user: []domain.ThemeUser{}}
-	redis := &redisRepoStub{err: redisErr}
+	state := &stubState{}
+
+	postgres := &postgresRepoStub{
+		themes_user: []domain.ThemeUser{},
+		state:       state,
+	}
+
+	redis := &redisRepoStub{
+		err:   redisErr,
+		state: state,
+	}
 
 	service := &ThemeUserService{
 		themeUserRepositoryPostgres: postgres,
@@ -56,7 +66,7 @@ func Begin(redisErr error) (context.Context, *ThemeUserService, domain.ThemeUser
 	return ctx, service, inputTheme
 }
 
-func TestThemeService_CreateTheme(t *testing.T) {
+func TestThemeUserService_CreateThemeUser(t *testing.T) {
 	type testCase struct {
 		name     string
 		cacheErr error
@@ -89,7 +99,7 @@ func TestThemeService_CreateTheme(t *testing.T) {
 	}
 }
 
-func TestThemeService_DeleteTheme(t *testing.T) {
+func TestThemeUserService_DeleteThemeUser(t *testing.T) {
 	type testCase struct {
 		name     string
 		cacheErr error
@@ -122,7 +132,7 @@ func TestThemeService_DeleteTheme(t *testing.T) {
 	}
 }
 
-func TestThemeService_GetTheme(t *testing.T) {
+func TestThemeUserService_GetThemeUser(t *testing.T) {
 	type testCase struct {
 		name     string
 		cacheErr error
@@ -160,7 +170,7 @@ func TestThemeService_GetTheme(t *testing.T) {
 	}
 }
 
-func TestThemeService_GetThemes(t *testing.T) {
+func TestThemeUserService_GetThemesUser(t *testing.T) {
 	type testCase struct {
 		name     string
 		cacheErr error
@@ -200,7 +210,7 @@ func TestThemeService_GetThemes(t *testing.T) {
 	}
 }
 
-func TestThemeService_PatchTheme(t *testing.T) {
+func TestThemeUserService_PatchThemeUser(t *testing.T) {
 	type testCase struct {
 		name     string
 		cacheErr error
@@ -247,7 +257,7 @@ func TestThemeService_PatchTheme(t *testing.T) {
 }
 
 func TestPatchThemeUser_TwiceInRow(t *testing.T) {
-	ctx, service, theme_user := Begin(ErrRedisUnavailable)
+	ctx, service, theme_user := Begin(ErrNotGoToCache)
 
 	created, err := service.CreateThemeUser(ctx, theme_user)
 	if err != nil {
@@ -264,7 +274,7 @@ func TestPatchThemeUser_TwiceInRow(t *testing.T) {
 
 	theme_user_patch, err := service.PatchThemeUser(ctx, created.ID, patch)
 	if err != nil {
-		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+		t.Fatalf("PatchThemeUser() returned unexpected error: %v", err)
 	}
 
 	if theme_user_patch.Completed != completed {
@@ -281,7 +291,7 @@ func TestPatchThemeUser_TwiceInRow(t *testing.T) {
 
 	theme_user_patch, err = service.PatchThemeUser(ctx, created.ID, patch)
 	if err != nil {
-		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+		t.Fatalf("PatchThemeUser() returned unexpected error: %v", err)
 	}
 
 	if theme_user_patch.Completed != completed {
