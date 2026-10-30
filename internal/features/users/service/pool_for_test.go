@@ -218,15 +218,14 @@ func (r *redisRepoStub) SaveUsers(
 		return r.err
 	}
 
-	version, err := r.GetUsersListVersion(ctx)
-	if err != nil {
-		return err
+	if r.usersCache == nil {
+		r.usersCache = make(map[string][]domain.User)
 	}
 
 	cached := make([]domain.User, len(users))
 	copy(cached, users)
+	r.usersCache[key] = cached
 
-	r.moveUsersCacheToVersion(version, key, cached)
 	return nil
 }
 
@@ -372,4 +371,25 @@ func cacheKeyInt(key, marker, nextMarker string) (int, bool) {
 		return 0, false
 	}
 	return value, true
+}
+
+func (r *redisRepoStub) GetUsersListVersion(
+	ctx context.Context,
+) (int64, error) {
+	if r.err != nil {
+		return 0, r.err
+	}
+
+	return r.listVersion, nil
+}
+
+func (r *redisRepoStub) BumpThemesListVersion(
+	ctx context.Context,
+) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	r.listVersion++
+	return nil
 }
