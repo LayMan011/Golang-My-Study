@@ -205,19 +205,14 @@ func (r *redisRepoStub) SaveThemes(
 		return r.err
 	}
 
-	version, err := r.GetThemesListVersion(ctx)
-	if err != nil {
-		return err
-	}
-
 	if r.themesCache == nil {
 		r.themesCache = make(map[string][]domain.Theme)
 	}
 
 	cached := make([]domain.Theme, len(themes))
 	copy(cached, themes)
+	r.themesCache[key] = cached
 
-	r.moveThemesCacheToVersion(version, key, cached)
 	return nil
 }
 
