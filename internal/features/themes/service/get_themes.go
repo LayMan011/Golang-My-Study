@@ -25,6 +25,18 @@ func (s *ThemeService) GetThemes(
 	if err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to get themes list version", zap.Error(err))
+
+		themes, err := s.themeRepositoryPostgres.GetThemes(
+			ctx,
+			userID,
+			limit,
+			offset,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("get themes from repository: %w", err)
+		}
+
+		return themes, nil
 	}
 
 	cacheKey := fmt.Sprintf("themes:list:version:%d:user_id:%d:limit:%d:offset:%d", version, result[0], result[1], result[2])
@@ -54,14 +66,14 @@ func (s *ThemeService) GetThemes(
 func getQueryParams(userID *int, limit *int, offset *int) ([3]int, error) {
 	if limit != nil && *limit < 0 {
 		return [3]int{}, fmt.Errorf(
-			"'first' must be non-negative: %w",
+			"'limit' must be non-negative: %w",
 			core_errors.ErrInvalidArgument,
 		)
 	}
 
 	if offset != nil && *offset < 0 {
 		return [3]int{}, fmt.Errorf(
-			"'last' must be non-negative: %w",
+			"'offset' must be non-negative: %w",
 			core_errors.ErrInvalidArgument,
 		)
 	}
