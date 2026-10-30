@@ -42,6 +42,17 @@ func (s *UserService) GetUsers(
 	if err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to get users list version", zap.Error(err))
+
+		users, err := s.userRepositoryPostgres.GetUsers(
+			ctx,
+			limit,
+			offset,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("get users from repository: %w", err)
+		}
+
+		return users, nil
 	}
 
 	cacheKey := fmt.Sprintf("users:list:version:%d:limit:%d:offset:%d", version, lim, off)
