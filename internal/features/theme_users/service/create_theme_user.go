@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeUserService) CreateThemeUser(
 	ctx context.Context,
 	themeUser domain.ThemeUser,
 ) (domain.ThemeUser, error) {
-
 	if err := themeUser.Validate(); err != nil {
 		return domain.ThemeUser{}, fmt.Errorf("validate themeUser domain: %w", err)
 	}
@@ -24,7 +25,8 @@ func (s *ThemeUserService) CreateThemeUser(
 	key := fmt.Sprintf("theme_user:%d", themeUser.ID)
 
 	if err := s.themeUserRepositoryRedis.SaveThemeUser(ctx, key, themeUser); err != nil {
-		return domain.ThemeUser{}, fmt.Errorf("failed to cache the theme_user: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to cache the theme_user", zap.Error(err))
 	}
 
 	return themeUserDomain, nil

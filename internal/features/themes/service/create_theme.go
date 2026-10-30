@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeService) CreateTheme(
@@ -24,7 +26,8 @@ func (s *ThemeService) CreateTheme(
 	key := fmt.Sprintf("theme:%d", theme.ID)
 
 	if err := s.themeRepositoryRedis.SaveTheme(ctx, key, theme); err != nil {
-		return domain.Theme{}, fmt.Errorf("failed to cache the theme: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to cache the theme", zap.Error(err))
 	}
 
 	return theme, nil
