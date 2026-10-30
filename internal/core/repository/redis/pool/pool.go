@@ -20,8 +20,8 @@ type Pool interface {
 	Exists(ctx context.Context, key string) CustomIntCmd                 // +
 	HDel(ctx context.Context, key string, fields ...string) CustomIntCmd // +
 
-	Close() error                                        // +
-	Incr(ctx context.Context, key string) (int64, error) //  +
+	Close() error // +
+	Incr(ctx context.Context, key string) (int64, error)
 
 	// OpTimeout() time.Duration
 }
