@@ -16,6 +16,7 @@ import (
 var (
 	ErrRedisUnavailable       = errors.New("redis unavailable")
 	ErrRedisConnectionRefused = errors.New("connection refused")
+	ErrNotGoToCache           = errors.New("no cache")
 )
 
 func generate_users() []domain.User {
@@ -41,8 +42,17 @@ func Begin(redisErr error) (context.Context, *UserService, domain.User) {
 		FullName:  "Иван Иванов Иванович",
 	}
 
-	postgres := &postgresRepoStub{users: []domain.User{}}
-	redis := &redisRepoStub{err: redisErr}
+	state := &stubState{}
+
+	postgres := &postgresRepoStub{
+		users: []domain.User{},
+		state: state,
+	}
+
+	redis := &redisRepoStub{
+		err:   redisErr,
+		state: state,
+	}
 
 	service := &UserService{
 		userRepositoryPostgres: postgres,
@@ -247,7 +257,7 @@ func TestUserService_PatchUser(t *testing.T) {
 }
 
 func TestPatchUser_TwiceInRow(t *testing.T) {
-	ctx, service, user := Begin(ErrRedisUnavailable)
+	ctx, service, user := Begin(ErrNotGoToCache)
 
 	created, err := service.CreateUser(ctx, user)
 	if err != nil {
