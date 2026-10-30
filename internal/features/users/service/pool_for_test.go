@@ -373,3 +373,24 @@ func cacheKeyInt(key, marker, nextMarker string) (int, bool) {
 	}
 	return value, true
 }
+
+func (r *redisRepoStub) GetUsersListVersion(
+	ctx context.Context,
+) (int64, error) {
+	if r.err != nil {
+		return 0, r.err
+	}
+
+	return r.listVersion, nil
+}
+
+func (r *redisRepoStub) BumpThemesListVersion(
+	ctx context.Context,
+) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	r.listVersion++
+	return nil
+}
