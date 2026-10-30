@@ -44,6 +44,14 @@ type ThemeUserRepositoryRedis interface {
 		ctx context.Context,
 		key string,
 	) ([]domain.ThemeUser, error)
+
+	GetThemesUserListVersion(
+		ctx context.Context,
+	) (int64, error)
+
+	BumpThemesUserListVersion(
+		ctx context.Context,
+	) error
 }
 
 type ThemeUserRepositoryPostgres interface {

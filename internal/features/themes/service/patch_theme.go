@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *ThemeService) PatchTheme(
@@ -12,7 +14,7 @@ func (s *ThemeService) PatchTheme(
 	id int,
 	patch domain.ThemePatch,
 ) (domain.Theme, error) {
-	theme, err := s.themeRepositoryPostgres.GetTheme(ctx, id)
+	theme, err := s.GetTheme(ctx, id)
 	if err != nil {
 		return domain.Theme{}, fmt.Errorf("get theme: %w", err)
 	}
@@ -26,8 +28,14 @@ func (s *ThemeService) PatchTheme(
 		return domain.Theme{}, fmt.Errorf("patch theme: %w", err)
 	}
 
+	if err := s.themeRepositoryRedis.BumpThemesListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate themes list cache", zap.Error(err))
+	}
+
 	if err := s.themeRepositoryRedis.PatchTheme(ctx, patchedTheme.ID, patch); err != nil {
-		return domain.Theme{}, fmt.Errorf("patch theme to cache: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("patch theme to cache", zap.Error(err))
 	}
 
 	return patchedTheme, nil

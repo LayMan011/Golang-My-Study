@@ -6,6 +6,8 @@ import (
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *UserService) GetUsers(
@@ -27,8 +29,8 @@ func (s *UserService) GetUsers(
 		)
 	}
 
-	lim := 0
-	off := 0
+	lim := -1
+	off := -1
 	if limit != nil {
 		lim = *limit
 	}
@@ -36,7 +38,24 @@ func (s *UserService) GetUsers(
 		off = *offset
 	}
 
-	cacheKey := fmt.Sprintf("users:limit:%d:offset:%d", lim, off)
+	version, err := s.userRepositoryRedis.GetUsersListVersion(ctx)
+	if err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to get users list version", zap.Error(err))
+
+		users, err := s.userRepositoryPostgres.GetUsers(
+			ctx,
+			limit,
+			offset,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("get users from repository: %w", err)
+		}
+
+		return users, nil
+	}
+
+	cacheKey := fmt.Sprintf("users:list:version:%d:limit:%d:offset:%d", version, lim, off)
 
 	if cached, err := s.userRepositoryRedis.GetUsers(ctx, cacheKey); err == nil {
 		return cached, nil
@@ -52,7 +71,8 @@ func (s *UserService) GetUsers(
 	}
 
 	if err := s.userRepositoryRedis.SaveUsers(ctx, cacheKey, users); err != nil {
-		return nil, fmt.Errorf("failed save to cache the users: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed save to cache the users", zap.Error(err))
 	}
 
 	return users, nil

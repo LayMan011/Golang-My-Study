@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	"go.uber.org/zap"
 )
 
 func (s *UserService) CreateUser(
@@ -20,10 +22,16 @@ func (s *UserService) CreateUser(
 		return domain.User{}, fmt.Errorf("create user: %w", err)
 	}
 
+	if err := s.userRepositoryRedis.BumpUsersListVersion(ctx); err != nil {
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to invalidate users list cache", zap.Error(err))
+	}
+
 	key := fmt.Sprintf("user:%d", user.ID)
 
 	if err := s.userRepositoryRedis.SaveUser(ctx, key, user); err != nil {
-		return domain.User{}, fmt.Errorf("failed to cache the user: %w", err)
+		log := core_logger.FromContext(ctx)
+		log.Warn("failed to cache the user", zap.Error(err))
 	}
 
 	return user, nil

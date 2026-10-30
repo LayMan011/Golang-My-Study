@@ -21,6 +21,7 @@ type Pool interface {
 	HDel(ctx context.Context, key string, fields ...string) CustomIntCmd // +
 
 	Close() error // +
+	Incr(ctx context.Context, key string) (int64, error)
 
 	// OpTimeout() time.Duration
 }
