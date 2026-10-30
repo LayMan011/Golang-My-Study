@@ -97,10 +97,6 @@ func Begin(redisErr error) (context.Context, *ThemeService, domain.Theme) {
 	redis := &redisRepoStub{
 		err:   redisErr,
 		state: state,
-
-		themeCache:  make(map[string]domain.Theme),
-		themesCache: make(map[string][]domain.Theme),
-		listVersion: 0,
 	}
 
 	service := &ThemeService{

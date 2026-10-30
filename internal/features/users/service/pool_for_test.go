@@ -218,15 +218,14 @@ func (r *redisRepoStub) SaveUsers(
 		return r.err
 	}
 
-	version, err := r.GetUsersListVersion(ctx)
-	if err != nil {
-		return err
+	if r.usersCache == nil {
+		r.usersCache = make(map[string][]domain.User)
 	}
 
 	cached := make([]domain.User, len(users))
 	copy(cached, users)
+	r.usersCache[key] = cached
 
-	r.moveUsersCacheToVersion(version, key, cached)
 	return nil
 }
 

@@ -76,18 +76,11 @@ func Begin(redisErr error) (context.Context, *ThemeUserService, domain.ThemeUser
 	postgres := &postgresRepoStub{
 		themes_user: []domain.ThemeUser{},
 		state:       state,
-
-		getThemesUserCalls:    0,
-		createThemesUserCalls: 0,
 	}
 
 	redis := &redisRepoStub{
 		err:   redisErr,
 		state: state,
-
-		themeUserCache:  make(map[string]domain.ThemeUser),
-		themesUserCache: make(map[string][]domain.ThemeUser),
-		listVersion:     0,
 	}
 
 	service := &ThemeUserService{
@@ -242,7 +235,7 @@ func TestThemeUserService_GetThemesUser(t *testing.T) {
 	}
 }
 
-func TestThemeService_PatchTheme(t *testing.T) {
+func TestThemeUserService_PatchThemeUser(t *testing.T) {
 	type testCase struct {
 		name     string
 		cacheErr error
@@ -289,7 +282,7 @@ func TestThemeService_PatchTheme(t *testing.T) {
 }
 
 func TestPatchThemeUser_TwiceInRow(t *testing.T) {
-	ctx, service, theme_user := Begin(ErrRedisUnavailable)
+	ctx, service, theme_user := Begin(ErrNotGoToCache)
 
 	created, err := service.CreateThemeUser(ctx, theme_user)
 	if err != nil {
@@ -306,7 +299,7 @@ func TestPatchThemeUser_TwiceInRow(t *testing.T) {
 
 	theme_user_patch, err := service.PatchThemeUser(ctx, created.ID, patch)
 	if err != nil {
-		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+		t.Fatalf("PatchThemeUser() returned unexpected error: %v", err)
 	}
 
 	if theme_user_patch.Completed != completed {
@@ -323,7 +316,7 @@ func TestPatchThemeUser_TwiceInRow(t *testing.T) {
 
 	theme_user_patch, err = service.PatchThemeUser(ctx, created.ID, patch)
 	if err != nil {
-		t.Fatalf("PatchTheme() returned unexpected error: %v", err)
+		t.Fatalf("PatchThemeUser() returned unexpected error: %v", err)
 	}
 
 	if theme_user_patch.Completed != completed {
