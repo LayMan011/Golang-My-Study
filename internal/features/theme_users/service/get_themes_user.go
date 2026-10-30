@@ -26,6 +26,19 @@ func (s *ThemeUserService) GetThemesUser(
 	if err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to get themes_user list version", zap.Error(err))
+
+		themesUser, err := s.themeUserRepositoryPostgres.GetThemesUser(
+			ctx,
+			userID,
+			themeID,
+			limit,
+			offset,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("get themes_user from repository: %w", err)
+		}
+
+		return themesUser, nil
 	}
 
 	cacheKey := fmt.Sprintf("themes_user:list:version:%duser_id:%dtheme_id:%dlimit:%d:offset:%d", version, result[0], result[1], result[2], result[3])
@@ -56,14 +69,14 @@ func (s *ThemeUserService) GetThemesUser(
 func getQueryParams(userID *int, themeID *int, limit *int, offset *int) ([4]int, error) {
 	if limit != nil && *limit < 0 {
 		return [4]int{}, fmt.Errorf(
-			"'first' must be non-negative: %w",
+			"'limit' must be non-negative: %w",
 			core_errors.ErrInvalidArgument,
 		)
 	}
 
 	if offset != nil && *offset < 0 {
 		return [4]int{}, fmt.Errorf(
-			"'last' must be non-negative: %w",
+			"'offset' must be non-negative: %w",
 			core_errors.ErrInvalidArgument,
 		)
 	}
