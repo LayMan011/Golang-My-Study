@@ -16,6 +16,7 @@ import (
 var (
 	ErrRedisUnavailable       = errors.New("redis unavailable")
 	ErrRedisConnectionRefused = errors.New("connection refused")
+	ErrNotGoToCache           = errors.New("no cache")
 )
 
 func generate_themes() []domain.Theme {
@@ -50,8 +51,16 @@ func Begin(redisErr error) (context.Context, *ThemeService, domain.Theme) {
 		AuthorUserID:    26,
 	}
 
-	postgres := &postgresRepoStub{themes: []domain.Theme{}}
-	redis := &redisRepoStub{err: redisErr}
+	state := &stubState{}
+
+	postgres := &postgresRepoStub{
+		themes: []domain.Theme{},
+		state:  state,
+	}
+	redis := &redisRepoStub{
+		err:   redisErr,
+		state: state,
+	}
 
 	service := &ThemeService{
 		themeRepositoryPostgres: postgres,
@@ -272,7 +281,7 @@ func TestThemeService_PatchTheme(t *testing.T) {
 }
 
 func TestPatchTheme_TwiceInRow(t *testing.T) {
-	ctx, service, theme := Begin(ErrRedisUnavailable)
+	ctx, service, theme := Begin(ErrNotGoToCache)
 
 	created, err := service.CreateTheme(ctx, theme)
 	if err != nil {

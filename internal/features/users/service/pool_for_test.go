@@ -8,10 +8,15 @@ import (
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 )
 
+type stubState struct {
+	unexpectedCacheRead bool
+}
+
 type postgresRepoStub struct {
 	users []domain.User
 	err   error
 	calls int
+	state *stubState
 }
 
 func (r *postgresRepoStub) GetUsers(
@@ -26,6 +31,11 @@ func (r *postgresRepoStub) GetUser(
 	ctx context.Context,
 	id int,
 ) (domain.User, error) {
+	if r.state.unexpectedCacheRead {
+		r.state.unexpectedCacheRead = false
+		return domain.User{}, errors.New("unexpected cache read before Postgres GetUser")
+	}
+
 	for _, user := range r.users {
 		if user.ID == id {
 			return user, nil
@@ -87,6 +97,11 @@ type redisRepoStub struct {
 	calls int
 	key   string
 	user  domain.User
+	state *stubState
+
+	userCache   map[string]domain.User
+	usersCache  map[string][]domain.User
+	listVersion int64
 }
 
 func (r *redisRepoStub) SaveToken(
@@ -116,28 +131,52 @@ func (r *redisRepoStub) SaveUser(
 	key string,
 	user domain.User,
 ) error {
-	r.calls++
 	r.key = key
 	r.user = user
-	return r.err
+
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.userCache == nil {
+		r.userCache = make(map[string]domain.User)
+	}
+
+	r.userCache[key] = user
+	return nil
 }
 
 func (r *redisRepoStub) GetUser(
 	ctx context.Context,
 	key string,
 ) (domain.User, error) {
-	if r.err != nil {
+	if r.err == ErrNotGoToCache {
+		r.state.unexpectedCacheRead = true
 		return domain.User{}, r.err
 	}
 
-	return domain.User{}, core_errors.ErrNotFound
+	user, ok := r.userCache[key]
+	if !ok {
+		return domain.User{}, core_errors.ErrNotFound
+	}
+
+	return user, nil
 }
 
 func (r *redisRepoStub) DeleteUser(
 	ctx context.Context,
 	key string,
 ) error {
-	return core_errors.ErrNotFound
+	if r.err != nil {
+		return r.err
+	}
+
+	if _, ok := r.userCache[key]; !ok {
+		return core_errors.ErrNotFound
+	}
+
+	delete(r.userCache, key)
+	return nil
 }
 
 func (r *redisRepoStub) SaveUsers(
@@ -145,6 +184,18 @@ func (r *redisRepoStub) SaveUsers(
 	key string,
 	users []domain.User,
 ) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	if r.usersCache == nil {
+		r.usersCache = make(map[string][]domain.User)
+	}
+
+	cached := make([]domain.User, len(users))
+	copy(cached, users)
+	r.usersCache[key] = cached
+
 	return nil
 }
 
@@ -156,7 +207,15 @@ func (r *redisRepoStub) GetUsers(
 		return nil, r.err
 	}
 
-	return []domain.User{}, core_errors.ErrNotFound
+	users, ok := r.usersCache[key]
+	if !ok {
+		return nil, core_errors.ErrNotFound
+	}
+
+	result := make([]domain.User, len(users))
+	copy(result, users)
+
+	return result, nil
 }
 
 func (r *redisRepoStub) PatchUser(
@@ -165,4 +224,25 @@ func (r *redisRepoStub) PatchUser(
 	patch domain.UserPatch,
 ) error {
 	return core_errors.ErrNotFound
+}
+
+func (r *redisRepoStub) GetUsersListVersion(
+	ctx context.Context,
+) (int64, error) {
+	if r.err != nil {
+		return 0, r.err
+	}
+
+	return r.listVersion, nil
+}
+
+func (r *redisRepoStub) BumpThemesListVersion(
+	ctx context.Context,
+) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	r.listVersion++
+	return nil
 }
