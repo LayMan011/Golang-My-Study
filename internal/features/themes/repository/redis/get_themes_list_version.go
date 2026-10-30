@@ -14,7 +14,7 @@ func (r *ThemeRepository) GetThemesListVersion(ctx context.Context) (int64, erro
 	value, err := r.pool.Get(ctx, themesListVersionKey)
 	if err != nil {
 		if errors.Is(err, core_errors.ErrNotFound) {
-			return 0, nil
+			return 0, core_errors.ErrNotFound
 		}
 		return 0, fmt.Errorf("get themes list version: %w", err)
 	}

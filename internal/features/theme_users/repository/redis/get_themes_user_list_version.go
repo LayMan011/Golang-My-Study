@@ -14,7 +14,7 @@ func (r *ThemeUserRepository) GetThemesUserListVersion(ctx context.Context) (int
 	value, err := r.pool.Get(ctx, themesUserListVersionKey)
 	if err != nil {
 		if errors.Is(err, core_errors.ErrNotFound) {
-			return 0, nil
+			return 0, core_errors.ErrNotFound
 		}
 		return 0, fmt.Errorf("get themes_user list version: %w", err)
 	}
