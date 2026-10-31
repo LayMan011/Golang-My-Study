@@ -19,11 +19,10 @@ import (
 	users_service "github.com/LayMan011/Golang-My-Study/internal/features/users/service"
 )
 
-func Test_Delete_User_And_Theme_With_ThemeUser(t *testing.T) {
+func Test_Delete_User_With_Theme(t *testing.T) {
 	ctx := context.Background()
 
-	usersService, themesService, themesUserService :=
-		InitFeatures(ctx, TestDB, redisClient)
+	usersService, themesService, _ := InitFeatures(ctx, TestDB, redisClient)
 
 	user, err := usersService.CreateUser(ctx, domain.User{
 		ID:        42,
@@ -31,7 +30,56 @@ func Test_Delete_User_And_Theme_With_ThemeUser(t *testing.T) {
 		Email:     "user@example.com",
 		CreatedAt: time.Now(),
 		Password:  []byte("c29tZV9wYXNzd29yZF9oYXNo"),
-		FullName:  "Иван Иванов Иванович",
+		FullName:  "Иван Иванов 1",
+	})
+	if err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	_, err = themesService.CreateTheme(ctx, domain.Theme{
+		ID:              21,
+		Version:         1,
+		Title:           "123",
+		Description:     nil,
+		CreatedAt:       time.Now(),
+		Subject:         "Русский язык",
+		Rating:          nil,
+		AllRatings:      0,
+		NumberOfRatings: 0,
+		NumberOfUsers:   0,
+		Price:           5000,
+		Level:           "beginner",
+		Duration:        "3 месяца",
+		Format:          "video",
+		AuthorUserID:    user.ID,
+	})
+	if err != nil {
+		t.Fatalf("create theme: %v", err)
+	}
+
+	if err := usersService.DeleteUser(ctx, user.ID); err == nil {
+		t.Fatal("expected deleting user to fail, got nil")
+	}
+
+	// Пока что закомментировал эту проврку, потому что здесь все ещё есть проверка из #23. Как залью в main #23,
+	// так сразу раскомментирую
+	// if _, err = usersService.GetUser(ctx, user.ID); err != nil {
+	// 	t.Fatal("expected user to be deleted")
+	// }
+}
+
+func Test_Delete_Theme_With_Theme(t *testing.T) {
+	ctx := context.Background()
+
+	usersService, themesService, themesUserService := InitFeatures(ctx, TestDB, redisClient)
+
+	user, err := usersService.CreateUser(ctx, domain.User{
+		ID:        42,
+		Version:   1,
+		Email:     "user1@example.com",
+		CreatedAt: time.Now(),
+		Password:  []byte("c29tZV9wYXNzd29yZF9oYXNo"),
+		FullName:  "Иван Иванов 2",
 	})
 	if err != nil {
 		t.Fatalf("create user: %v", err)
@@ -74,15 +122,75 @@ func Test_Delete_User_And_Theme_With_ThemeUser(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected theme-user relation to be deleted with the theme")
 	}
+}
+
+func Test_Delete_User_With_ThemeUser(t *testing.T) {
+	ctx := context.Background()
+
+	usersService, themesService, themesUserService :=
+		InitFeatures(ctx, TestDB, redisClient)
+
+	user_1, err := usersService.CreateUser(ctx, domain.User{
+		ID:        42,
+		Version:   1,
+		Email:     "user3@example.com",
+		CreatedAt: time.Now(),
+		Password:  []byte("c29tZV9wYXNzd29yZF9oYXNo"),
+		FullName:  "Иван Иванов Иванович",
+	})
+	if err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	theme, err := themesService.CreateTheme(ctx, domain.Theme{
+		ID:              21,
+		Version:         1,
+		Title:           "123",
+		Description:     nil,
+		CreatedAt:       time.Now(),
+		Subject:         "Русский язык",
+		Rating:          nil,
+		AllRatings:      0,
+		NumberOfRatings: 0,
+		NumberOfUsers:   0,
+		Price:           5000,
+		Level:           "beginner",
+		Duration:        "3 месяца",
+		Format:          "video",
+		AuthorUserID:    user_1.ID,
+	})
+	if err != nil {
+		t.Fatalf("create theme: %v", err)
+	}
+
+	user_2, err := usersService.CreateUser(ctx, domain.User{
+		ID:        42,
+		Version:   1,
+		Email:     "user4@example.com",
+		CreatedAt: time.Now(),
+		Password:  []byte("c29tZV9wYXNzd29yZF9oYXNo"),
+		FullName:  "Иван Иванов Иванович",
+	})
+	if err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	if user_1.ID == user_2.ID {
+		t.Fatalf("expected distinct users, got same ID %d", user_1.ID)
+	}
+
+	_, err = themesUserService.CreateThemeUser(
+		ctx,
+		domain.NewThemeUserUnitialized(theme.ID, user_2.ID),
+	)
+	if err != nil {
+		t.Fatalf("create theme-user relation: %v", err)
+	}
 
 	// Пока что закомментировал эту проврку, потому что здесь все ещё есть проверка из #23. Как залью в main #23,
 	// так сразу раскомментирую
-	// if err := usersService.DeleteUser(ctx, user.ID); err == nil {
-	// 	t.Fatal("expected deleting user to fail, got nil")
-	// }
-
-	// if _, err = usersService.GetUser(ctx, user.ID); err != nil {
-	// 	t.Fatal("expected user to be deleted")
+	// if err := usersService.DeleteUser(ctx, user_2.ID); err != nil {
+	// 	t.Fatalf("delete user: %v", err)
 	// }
 }
 
