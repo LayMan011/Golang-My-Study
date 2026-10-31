@@ -22,25 +22,40 @@ func (r *ThemeUserRepository) GetThemesUser(
 	FROM progress.themes_user
 	%s
 	ORDER by id ASC
-	LIMIT $1
-	OFFSET $2;
+	%s;
 	`
 
-	args := []any{first, last}
+	add_strings := [2]string{}
+	args := []any{}
 
 	if userID != nil && themeID != nil {
-		query = fmt.Sprintf(query, "WHERE user_id=$3 AND theme_id=$4")
+		add_strings[0] = `WHERE user_id=$1 AND theme_id=$2`
 		args = append(args, userID)
 		args = append(args, themeID)
 	} else if userID != nil && themeID == nil {
-		query = fmt.Sprintf(query, "WHERE user_id=$3")
+		add_strings[0] = `WHERE user_id=$1`
 		args = append(args, userID)
 	} else if userID == nil && themeID != nil {
-		query = fmt.Sprintf(query, "WHERE theme_id=$3")
+		add_strings[0] = `WHERE theme_id=$1`
 		args = append(args, themeID)
 	} else {
-		query = fmt.Sprintf(query, "")
+		add_strings[0] = ``
 	}
+
+	if first != nil && last != nil {
+		args = append(args, first, last)
+		add_strings[1] = fmt.Sprintf(`LIMIT $%d OFFSET $%d`, len(args)-1, len(args))
+	} else if first != nil && last == nil {
+		args = append(args, first)
+		add_strings[1] = fmt.Sprintf(`LIMIT $%d`, len(args))
+	} else if first == nil && last != nil {
+		args = append(args, last)
+		add_strings[1] = fmt.Sprintf(`OFFSET $%d`, len(args))
+	} else {
+		add_strings[1] = ``
+	}
+
+	query = fmt.Sprintf(query, add_strings[0], add_strings[1])
 
 	rows, err := r.pool.Query(
 		ctx,
@@ -48,11 +63,11 @@ func (r *ThemeUserRepository) GetThemesUser(
 		args...,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("select themes: %w", err)
+		return nil, fmt.Errorf("select themes_user: %w", err)
 	}
 	defer rows.Close()
 
-	var themeUserModels []ThemeUserModel
+	themeUserModels := make([]ThemeUserModel, 0)
 	for rows.Next() {
 		var themeUserModel ThemeUserModel
 
