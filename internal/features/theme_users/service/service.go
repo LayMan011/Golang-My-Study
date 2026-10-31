@@ -73,11 +73,6 @@ type ThemeUserRepositoryPostgres interface {
 		id int,
 	) (domain.ThemeUser, error)
 
-	GetThemeUserByUserID(
-		ctx context.Context,
-		id int,
-	) (domain.ThemeUser, error)
-
 	DeleteThemeUser(
 		ctx context.Context,
 		themeUserID int,
