@@ -1,8 +1,10 @@
 package users_transport_http
 
 import (
+	"errors"
 	"net/http"
 
+	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	core_http_request "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/request"
 	core_http_response "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/response"
@@ -34,9 +36,15 @@ func (h *UsersHTTPHandler) DeleteUser(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.userService.DeleteUser(ctx, userID); err != nil {
+		msg := "failed to delete user"
+
+		if errors.Is(err, core_errors.ErrConflict) {
+			msg = "you can’t delete this user because they have created themes. Transfer the themes to another user or delete them first."
+		}
+
 		responseHandler.ErrorResponse(
 			err,
-			"failed to delete user",
+			msg,
 		)
 
 		return
