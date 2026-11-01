@@ -66,10 +66,23 @@ migrate-version:
 
 
 migrate-force:
-	@docker compose run --rm project-postgres-migrate \
+	@if [ -z "$(seq)" ]; then \
+		echo "Отсутствует необходимый параметр seq. Пример: make migrate-force seq=4"; \
+		exit 1; \
+	fi; \
+	if ! printf '%s\n' "$(seq)" | grep -Eq '^[0-9]+$$'; then \
+		echo "Версия должна содержать только цифры: seq=$(seq)"; \
+		exit 1; \
+	fi; \
+	docker compose run --rm project-postgres-migrate \
 		-path /migrations \
 		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@project-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
-		force 4
+		force $(seq)
+
+migrate-cycle-test:
+	@make migrate-up; \
+	make migrate-down; \
+	make migrate-up
 
 logs-cleanup:
 	@read -p "Очистить все log файлы? Опастность утери логов. [y/N]: " ans; \
