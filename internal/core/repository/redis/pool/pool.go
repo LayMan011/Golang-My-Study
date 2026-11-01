@@ -6,23 +6,19 @@ import (
 )
 
 type Pool interface {
-	// Ping(ctx context.Context) CustomStatusCmd
-
-	Set(ctx context.Context, key string, value any, expiration time.Duration) CustomStatusCmd // +
-	Get(ctx context.Context, key string) (string, error)                                      // +
+	Set(ctx context.Context, key string, value any, expiration time.Duration) CustomStatusCmd
+	Get(ctx context.Context, key string) (string, error)
 
 	DoError(ctx context.Context, str1 string, key int) error
-	HSet(ctx context.Context, key string, value any) error                       // +
-	HGetAll(ctx context.Context, login string) (map[string]string, error)        // +
-	Expire(ctx context.Context, key string, time time.Duration) error            // +
-	Pipelined(ctx context.Context, fn func(Pipeline) error) (CustomCmder, error) // +
+	HSet(ctx context.Context, key string, value any) error
+	HGetAll(ctx context.Context, login string) (map[string]string, error)
+	Expire(ctx context.Context, key string, time time.Duration) error
+	Pipelined(ctx context.Context, fn func(Pipeline) error) (CustomCmder, error)
 
-	Exists(ctx context.Context, key string) CustomIntCmd                 // +
-	HDel(ctx context.Context, key string, fields ...string) CustomIntCmd // +
+	Exists(ctx context.Context, key string) CustomIntCmd
+	HDel(ctx context.Context, key string, fields ...string) CustomIntCmd
 
-	Close() error // +
-
-	// OpTimeout() time.Duration
+	Close() error
 }
 
 type CustomStatusCmd interface {
