@@ -2,12 +2,10 @@ package domain
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
 type TokenPair struct {
@@ -38,11 +36,6 @@ func NewClaims(id string, nameJTI string, TTL time.Duration) Claims {
 }
 
 func ParseToken(ID string) (*Claims, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	secret := []byte(os.Getenv("SECTER_KEY_FOR_JWT"))
 
 	claims := &Claims{}
