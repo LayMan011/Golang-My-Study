@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,6 +30,7 @@ import (
 	users_redis_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/redis"
 	users_service "github.com/LayMan011/Golang-My-Study/internal/features/users/service"
 	users_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/users/transport/http"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
 	_ "github.com/LayMan011/Golang-My-Study/docs"
@@ -40,6 +42,11 @@ import (
 // @host 		127.0.0.1:5050
 // @BasePath 	/api/v1
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	cfg := core_config.NewConfigMust()
 	time.Local = cfg.TimeZone
 
