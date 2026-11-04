@@ -14,8 +14,14 @@ func (r *ThemeUserRepository) GetThemesUserListVersion(ctx context.Context) (int
 	value, err := r.pool.Get(ctx, themesUserListVersionKey)
 	if err != nil {
 		if errors.Is(err, core_errors.ErrNotFound) {
-			return 0, core_errors.ErrNotFound
+			version, incrErr := r.pool.Incr(ctx, themesUserListVersionKey)
+			if incrErr != nil {
+				return 0, fmt.Errorf("initialize themes_user list version: %w", incrErr)
+			}
+
+			return version, nil
 		}
+
 		return 0, fmt.Errorf("get themes_user list version: %w", err)
 	}
 
