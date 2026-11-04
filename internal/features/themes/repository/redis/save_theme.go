@@ -3,7 +3,6 @@ package themes_redis_repository
 import (
 	"context"
 	"reflect"
-	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
@@ -25,7 +24,7 @@ func (r *ThemeRepository) SaveTheme(ctx context.Context, key string, value domai
 			}
 		}
 
-		if err := p.Expire(ctx, key, 1*time.Hour); err != nil {
+		if err := p.Expire(ctx, key, core_redis_pool.TTLDataSave); err != nil {
 			return err
 		}
 
