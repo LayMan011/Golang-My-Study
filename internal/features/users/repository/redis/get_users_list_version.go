@@ -14,8 +14,14 @@ func (r *UserRepository) GetUsersListVersion(ctx context.Context) (int64, error)
 	value, err := r.pool.Get(ctx, usersListVersionKey)
 	if err != nil {
 		if errors.Is(err, core_errors.ErrNotFound) {
-			return 0, core_errors.ErrNotFound
+			version, incrErr := r.pool.Incr(ctx, usersListVersionKey)
+			if incrErr != nil {
+				return 0, fmt.Errorf("initialize users list version: %w", incrErr)
+			}
+
+			return version, nil
 		}
+
 		return 0, fmt.Errorf("get users list version: %w", err)
 	}
 
