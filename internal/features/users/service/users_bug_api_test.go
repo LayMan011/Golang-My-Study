@@ -7,7 +7,14 @@ import (
 )
 
 func TestBug14_A(t *testing.T) {
-	ctx, service, _ := Begin(ErrRedisUnavailable)
+	ctx, service, _ := Begin(nil)
+
+	users_generate := generate_users()
+	for _, user := range users_generate {
+		if _, err := service.CreateUser(ctx, user); err != nil {
+			t.Fatalf("CreateUser() returned unexpected error: %v", err)
+		}
+	}
 
 	offset := 1
 	users_query, err := service.GetUsers(ctx, nil, &offset)
@@ -20,13 +27,20 @@ func TestBug14_A(t *testing.T) {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
 	}
 
-	if len(users_query) != len(users) {
+	if len(users_query) == len(users) {
 		t.Fatalf("GetUsers with query params writes to the cache, just like for all users")
 	}
 }
 
 func TestBug14_B(t *testing.T) {
-	ctx, service, _ := Begin(ErrRedisUnavailable)
+	ctx, service, _ := Begin(nil)
+
+	users_generate := generate_users()
+	for _, user := range users_generate {
+		if _, err := service.CreateUser(ctx, user); err != nil {
+			t.Fatalf("CreateUser() returned unexpected error: %v", err)
+		}
+	}
 
 	limit := 0
 	users_query, err := service.GetUsers(ctx, &limit, nil)
@@ -39,13 +53,13 @@ func TestBug14_B(t *testing.T) {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
 	}
 
-	if len(users_query) != len(users) {
+	if len(users_query) == len(users) {
 		t.Fatalf("GetUsers with query params writes to the cache, just like for all users")
 	}
 }
 
 func TestBug14_C_POST(t *testing.T) {
-	ctx, service, inputUser := Begin(ErrRedisUnavailable)
+	ctx, service, inputUser := Begin(nil)
 
 	users_1, err := service.GetUsers(ctx, nil, nil)
 	if err != nil {
@@ -62,13 +76,19 @@ func TestBug14_C_POST(t *testing.T) {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
 	}
 
+	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
+
 	if len(users_1) == len(users_2) {
 		t.Fatalf("GetUsers with query params writes to the cache, just like for all users")
 	}
 }
 
 func TestBug14_C_DEL(t *testing.T) {
-	ctx, service, inputUser := Begin(ErrRedisUnavailable)
+	ctx, service, inputUser := Begin(nil)
 
 	created, err := service.CreateUser(ctx, inputUser)
 	if err != nil {
@@ -90,13 +110,19 @@ func TestBug14_C_DEL(t *testing.T) {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
 	}
 
+	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
+
 	if len(users_1) == len(users_2) {
 		t.Fatalf("GetUsers with query params writes to the cache, just like for all users")
 	}
 }
 
 func TestBug14_C_PATCH(t *testing.T) {
-	ctx, service, inputUser := Begin(ErrRedisUnavailable)
+	ctx, service, inputUser := Begin(nil)
 
 	created, err := service.CreateUser(ctx, inputUser)
 	if err != nil {
@@ -124,6 +150,12 @@ func TestBug14_C_PATCH(t *testing.T) {
 	}
 
 	users_2_fullname := users_2[len(users_2)-1].FullName
+
+	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
 
 	if user_1_fullname == users_2_fullname {
 		t.Fatalf("PatchUser with query params writes to the cache, just like for all users")
