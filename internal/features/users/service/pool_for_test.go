@@ -3,6 +3,8 @@ package users_service
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
@@ -15,8 +17,10 @@ type stubState struct {
 type postgresRepoStub struct {
 	users []domain.User
 	err   error
-	calls int
 	state *stubState
+
+	getUsersCalls   int
+	createUserCalls int
 }
 
 func (r *postgresRepoStub) GetUsers(
@@ -24,7 +28,7 @@ func (r *postgresRepoStub) GetUsers(
 	limit *int,
 	offset *int,
 ) ([]domain.User, error) {
-	r.calls++
+	r.getUsersCalls++
 
 	if r.err != nil {
 		return nil, r.err
@@ -117,7 +121,7 @@ func (r *postgresRepoStub) CreateUser(
 	ctx context.Context,
 	user domain.User,
 ) (domain.User, error) {
-	r.calls++
+	r.createUserCalls++
 	if r.err != nil {
 		return domain.User{}, r.err
 	}
@@ -128,9 +132,7 @@ func (r *postgresRepoStub) CreateUser(
 
 type redisRepoStub struct {
 	err   error
-	calls int
 	key   string
-	user  domain.User
 	state *stubState
 
 	userCache   map[string]domain.User
@@ -165,18 +167,52 @@ func (r *redisRepoStub) SaveUser(
 	key string,
 	user domain.User,
 ) error {
-	r.key = key
-	r.user = user
-
 	if r.err != nil {
 		return r.err
 	}
 
-	if r.userCache == nil {
-		r.userCache = make(map[string]domain.User)
+	version, err := r.GetUsersListVersion(ctx)
+	if err != nil {
+		return err
 	}
 
+	r.key = key
 	r.userCache[key] = user
+
+	type cacheEntry struct {
+		key   string
+		users []domain.User
+	}
+
+	entries := make([]cacheEntry, 0, len(r.usersCache))
+	for listKey, users := range r.usersCache {
+		entries = append(entries, cacheEntry{key: listKey, users: users})
+	}
+
+	for _, entry := range entries {
+		if !isUnpaginatedUsersList(entry.key) {
+			continue
+		}
+
+		updated := make([]domain.User, len(entry.users))
+		copy(updated, entry.users)
+
+		found := false
+		for i := range updated {
+			if updated[i].ID == user.ID {
+				updated[i] = user
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			updated = append(updated, user)
+		}
+
+		r.moveUsersCacheToVersion(version, entry.key, updated)
+	}
+
 	return nil
 }
 
@@ -205,11 +241,44 @@ func (r *redisRepoStub) DeleteUser(
 		return r.err
 	}
 
-	if _, ok := r.userCache[key]; !ok {
+	user, ok := r.userCache[key]
+	if !ok {
 		return core_errors.ErrNotFound
 	}
 
+	version, err := r.GetUsersListVersion(ctx)
+	if err != nil {
+		return err
+	}
+
+	type cacheEntry struct {
+		key   string
+		users []domain.User
+	}
+
+	entries := make([]cacheEntry, 0, len(r.usersCache))
+	for listKey, users := range r.usersCache {
+		entries = append(entries, cacheEntry{key: listKey, users: users})
+	}
+
 	delete(r.userCache, key)
+
+	for _, entry := range entries {
+		if !isUnpaginatedUsersList(entry.key) {
+			delete(r.usersCache, entry.key)
+			continue
+		}
+
+		updated := make([]domain.User, 0, len(entry.users))
+		for _, cachedUser := range entry.users {
+			if cachedUser.ID != user.ID {
+				updated = append(updated, cachedUser)
+			}
+		}
+
+		r.moveUsersCacheToVersion(version, entry.key, updated)
+	}
+
 	return nil
 }
 
@@ -222,14 +291,15 @@ func (r *redisRepoStub) SaveUsers(
 		return r.err
 	}
 
-	if r.usersCache == nil {
-		r.usersCache = make(map[string][]domain.User)
+	version, err := r.GetUsersListVersion(ctx)
+	if err != nil {
+		return err
 	}
 
 	cached := make([]domain.User, len(users))
 	copy(cached, users)
-	r.usersCache[key] = cached
 
+	r.moveUsersCacheToVersion(version, key, cached)
 	return nil
 }
 
@@ -261,14 +331,65 @@ func (r *redisRepoStub) PatchUser(
 		return r.err
 	}
 
+	found := false
 	for key, user := range r.userCache {
-		if user.ID == id {
-			delete(r.userCache, key)
-			return nil
+		if user.ID != id {
+			continue
+		}
+
+		user.ApplyPatch(patch)
+		r.userCache[key] = user
+		found = true
+	}
+
+	type cacheEntry struct {
+		key   string
+		users []domain.User
+	}
+
+	entries := make([]cacheEntry, 0, len(r.usersCache))
+	for key, users := range r.usersCache {
+		entries = append(entries, cacheEntry{key: key, users: users})
+	}
+
+	updatedLists := make([]cacheEntry, 0, len(entries))
+	for _, entry := range entries {
+		users := make([]domain.User, len(entry.users))
+		copy(users, entry.users)
+
+		changed := false
+		for i := range users {
+			if users[i].ID != id {
+				continue
+			}
+
+			users[i].ApplyPatch(patch)
+			changed = true
+			found = true
+		}
+
+		if changed {
+			updatedLists = append(updatedLists, cacheEntry{
+				key:   entry.key,
+				users: users,
+			})
 		}
 	}
 
-	return core_errors.ErrNotFound
+	if !found {
+		return core_errors.ErrNotFound
+	}
+
+	version, err := r.GetUsersListVersion(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range updatedLists {
+		r.moveUsersCacheToVersion(version, entry.key, entry.users)
+	}
+
+	return nil
 }
 
 func (r *redisRepoStub) GetUsersListVersion(
@@ -290,4 +411,80 @@ func (r *redisRepoStub) BumpUsersListVersion(
 
 	r.listVersion++
 	return nil
+}
+
+const usersListCachePrefix = "users:list:version:"
+
+func (r *redisRepoStub) moveUsersCacheToVersion(
+	version int64,
+	key string,
+	users []domain.User,
+) {
+	rest := strings.TrimPrefix(key, usersListCachePrefix)
+	if rest == key {
+		r.usersCache[key] = users
+		return
+	}
+
+	i := 0
+	for i < len(rest) && rest[i] >= '0' && rest[i] <= '9' {
+		i++
+	}
+	if i == 0 {
+		r.usersCache[key] = users
+		return
+	}
+
+	suffix := rest[i:]
+	newKey := usersListCachePrefix + strconv.FormatInt(version, 10) + suffix
+
+	for cachedKey := range r.usersCache {
+		cachedRest := strings.TrimPrefix(cachedKey, usersListCachePrefix)
+		if cachedRest == cachedKey {
+			continue
+		}
+
+		j := 0
+		for j < len(cachedRest) && cachedRest[j] >= '0' && cachedRest[j] <= '9' {
+			j++
+		}
+
+		if j > 0 && cachedRest[j:] == suffix {
+			delete(r.usersCache, cachedKey)
+		}
+	}
+
+	r.usersCache[newKey] = users
+}
+
+func isUnpaginatedUsersList(key string) bool {
+	limit, hasLimit := cacheKeyInt(key, "limit:", ":offset:")
+	offset, hasOffset := cacheKeyInt(key, "offset:", "")
+
+	if !hasLimit && !hasOffset {
+		return true
+	}
+
+	return hasLimit && hasOffset && limit == -1 && offset == -1
+}
+
+func cacheKeyInt(key, marker, nextMarker string) (int, bool) {
+	start := strings.Index(key, marker)
+	if start == -1 {
+		return 0, false
+	}
+	start += len(marker)
+
+	end := len(key)
+	if nextMarker != "" {
+		if i := strings.Index(key[start:], nextMarker); i >= 0 {
+			end = start + i
+		}
+	}
+
+	value, err := strconv.Atoi(key[start:end])
+	if err != nil {
+		return 0, false
+	}
+	return value, true
 }

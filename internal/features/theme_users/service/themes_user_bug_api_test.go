@@ -7,9 +7,16 @@ import (
 )
 
 func TestBug14_A(t *testing.T) {
-	ctx, service, _ := Begin(ErrRedisUnavailable)
+	ctx, service, _ := Begin(nil)
 
-	user_id := 1
+	themesUser_generate := generate_themes_user()
+	for _, themeUser := range themesUser_generate {
+		if _, err := service.CreateThemeUser(ctx, themeUser); err != nil {
+			t.Fatalf("CreateThemeUser() returned unexpected error: %v", err)
+		}
+	}
+
+	user_id := 2
 	themes_user_query, err := service.GetThemesUser(ctx, &user_id, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("GetThemesUser() with query params returned unexpected error: %v", err)
@@ -20,13 +27,20 @@ func TestBug14_A(t *testing.T) {
 		t.Fatalf("GetThemesUser() returned unexpected error: %v", err)
 	}
 
-	if len(themes_user_query) != len(themes_user) {
+	if len(themes_user_query) == len(themes_user) {
 		t.Fatalf("GetThemesUser with query params writes to the cache, just like for all themes_user")
 	}
 }
 
 func TestBug14_B(t *testing.T) {
-	ctx, service, _ := Begin(ErrRedisUnavailable)
+	ctx, service, _ := Begin(nil)
+
+	themesUser_generate := generate_themes_user()
+	for _, themeUser := range themesUser_generate {
+		if _, err := service.CreateThemeUser(ctx, themeUser); err != nil {
+			t.Fatalf("CreateThemeUser() returned unexpected error: %v", err)
+		}
+	}
 
 	limit := 0
 	themes_user_query, err := service.GetThemesUser(ctx, nil, nil, &limit, nil)
@@ -39,13 +53,13 @@ func TestBug14_B(t *testing.T) {
 		t.Fatalf("GetThemesUser() returned unexpected error: %v", err)
 	}
 
-	if len(themes_user_query) != len(themes_user) {
+	if len(themes_user_query) == len(themes_user) {
 		t.Fatalf("GetThemesUser with query params writes to the cache, just like for all themes_user")
 	}
 }
 
 func TestBug14_C_POST(t *testing.T) {
-	ctx, service, inputThemeUser := Begin(ErrRedisUnavailable)
+	ctx, service, inputThemeUser := Begin(nil)
 
 	themes_user_1, err := service.GetThemesUser(ctx, nil, nil, nil, nil)
 	if err != nil {
@@ -62,13 +76,19 @@ func TestBug14_C_POST(t *testing.T) {
 		t.Fatalf("GetThemesUser() returned unexpected error: %v", err)
 	}
 
+	postgresStub := service.themeUserRepositoryPostgres.(*postgresRepoStub)
+
+	if postgresStub.getThemesUserCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getThemesUserCalls)
+	}
+
 	if len(themes_user_1) == len(themes_user_2) {
 		t.Fatalf("GetThemesUser with query params writes to the cache, just like for all themes_user")
 	}
 }
 
 func TestBug14_C_DEL(t *testing.T) {
-	ctx, service, inputThemeUser := Begin(ErrRedisUnavailable)
+	ctx, service, inputThemeUser := Begin(nil)
 
 	created, err := service.CreateThemeUser(ctx, inputThemeUser)
 	if err != nil {
@@ -90,13 +110,19 @@ func TestBug14_C_DEL(t *testing.T) {
 		t.Fatalf("GetThemesUser() returned unexpected error: %v", err)
 	}
 
+	postgresStub := service.themeUserRepositoryPostgres.(*postgresRepoStub)
+
+	if postgresStub.getThemesUserCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getThemesUserCalls)
+	}
+
 	if len(themes_user_1) == len(themes_user_2) {
 		t.Fatalf("GetThemesUser with query params writes to the cache, just like for all themes_user")
 	}
 }
 
 func TestBug14_C_PATCH(t *testing.T) {
-	ctx, service, inputThemeUser := Begin(ErrRedisUnavailable)
+	ctx, service, inputThemeUser := Begin(nil)
 
 	created, err := service.CreateThemeUser(ctx, inputThemeUser)
 	if err != nil {
@@ -124,6 +150,12 @@ func TestBug14_C_PATCH(t *testing.T) {
 	}
 
 	theme_user_2_completed := themes_user_2[len(themes_user_2)-1].Completed
+
+	postgresStub := service.themeUserRepositoryPostgres.(*postgresRepoStub)
+
+	if postgresStub.getThemesUserCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getThemesUserCalls)
+	}
 
 	if theme_user_1_completed == theme_user_2_completed {
 		t.Fatalf("PatchThemeUser with query params writes to the cache, just like for all themes_user")
