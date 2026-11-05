@@ -188,11 +188,39 @@ func (r *redisRepoStub) DeleteTheme(
 		return r.err
 	}
 
-	if _, ok := r.themeCache[key]; !ok {
+	theme, ok := r.themeCache[key]
+	if !ok {
 		return core_errors.ErrNotFound
 	}
 
+	version, err := r.GetThemesListVersion(ctx)
+	if err != nil {
+		return err
+	}
+
+	type cacheEntry struct {
+		key    string
+		themes []domain.Theme
+	}
+
+	entries := make([]cacheEntry, 0, len(r.themesCache))
+	for listKey, themes := range r.themesCache {
+		entries = append(entries, cacheEntry{key: listKey, themes: themes})
+	}
+
 	delete(r.themeCache, key)
+
+	for _, entry := range entries {
+		updated := make([]domain.Theme, 0, len(entry.themes))
+		for _, cachedTheme := range entry.themes {
+			if cachedTheme.ID != theme.ID {
+				updated = append(updated, cachedTheme)
+			}
+		}
+
+		r.moveThemesCacheToVersion(version, entry.key, updated)
+	}
+
 	return nil
 }
 
@@ -205,14 +233,19 @@ func (r *redisRepoStub) SaveThemes(
 		return r.err
 	}
 
+	version, err := r.GetThemesListVersion(ctx)
+	if err != nil {
+		return err
+	}
+
 	if r.themesCache == nil {
 		r.themesCache = make(map[string][]domain.Theme)
 	}
 
 	cached := make([]domain.Theme, len(themes))
 	copy(cached, themes)
-	r.themesCache[key] = cached
 
+	r.moveThemesCacheToVersion(version, key, cached)
 	return nil
 }
 
