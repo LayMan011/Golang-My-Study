@@ -47,11 +47,18 @@ func Begin(redisErr error) (context.Context, *UserService, domain.User) {
 	postgres := &postgresRepoStub{
 		users: []domain.User{},
 		state: state,
+
+		getUsersCalls:   0,
+		createUserCalls: 0,
 	}
 
 	redis := &redisRepoStub{
 		err:   redisErr,
 		state: state,
+
+		userCache:   make(map[string]domain.User),
+		usersCache:  make(map[string][]domain.User),
+		listVersion: 0,
 	}
 
 	service := &UserService{
