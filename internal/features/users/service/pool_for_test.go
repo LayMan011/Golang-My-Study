@@ -171,8 +171,48 @@ func (r *redisRepoStub) SaveUser(
 		return r.err
 	}
 
+	version, err := r.GetUsersListVersion(ctx)
+	if err != nil {
+		return err
+	}
+
 	r.key = key
 	r.userCache[key] = user
+
+	type cacheEntry struct {
+		key   string
+		users []domain.User
+	}
+
+	entries := make([]cacheEntry, 0, len(r.usersCache))
+	for listKey, users := range r.usersCache {
+		entries = append(entries, cacheEntry{key: listKey, users: users})
+	}
+
+	for _, entry := range entries {
+		if !isUnpaginatedUsersList(entry.key) {
+			continue
+		}
+
+		updated := make([]domain.User, len(entry.users))
+		copy(updated, entry.users)
+
+		found := false
+		for i := range updated {
+			if updated[i].ID == user.ID {
+				updated[i] = user
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			updated = append(updated, user)
+		}
+
+		r.moveUsersCacheToVersion(version, entry.key, updated)
+	}
+
 	return nil
 }
 
@@ -201,11 +241,44 @@ func (r *redisRepoStub) DeleteUser(
 		return r.err
 	}
 
-	if _, ok := r.userCache[key]; !ok {
+	user, ok := r.userCache[key]
+	if !ok {
 		return core_errors.ErrNotFound
 	}
 
+	version, err := r.GetUsersListVersion(ctx)
+	if err != nil {
+		return err
+	}
+
+	type cacheEntry struct {
+		key   string
+		users []domain.User
+	}
+
+	entries := make([]cacheEntry, 0, len(r.usersCache))
+	for listKey, users := range r.usersCache {
+		entries = append(entries, cacheEntry{key: listKey, users: users})
+	}
+
 	delete(r.userCache, key)
+
+	for _, entry := range entries {
+		if !isUnpaginatedUsersList(entry.key) {
+			delete(r.usersCache, entry.key)
+			continue
+		}
+
+		updated := make([]domain.User, 0, len(entry.users))
+		for _, cachedUser := range entry.users {
+			if cachedUser.ID != user.ID {
+				updated = append(updated, cachedUser)
+			}
+		}
+
+		r.moveUsersCacheToVersion(version, entry.key, updated)
+	}
+
 	return nil
 }
 
@@ -218,14 +291,15 @@ func (r *redisRepoStub) SaveUsers(
 		return r.err
 	}
 
-	if r.usersCache == nil {
-		r.usersCache = make(map[string][]domain.User)
+	version, err := r.GetUsersListVersion(ctx)
+	if err != nil {
+		return err
 	}
 
 	cached := make([]domain.User, len(users))
 	copy(cached, users)
-	r.usersCache[key] = cached
 
+	r.moveUsersCacheToVersion(version, key, cached)
 	return nil
 }
 
