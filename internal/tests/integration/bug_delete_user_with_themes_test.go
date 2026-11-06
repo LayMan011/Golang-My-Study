@@ -2,10 +2,13 @@ package integration_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	core_pgx_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool/pgx"
 	core_goredis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool/goredis"
 	themes_user_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/repository/postgres"
@@ -20,7 +23,15 @@ import (
 )
 
 func Test_Delete_User_With_Theme(t *testing.T) {
-	ctx := context.Background()
+	t.Setenv("LOGGER_FOLDER", t.TempDir())
+
+	logger, err := core_logger.NewLogger(core_logger.NewConfigMust())
+	if err != nil {
+		t.Fatalf("init application logger: %v", err)
+	}
+	defer logger.Close()
+
+	ctx := core_logger.ToContext(context.Background(), logger)
 
 	usersService, themesService, _ := InitFeatures(ctx, TestDB, redisClient)
 
@@ -36,7 +47,7 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 		t.Fatalf("create user: %v", err)
 	}
 
-	_, err = themesService.CreateTheme(ctx, domain.Theme{
+	theme, err := themesService.CreateTheme(ctx, domain.Theme{
 		ID:              21,
 		Version:         1,
 		Title:           "123",
@@ -57,19 +68,40 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 		t.Fatalf("create theme: %v", err)
 	}
 
-	if err := usersService.DeleteUser(ctx, user.ID); err == nil {
-		t.Fatal("expected deleting user to fail, got nil")
+	if _, err = usersService.GetUser(ctx, user.ID); err != nil {
+		t.Fatalf("get user before delete: %v", err)
 	}
 
-	// Пока что закомментировал эту проврку, потому что здесь все ещё есть проверка из #23. Как залью в main #23,
-	// так сразу раскомментирую
-	// if _, err = usersService.GetUser(ctx, user.ID); err != nil {
-	// 	t.Fatal("expected user to be deleted")
-	// }
+	if _, err = themesService.GetTheme(ctx, theme.ID); err != nil {
+		t.Fatalf("get theme before delete: %v", err)
+	}
+
+	err = usersService.DeleteUser(ctx, user.ID)
+
+	if !errors.Is(err, core_errors.ErrConflict) {
+		t.Fatalf("expected ErrConflict, got %v", err)
+	}
+
+	if _, err = usersService.GetUser(ctx, user.ID); err != nil {
+		t.Fatalf("expected ErrNotFound user, got %v", err)
+	}
+
+	_, err = themesService.GetTheme(ctx, theme.ID)
+	if err != nil {
+		t.Fatalf("expected ErrNotFound theme, got %v", err)
+	}
 }
 
-func Test_Delete_Theme_With_Theme(t *testing.T) {
-	ctx := context.Background()
+func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
+	t.Setenv("LOGGER_FOLDER", t.TempDir())
+
+	logger, err := core_logger.NewLogger(core_logger.NewConfigMust())
+	if err != nil {
+		t.Fatalf("init application logger: %v", err)
+	}
+	defer logger.Close()
+
+	ctx := core_logger.ToContext(context.Background(), logger)
 
 	usersService, themesService, themesUserService := InitFeatures(ctx, TestDB, redisClient)
 
@@ -114,24 +146,62 @@ func Test_Delete_Theme_With_Theme(t *testing.T) {
 		t.Fatalf("create theme-user relation: %v", err)
 	}
 
+	_, err = themesService.GetTheme(ctx, theme.ID)
+	if err != nil {
+		t.Fatalf("get theme relation before delete: %v", err)
+	}
+
+	if _, err := themesUserService.GetThemeUser(ctx, theme_user.ID); err != nil {
+		t.Fatalf("get theme_user relation before delete: %v", err)
+	}
+
 	if err := themesService.DeleteTheme(ctx, theme.ID); err != nil {
 		t.Fatalf("delete theme: %v", err)
 	}
 
 	_, err = themesUserService.GetThemeUser(ctx, theme_user.ID)
-	if err == nil {
-		t.Fatal("expected theme-user relation to be deleted with the theme")
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
+	}
+
+	_, err = themesService.GetTheme(ctx, theme.ID)
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound theme, got %v", err)
+	}
+
+	var exists bool
+	err = TestDB.QueryRow(ctx, `
+	SELECT EXISTS (
+		SELECT 1
+		FROM progress.themes_user
+		WHERE id = $1
+	)
+`, theme_user.ID).Scan(&exists)
+	if err != nil {
+		t.Fatalf("check theme_user relation in Postgres: %v", err)
+	}
+
+	if exists {
+		t.Fatal("expected theme_user relation to be absent from Postgres")
 	}
 }
 
 func Test_Delete_User_With_ThemeUser(t *testing.T) {
-	ctx := context.Background()
+	t.Setenv("LOGGER_FOLDER", t.TempDir())
+
+	logger, err := core_logger.NewLogger(core_logger.NewConfigMust())
+	if err != nil {
+		t.Fatalf("init application logger: %v", err)
+	}
+	defer logger.Close()
+
+	ctx := core_logger.ToContext(context.Background(), logger)
 
 	usersService, themesService, themesUserService :=
 		InitFeatures(ctx, TestDB, redisClient)
 
 	user_1, err := usersService.CreateUser(ctx, domain.User{
-		ID:        42,
+		ID:        41,
 		Version:   1,
 		Email:     "user3@example.com",
 		CreatedAt: time.Now(),
@@ -179,19 +249,35 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 		t.Fatalf("expected distinct users, got same ID %d", user_1.ID)
 	}
 
-	_, err = themesUserService.CreateThemeUser(
+	theme_user, err := themesUserService.CreateThemeUser(
 		ctx,
 		domain.NewThemeUserUnitialized(theme.ID, user_2.ID),
 	)
 	if err != nil {
-		t.Fatalf("create theme-user relation: %v", err)
+		t.Fatalf("create theme_user relation: %v", err)
 	}
 
-	// Пока что закомментировал эту проврку, потому что здесь все ещё есть проверка из #23. Как залью в main #23,
-	// так сразу раскомментирую
-	// if err := usersService.DeleteUser(ctx, user_2.ID); err != nil {
-	// 	t.Fatalf("delete user: %v", err)
-	// }
+	if _, err := usersService.GetUser(ctx, user_2.ID); err != nil {
+		t.Fatalf("get user relation before delete: %v", err)
+	}
+
+	if _, err := themesUserService.GetThemeUser(ctx, theme_user.ID); err != nil {
+		t.Fatalf("get theme_user relation before delete: %v", err)
+	}
+
+	if err := usersService.DeleteUser(ctx, user_2.ID); err != nil {
+		t.Fatalf("delete user: %v", err)
+	}
+
+	_, err = usersService.GetUser(ctx, user_2.ID)
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound user, got %v", err)
+	}
+
+	_, err = themesUserService.GetThemeUser(ctx, theme_user.ID)
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
+	}
 }
 
 func InitFeatures(
