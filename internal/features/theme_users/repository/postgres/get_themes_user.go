@@ -11,8 +11,8 @@ func (r *ThemeUserRepository) GetThemesUser(
 	ctx context.Context,
 	userID *int,
 	themeID *int,
-	first *int,
-	last *int,
+	limit *int,
+	offset *int,
 ) ([]domain.ThemeUser, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
@@ -42,14 +42,14 @@ func (r *ThemeUserRepository) GetThemesUser(
 		add_strings[0] = ``
 	}
 
-	if first != nil && last != nil {
-		args = append(args, first, last)
+	if limit != nil && offset != nil {
+		args = append(args, limit, offset)
 		add_strings[1] = fmt.Sprintf(`LIMIT $%d OFFSET $%d`, len(args)-1, len(args))
-	} else if first != nil && last == nil {
-		args = append(args, first)
+	} else if limit != nil && offset == nil {
+		args = append(args, limit)
 		add_strings[1] = fmt.Sprintf(`LIMIT $%d`, len(args))
-	} else if first == nil && last != nil {
-		args = append(args, last)
+	} else if limit == nil && offset != nil {
+		args = append(args, offset)
 		add_strings[1] = fmt.Sprintf(`OFFSET $%d`, len(args))
 	} else {
 		add_strings[1] = ``
