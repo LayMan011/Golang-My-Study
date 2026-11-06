@@ -13,9 +13,10 @@ import (
 	themes_user_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/repository/postgres"
 	themes_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/themes/repository/postgres"
 	users_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/postgres"
+	"github.com/google/uuid"
 )
 
-func Test_Delete_User_With_Theme(t *testing.T) {
+func Test_Get_Theme_User_with_Query(t *testing.T) {
 	t.Setenv("LOGGER_FOLDER", t.TempDir())
 
 	logger, err := core_logger.NewLogger(core_logger.NewConfigMust())
@@ -193,7 +194,7 @@ func generateUsers(
 		user, err := usersRepo.CreateUser(ctx, domain.User{
 			ID:        i,
 			Version:   1,
-			Email:     fmt.Sprintf("user%d@example.com", i),
+			Email:     fmt.Sprintf("user%d-%s@example.com", i, uuid.NewString()),
 			CreatedAt: time.Now(),
 			Password:  []byte("c29tZV9wYXNzd29yZF9oYXNo"),
 			FullName:  "Иван Иванов 1",
@@ -231,7 +232,11 @@ func initFeatures(
 	ctx context.Context,
 	pool *core_pgx_pool.Pool,
 	redisClient *core_goredis_pool.RedisClient,
-) (*users_postgres_repository.UserRepository, *themes_postgres_repository.ThemeRepository, *themes_user_postgres_repository.ThemeUserRepository) {
+) (
+	*users_postgres_repository.UserRepository,
+	*themes_postgres_repository.ThemeRepository,
+	*themes_user_postgres_repository.ThemeUserRepository,
+) {
 	usersRepositoryPostgres := users_postgres_repository.NewUsersRepository(pool)
 
 	themesRepositoryPostgres := themes_postgres_repository.NewThemeRepository(pool)
