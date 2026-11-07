@@ -353,7 +353,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Смещение страницы с темами пользователя",
-                        "name": "offser",
+                        "name": "offset",
                         "in": "query"
                     }
                 ],
