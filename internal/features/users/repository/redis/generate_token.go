@@ -25,12 +25,13 @@ func (r *UserRepository) GenerateTokenPair(ctx context.Context, ID string) (*dom
 	if err != nil {
 		return nil, err
 	}
+
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(secret)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.pool.Set(ctx, "refresh:"+ID, ID, refreshTTL); err.Err() != nil {
+	if err := r.pool.Set(ctx, "refresh:"+refreshClaims.ID, ID, refreshTTL); err.Err() != nil {
 		return nil, err.Err()
 	}
 
