@@ -22,6 +22,10 @@ func TestBug14_A(t *testing.T) {
 		t.Fatalf("GetUsers() with query params returned unexpected error: %v", err)
 	}
 
+	if len(users_query) != 2 {
+		t.Fatalf("expected 2 user with offset %d, got %d", offset, len(users_query))
+	}
+
 	users, err := service.GetUsers(ctx, nil, nil)
 	if err != nil {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
@@ -48,9 +52,17 @@ func TestBug14_B(t *testing.T) {
 		t.Fatalf("GetUsers() with query params returned unexpected error: %v", err)
 	}
 
+	if len(users_query) != 0 {
+		t.Fatalf("expected no users with limit %d, got %d", limit, len(users_query))
+	}
+
 	users, err := service.GetUsers(ctx, nil, nil)
 	if err != nil {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if len(users) != len(users_generate) {
+		t.Fatalf("expected %d users without filters, got %d", len(users_generate), len(users))
 	}
 
 	if len(users_query) == len(users) {
@@ -61,9 +73,24 @@ func TestBug14_B(t *testing.T) {
 func TestBug14_C_POST(t *testing.T) {
 	ctx, service, inputUser := Begin(nil)
 
+	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+
+	_, err := service.GetUsers(ctx, nil, nil)
+	if err != nil {
+		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
+
 	users_1, err := service.GetUsers(ctx, nil, nil)
 	if err != nil {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
 	}
 
 	_, err = service.CreateUser(ctx, inputUser)
@@ -76,10 +103,17 @@ func TestBug14_C_POST(t *testing.T) {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
 	}
 
-	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+	if postgresStub.getUsersCalls != 2 {
+		t.Fatalf("expected 2 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
 
-	if postgresStub.getUsersCalls != 1 {
-		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	_, err = service.GetUsers(ctx, nil, nil)
+	if err != nil {
+		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 2 {
+		t.Fatalf("expected 2 Postgres list read, got %d", postgresStub.getUsersCalls)
 	}
 
 	if len(users_1) == len(users_2) {
@@ -90,14 +124,29 @@ func TestBug14_C_POST(t *testing.T) {
 func TestBug14_C_DEL(t *testing.T) {
 	ctx, service, inputUser := Begin(nil)
 
+	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+
 	created, err := service.CreateUser(ctx, inputUser)
 	if err != nil {
 		t.Fatalf("CreateUser() returned unexpected error: %v", err)
 	}
 
+	_, err = service.GetUsers(ctx, nil, nil)
+	if err != nil {
+		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
+
 	users_1, err := service.GetUsers(ctx, nil, nil)
 	if err != nil {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
 	}
 
 	err = service.DeleteUser(ctx, created.ID)
@@ -110,10 +159,17 @@ func TestBug14_C_DEL(t *testing.T) {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
 	}
 
-	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+	if postgresStub.getUsersCalls != 2 {
+		t.Fatalf("expected 2 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
 
-	if postgresStub.getUsersCalls != 1 {
-		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	_, err = service.GetUsers(ctx, nil, nil)
+	if err != nil {
+		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 2 {
+		t.Fatalf("expected 2 Postgres list read, got %d", postgresStub.getUsersCalls)
 	}
 
 	if len(users_1) == len(users_2) {
@@ -124,14 +180,29 @@ func TestBug14_C_DEL(t *testing.T) {
 func TestBug14_C_PATCH(t *testing.T) {
 	ctx, service, inputUser := Begin(nil)
 
+	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
+
 	created, err := service.CreateUser(ctx, inputUser)
 	if err != nil {
 		t.Fatalf("CreateUser() returned unexpected error: %v", err)
 	}
 
+	_, err = service.GetUsers(ctx, nil, nil)
+	if err != nil {
+		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
+
 	users_1, err := service.GetUsers(ctx, nil, nil)
 	if err != nil {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 1 {
+		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
 	}
 
 	user_1_fullname := users_1[len(users_1)-1].FullName
@@ -149,13 +220,20 @@ func TestBug14_C_PATCH(t *testing.T) {
 		t.Fatalf("GetUsers() returned unexpected error: %v", err)
 	}
 
-	users_2_fullname := users_2[len(users_2)-1].FullName
-
-	postgresStub := service.userRepositoryPostgres.(*postgresRepoStub)
-
-	if postgresStub.getUsersCalls != 1 {
-		t.Fatalf("expected 1 Postgres list read, got %d", postgresStub.getUsersCalls)
+	if postgresStub.getUsersCalls != 2 {
+		t.Fatalf("expected 2 Postgres list read, got %d", postgresStub.getUsersCalls)
 	}
+
+	_, err = service.GetUsers(ctx, nil, nil)
+	if err != nil {
+		t.Fatalf("GetUsers() returned unexpected error: %v", err)
+	}
+
+	if postgresStub.getUsersCalls != 2 {
+		t.Fatalf("expected 2 Postgres list read, got %d", postgresStub.getUsersCalls)
+	}
+
+	users_2_fullname := users_2[len(users_2)-1].FullName
 
 	if user_1_fullname == users_2_fullname {
 		t.Fatalf("PatchUser with query params writes to the cache, just like for all users")
