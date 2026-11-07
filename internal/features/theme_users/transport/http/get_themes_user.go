@@ -20,7 +20,7 @@ type GetThemesUserResponse []domain.ThemeUser
 // @Param		user_id query int false "Фильтрация задач по ID автора"
 // @Param		theme_id query int false "Фильтрация задач по ID темы"
 // @Param 		limit query int false "Размер страницы с темами пользователя"
-// @Param 		offser query int false "Смещение страницы с темами пользователя"
+// @Param 		offset query int false "Смещение страницы с темами пользователя"
 // @Success 	200 {object} GetThemesUserResponse "Успешное получение списка тем пользователя"
 // @Failure 	400 {object} core_http_response.ErrorResponse "Bad request"
 // @Failure 	500 {object} core_http_response.ErrorResponse "Internal server error"
