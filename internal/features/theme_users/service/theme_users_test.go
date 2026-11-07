@@ -24,6 +24,31 @@ func generate_themes_user() []domain.ThemeUser {
 		domain.NewThemeUserUnitialized(1, 1),
 		domain.NewThemeUserUnitialized(1, 1),
 		domain.NewThemeUserUnitialized(1, 1),
+		domain.ThemeUser{
+			ID:               1,
+			Version:          2,
+			Completed:        false,
+			AdditionAt:       time.Now(),
+			CompletedAt:      nil,
+			Percentages:      100,
+			TotalLessons:     0,
+			CompletedLessons: 0,
+			ThemeID:          10,
+			UserID:           2,
+		},
+
+		domain.ThemeUser{
+			ID:               2,
+			Version:          2,
+			Completed:        false,
+			AdditionAt:       time.Now(),
+			CompletedAt:      nil,
+			Percentages:      100,
+			TotalLessons:     0,
+			CompletedLessons: 0,
+			ThemeID:          10,
+			UserID:           2,
+		},
 	}
 }
 
