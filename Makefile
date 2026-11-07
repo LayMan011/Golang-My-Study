@@ -79,10 +79,31 @@ migrate-force:
 		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@project-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
 		force $(seq)
 
+test-db-up:
+	@docker run -d --name test-postgres \
+		-e POSTGRES_DB=test \
+		-e POSTGRES_USER=test \
+		-e POSTGRES_PASSWORD=test \
+		-p 5433:5432 \
+		postgres:16-alpine
+
+test-db-down:
+	@docker rm -f test-postgres
+
 migrate-cycle-test:
-	@make migrate-up; \
-	make migrate-down; \
-	make migrate-up
+	@make migrate-action-test action=up POSTGRES_USER=test POSTGRES_PASSWORD=test POSTGRES_DB=test && \
+	make migrate-action-test action=down POSTGRES_USER=test POSTGRES_PASSWORD=test POSTGRES_DB=test && \
+	make migrate-action-test action=up POSTGRES_USER=test POSTGRES_PASSWORD=test POSTGRES_DB=test
+
+migrate-action-test:
+	@if [ -z "$(action)" ]; then \
+		echo "Отсутствует необходимый параметр action. Пример: make migrate-action action='down 1'"; \
+		exit 1; \
+	fi; \
+	docker compose run --rm project-postgres-migrate \
+		-path /migrations \
+		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@host.docker.internal:5433/${POSTGRES_DB}?sslmode=disable \
+		$(action)
 
 logs-cleanup:
 	@read -p "Очистить все log файлы? Опастность утери логов. [y/N]: " ans; \
