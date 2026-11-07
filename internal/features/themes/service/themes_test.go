@@ -24,6 +24,40 @@ func generate_themes() []domain.Theme {
 		domain.NewThemeUnitialized("1234", nil, "Математика", 5000, "beginner", "3 месяца", "video", 1),
 		domain.NewThemeUnitialized("1234", nil, "Математика", 5000, "beginner", "3 месяца", "video", 1),
 		domain.NewThemeUnitialized("1234", nil, "Математика", 5000, "beginner", "3 месяца", "video", 1),
+		domain.Theme{
+			ID:              1,
+			Version:         1,
+			Title:           "123",
+			Description:     nil,
+			CreatedAt:       time.Now(),
+			Subject:         "Русский язык",
+			Rating:          nil,
+			AllRatings:      0,
+			NumberOfRatings: 0,
+			NumberOfUsers:   0,
+			Price:           5000,
+			Level:           "beginner",
+			Duration:        "3 месяца",
+			Format:          "video",
+			AuthorUserID:    2,
+		},
+		domain.Theme{
+			ID:              2,
+			Version:         1,
+			Title:           "123",
+			Description:     nil,
+			CreatedAt:       time.Now(),
+			Subject:         "Русский язык",
+			Rating:          nil,
+			AllRatings:      0,
+			NumberOfRatings: 0,
+			NumberOfUsers:   0,
+			Price:           5000,
+			Level:           "beginner",
+			Duration:        "3 месяца",
+			Format:          "video",
+			AuthorUserID:    2,
+		},
 	}
 }
 
@@ -56,10 +90,17 @@ func Begin(redisErr error) (context.Context, *ThemeService, domain.Theme) {
 	postgres := &postgresRepoStub{
 		themes: []domain.Theme{},
 		state:  state,
+
+		getThemesCalls:   0,
+		createThemeCalls: 0,
 	}
 	redis := &redisRepoStub{
 		err:   redisErr,
 		state: state,
+
+		themeCache:  make(map[string]domain.Theme),
+		themesCache: make(map[string][]domain.Theme),
+		listVersion: 0,
 	}
 
 	service := &ThemeService{
@@ -284,6 +325,11 @@ func TestPatchTheme_TwiceInRow(t *testing.T) {
 	ctx, service, theme := Begin(ErrNotGoToCache)
 
 	created, err := service.CreateTheme(ctx, theme)
+	if err != nil {
+		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
+	}
+
+	_, err = service.CreateTheme(ctx, theme)
 	if err != nil {
 		t.Fatalf("CreateTheme() returned unexpected error: %v", err)
 	}

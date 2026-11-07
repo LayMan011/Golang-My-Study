@@ -3,6 +3,8 @@ package themes_user_service
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
@@ -15,8 +17,10 @@ type stubState struct {
 type postgresRepoStub struct {
 	themes_user []domain.ThemeUser
 	err         error
-	calls       int
 	state       *stubState
+
+	getThemesUserCalls    int
+	createThemesUserCalls int
 }
 
 func (r *postgresRepoStub) GetThemesUser(
@@ -26,7 +30,52 @@ func (r *postgresRepoStub) GetThemesUser(
 	first *int,
 	last *int,
 ) ([]domain.ThemeUser, error) {
-	return r.themes_user, nil
+	r.getThemesUserCalls++
+
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	filtered := make([]domain.ThemeUser, 0, len(r.themes_user))
+	for _, themeUser := range r.themes_user {
+		if userID != nil && themeUser.UserID != *userID {
+			continue
+		}
+
+		if themeID != nil && themeUser.ThemeID != *themeID {
+			continue
+		}
+
+		filtered = append(filtered, themeUser)
+	}
+
+	start := 0
+	if last != nil {
+		start = *last
+	}
+
+	if start < 0 {
+		return nil, core_errors.ErrInvalidArgument
+	}
+
+	if start >= len(filtered) {
+		return []domain.ThemeUser{}, nil
+	}
+
+	end := len(filtered)
+	if first != nil {
+		if *first < 0 {
+			return nil, core_errors.ErrInvalidArgument
+		}
+
+		if start+*first < end {
+			end = start + *first
+		}
+	}
+
+	result := make([]domain.ThemeUser, end-start)
+	copy(result, filtered[start:end])
+	return result, nil
 }
 
 func (r *postgresRepoStub) GetThemeUser(
@@ -58,12 +107,18 @@ func (r *postgresRepoStub) DeleteThemeUser(
 	ctx context.Context,
 	themeUserID int,
 ) error {
-	if len(r.themes_user) > 0 {
-		r.themes_user = r.themes_user[1:]
-		return nil
+	if r.err != nil {
+		return r.err
 	}
 
-	return errors.New("failed to delete themes_user")
+	for i, themeUser := range r.themes_user {
+		if themeUser.ID == themeUserID {
+			r.themes_user = append(r.themes_user[:i], r.themes_user[i+1:]...)
+			return nil
+		}
+	}
+
+	return core_errors.ErrNotFound
 }
 
 func (r *postgresRepoStub) PatchThemeUser(
@@ -71,8 +126,13 @@ func (r *postgresRepoStub) PatchThemeUser(
 	id int,
 	patch domain.ThemeUser,
 ) (domain.ThemeUser, error) {
-	for i, theme_user := range r.themes_user {
-		if theme_user.ID == id {
+	if r.err != nil {
+		return domain.ThemeUser{}, r.err
+	}
+
+	for i, themeUser := range r.themes_user {
+		if themeUser.ID == id {
+			patch.ID = id
 			r.themes_user[i] = patch
 			return patch, nil
 		}
@@ -85,7 +145,7 @@ func (r *postgresRepoStub) CreateThemeUser(
 	ctx context.Context,
 	themeUser domain.ThemeUser,
 ) (domain.ThemeUser, error) {
-	r.calls++
+	r.createThemesUserCalls++
 	if r.err != nil {
 		return domain.ThemeUser{}, r.err
 	}
@@ -95,22 +155,13 @@ func (r *postgresRepoStub) CreateThemeUser(
 }
 
 type redisRepoStub struct {
-	err        error
-	calls      int
-	key        string
-	theme_user domain.ThemeUser
-	state      *stubState
+	err   error
+	key   string
+	state *stubState
 
 	themeUserCache  map[string]domain.ThemeUser
 	themesUserCache map[string][]domain.ThemeUser
 	listVersion     int64
-}
-
-func (r *redisRepoStub) DeleteToken(
-	ctx context.Context,
-	key string,
-) error {
-	return core_errors.ErrNotFound
 }
 
 func (r *redisRepoStub) SaveThemeUser(
@@ -118,17 +169,11 @@ func (r *redisRepoStub) SaveThemeUser(
 	key string,
 	value domain.ThemeUser,
 ) error {
-	r.key = key
-	r.theme_user = value
-
 	if r.err != nil {
 		return r.err
 	}
 
-	if r.themeUserCache == nil {
-		r.themeUserCache = make(map[string]domain.ThemeUser)
-	}
-
+	r.key = key
 	r.themeUserCache[key] = value
 	return nil
 }
@@ -179,14 +224,15 @@ func (r *redisRepoStub) SaveThemesUser(
 		return r.err
 	}
 
-	if r.themesUserCache == nil {
-		r.themesUserCache = make(map[string][]domain.ThemeUser)
+	version, err := r.GetThemesUserListVersion(ctx)
+	if err != nil {
+		return err
 	}
 
 	cached := make([]domain.ThemeUser, len(themesUser))
 	copy(cached, themesUser)
-	r.themesUserCache[key] = cached
 
+	r.moveThemesUserCacheToVersion(version, key, cached)
 	return nil
 }
 
@@ -214,10 +260,33 @@ func (r *redisRepoStub) PatchThemeUser(
 	id int,
 	patch domain.ThemeUserPatch,
 ) error {
-	return core_errors.ErrNotFound
+	if r.err != nil {
+		return r.err
+	}
+
+	found := false
+
+	for key, themeUser := range r.themeUserCache {
+		if themeUser.ID != id {
+			continue
+		}
+
+		if patch.Completed.Set && patch.Completed.Value != nil {
+			themeUser.Completed = *patch.Completed.Value
+		}
+
+		r.themeUserCache[key] = themeUser
+		found = true
+	}
+
+	if !found {
+		return core_errors.ErrNotFound
+	}
+
+	return nil
 }
 
-func (r *redisRepoStub) GetThemesListVersion(
+func (r *redisRepoStub) GetThemesUserListVersion(
 	ctx context.Context,
 ) (int64, error) {
 	if r.err != nil {
@@ -227,7 +296,7 @@ func (r *redisRepoStub) GetThemesListVersion(
 	return r.listVersion, nil
 }
 
-func (r *redisRepoStub) BumpThemesListVersion(
+func (r *redisRepoStub) BumpThemesUserListVersion(
 	ctx context.Context,
 ) error {
 	if r.err != nil {
@@ -236,4 +305,64 @@ func (r *redisRepoStub) BumpThemesListVersion(
 
 	r.listVersion++
 	return nil
+}
+
+func (r *redisRepoStub) moveThemesUserCacheToVersion(
+	version int64,
+	key string,
+	themesUser []domain.ThemeUser,
+) {
+	const prefix = "themes_user:list:version:"
+	const listMarker = "user_id:"
+
+	rest := strings.TrimPrefix(key, prefix)
+	if rest == key {
+		r.themesUserCache[key] = themesUser
+		return
+	}
+
+	i := strings.Index(rest, listMarker)
+	if i == -1 {
+		r.themesUserCache[key] = themesUser
+		return
+	}
+
+	suffix := rest[i:]
+	newKey := prefix + strconv.FormatInt(version, 10) + suffix
+
+	for cachedKey := range r.themesUserCache {
+		cachedRest := strings.TrimPrefix(cachedKey, prefix)
+		if cachedRest == cachedKey {
+			continue
+		}
+
+		j := strings.Index(cachedRest, listMarker)
+		if j != -1 && cachedRest[j:] == suffix {
+			delete(r.themesUserCache, cachedKey)
+		}
+	}
+
+	r.themesUserCache[newKey] = themesUser
+}
+
+func cacheKeyInt(key, marker, nextMarker string) (int, bool) {
+	start := strings.Index(key, marker)
+	if start == -1 {
+		return 0, false
+	}
+	start += len(marker)
+
+	end := len(key)
+	if nextMarker != "" {
+		if i := strings.Index(key[start:], nextMarker); i >= 0 {
+			end = start + i
+		}
+	}
+
+	value, err := strconv.Atoi(key[start:end])
+	if err != nil {
+		return 0, false
+	}
+
+	return value, true
 }
