@@ -173,61 +173,8 @@ func (r *redisRepoStub) SaveThemeUser(
 		return r.err
 	}
 
-	version, err := r.GetThemesUserListVersion(ctx)
-	if err != nil {
-		return err
-	}
-
 	r.key = key
 	r.themeUserCache[key] = value
-
-	type cacheEntry struct {
-		key   string
-		users []domain.ThemeUser
-	}
-
-	entries := make([]cacheEntry, 0, len(r.themesUserCache))
-	for listKey, users := range r.themesUserCache {
-		entries = append(entries, cacheEntry{key: listKey, users: users})
-	}
-
-	for _, entry := range entries {
-		userID, hasUserID := cacheKeyInt(entry.key, "user_id:", "theme_id:")
-		themeID, hasThemeID := cacheKeyInt(entry.key, "theme_id:", "limit:")
-
-		if !hasUserID || (userID != -1 && userID != value.UserID) {
-			continue
-		}
-
-		if !hasThemeID || (themeID != -1 && themeID != value.ThemeID) {
-			continue
-		}
-
-		limit, hasLimit := cacheKeyInt(entry.key, "limit:", ":offset:")
-		offset, hasOffset := cacheKeyInt(entry.key, "offset:", "")
-		if !hasLimit || !hasOffset || limit != -1 || offset != -1 {
-			continue
-		}
-
-		updated := make([]domain.ThemeUser, len(entry.users))
-		copy(updated, entry.users)
-
-		found := false
-		for i := range updated {
-			if updated[i].ID == value.ID {
-				updated[i] = value
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			updated = append(updated, value)
-		}
-
-		r.moveThemesUserCacheToVersion(version, entry.key, updated)
-	}
-
 	return nil
 }
 
@@ -260,35 +207,8 @@ func (r *redisRepoStub) DeleteThemeUser(
 		return r.err
 	}
 
-	themeUser, ok := r.themeUserCache[key]
-	if !ok {
+	if _, ok := r.themeUserCache[key]; !ok {
 		return core_errors.ErrNotFound
-	}
-
-	version, err := r.GetThemesUserListVersion(ctx)
-	if err != nil {
-		return err
-	}
-
-	type cacheEntry struct {
-		key   string
-		users []domain.ThemeUser
-	}
-
-	entries := make([]cacheEntry, 0, len(r.themesUserCache))
-	for listKey, users := range r.themesUserCache {
-		entries = append(entries, cacheEntry{key: listKey, users: users})
-	}
-
-	for _, entry := range entries {
-		updated := make([]domain.ThemeUser, 0, len(entry.users))
-		for _, user := range entry.users {
-			if user.ID != themeUser.ID {
-				updated = append(updated, user)
-			}
-		}
-
-		r.moveThemesUserCacheToVersion(version, entry.key, updated)
 	}
 
 	delete(r.themeUserCache, key)
@@ -344,10 +264,9 @@ func (r *redisRepoStub) PatchThemeUser(
 		return r.err
 	}
 
-	var updatedUser domain.ThemeUser
 	found := false
 
-	for _, themeUser := range r.themeUserCache {
+	for key, themeUser := range r.themeUserCache {
 		if themeUser.ID != id {
 			continue
 		}
@@ -356,47 +275,8 @@ func (r *redisRepoStub) PatchThemeUser(
 			themeUser.Completed = *patch.Completed.Value
 		}
 
-		updatedUser = themeUser
+		r.themeUserCache[key] = themeUser
 		found = true
-		break
-	}
-
-	version, err := r.GetThemesUserListVersion(ctx)
-	if err != nil {
-		return err
-	}
-
-	for key, themeUser := range r.themeUserCache {
-		if themeUser.ID == id {
-			r.themeUserCache[key] = updatedUser
-		}
-	}
-
-	type cacheEntry struct {
-		key   string
-		users []domain.ThemeUser
-	}
-
-	entries := make([]cacheEntry, 0, len(r.themesUserCache))
-	for key, users := range r.themesUserCache {
-		entries = append(entries, cacheEntry{key: key, users: users})
-	}
-
-	for _, entry := range entries {
-		updatedUsers := make([]domain.ThemeUser, len(entry.users))
-		copy(updatedUsers, entry.users)
-
-		changed := false
-		for i := range updatedUsers {
-			if updatedUsers[i].ID == id {
-				updatedUsers[i] = updatedUser
-				changed = true
-			}
-		}
-
-		if changed {
-			r.moveThemesUserCacheToVersion(version, entry.key, updatedUsers)
-		}
 	}
 
 	if !found {

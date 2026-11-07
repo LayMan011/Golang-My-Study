@@ -154,47 +154,8 @@ func (r *redisRepoStub) SaveTheme(
 		return r.err
 	}
 
-	version, err := r.GetThemesListVersion(ctx)
-	if err != nil {
-		return err
-	}
-
 	r.key = key
 	r.themeCache[key] = value
-
-	type cacheEntry struct {
-		key    string
-		themes []domain.Theme
-	}
-
-	entries := make([]cacheEntry, 0, len(r.themesCache))
-	for listKey, themes := range r.themesCache {
-		entries = append(entries, cacheEntry{key: listKey, themes: themes})
-	}
-
-	for _, entry := range entries {
-		if !isUnpaginatedThemesList(entry.key) {
-			continue
-		}
-
-		updated := make([]domain.Theme, len(entry.themes))
-		copy(updated, entry.themes)
-
-		found := false
-		for i := range updated {
-			if updated[i].ID == value.ID {
-				updated[i] = value
-				found = true
-				break
-			}
-		}
-		if !found {
-			updated = append(updated, value)
-		}
-
-		r.moveThemesCacheToVersion(version, entry.key, updated)
-	}
-
 	return nil
 }
 
@@ -227,39 +188,11 @@ func (r *redisRepoStub) DeleteTheme(
 		return r.err
 	}
 
-	theme, ok := r.themeCache[key]
-	if !ok {
+	if _, ok := r.themeCache[key]; !ok {
 		return core_errors.ErrNotFound
 	}
 
-	version, err := r.GetThemesListVersion(ctx)
-	if err != nil {
-		return err
-	}
-
-	type cacheEntry struct {
-		key    string
-		themes []domain.Theme
-	}
-
-	entries := make([]cacheEntry, 0, len(r.themesCache))
-	for listKey, themes := range r.themesCache {
-		entries = append(entries, cacheEntry{key: listKey, themes: themes})
-	}
-
 	delete(r.themeCache, key)
-
-	for _, entry := range entries {
-		updated := make([]domain.Theme, 0, len(entry.themes))
-		for _, cachedTheme := range entry.themes {
-			if cachedTheme.ID != theme.ID {
-				updated = append(updated, cachedTheme)
-			}
-		}
-
-		r.moveThemesCacheToVersion(version, entry.key, updated)
-	}
-
 	return nil
 }
 
@@ -329,44 +262,6 @@ func (r *redisRepoStub) PatchTheme(
 
 		r.themeCache[key] = theme
 		found = true
-	}
-
-	type cacheEntry struct {
-		key    string
-		themes []domain.Theme
-	}
-
-	version, err := r.GetThemesListVersion(ctx)
-	if err != nil {
-		return err
-	}
-
-	entries := make([]cacheEntry, 0, len(r.themesCache))
-	for key, themes := range r.themesCache {
-		entries = append(entries, cacheEntry{key: key, themes: themes})
-	}
-
-	for _, entry := range entries {
-		themes := make([]domain.Theme, len(entry.themes))
-		copy(themes, entry.themes)
-
-		changed := false
-		for i := range themes {
-			if themes[i].ID != id {
-				continue
-			}
-
-			if err := themes[i].ApplyPatch(patch); err != nil {
-				return err
-			}
-
-			found = true
-			changed = true
-		}
-
-		if changed || entry.key != "" {
-			r.moveThemesCacheToVersion(version, entry.key, themes)
-		}
 	}
 
 	if !found {
