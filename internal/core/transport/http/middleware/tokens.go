@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
+	"github.com/joho/godotenv"
 )
 
 type contextKey string
@@ -39,7 +41,7 @@ func AuthMiddleware(pool core_redis_pool.Pool) Middleware {
 				return
 			}
 
-			key := fmt.Sprintf("jwt:%s", jti)
+			key := fmt.Sprintf("token:%s", jti)
 
 			tokenPair, err := getToken(r.Context(), key, pool)
 			if err != nil {
@@ -99,6 +101,11 @@ func getToken(ctx context.Context, key string, pool core_redis_pool.Pool) (domai
 }
 
 func parseTokenClaims(tokenString string) (string, string, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	claims, err := domain.ParseToken(tokenString)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to parse token: %w", err)

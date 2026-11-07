@@ -10,6 +10,7 @@ import (
 	"time"
 
 	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
+	"github.com/redis/go-redis/v9"
 )
 
 type PoolStub struct {
@@ -18,8 +19,6 @@ type PoolStub struct {
 	hashes map[string]map[string]string
 	closed bool
 }
-
-var _ core_redis_pool.Pool = (*PoolStub)(nil)
 
 func NewPoolStub() *PoolStub {
 	return &PoolStub{
@@ -233,6 +232,28 @@ func (p *PoolStub) Close() error {
 	return nil
 }
 
+func (p *PoolStub) Incr(ctx context.Context, key string) (int64, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.closed {
+		return 0, errors.New("redis stub is closed")
+	}
+
+	value, err := strconv.ParseInt(p.values[key], 10, 64)
+	if err != nil && p.values[key] != "" {
+		return 0, err
+	}
+
+	value++
+	p.values[key] = strconv.FormatInt(value, 10)
+	return value, nil
+}
+
 type pipelineStub struct {
 	pool *PoolStub
 	ctx  context.Context
@@ -365,4 +386,43 @@ func stringify(value any) string {
 	default:
 		return fmt.Sprint(value)
 	}
+}
+
+type recordingPool struct {
+	core_redis_pool.Pool
+	values map[string]string
+}
+
+func (p *recordingPool) Set(
+	_ context.Context,
+	key string,
+	value any,
+	_ time.Duration,
+) core_redis_pool.CustomStatusCmd {
+	p.values[key] = value.(string)
+	return successfulStatusCmd{}
+}
+
+type successfulStatusCmd struct{}
+
+func (successfulStatusCmd) Err() error { return nil }
+
+type miniredisPool struct {
+	*PoolStub
+	client *redis.Client
+}
+
+var _ core_redis_pool.Pool = (*miniredisPool)(nil)
+
+func (p *miniredisPool) Set(
+	ctx context.Context,
+	key string,
+	value any,
+	expiration time.Duration,
+) core_redis_pool.CustomStatusCmd {
+	return p.client.Set(ctx, key, value, expiration)
+}
+
+func (p *miniredisPool) Incr(ctx context.Context, key string) (int64, error) {
+	return p.client.Incr(ctx, key).Result()
 }
