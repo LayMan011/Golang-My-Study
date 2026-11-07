@@ -48,6 +48,8 @@ services:
     
     project-postgres-migrate:
         image: migrate/migrate:v4.19.1
+        extra_hosts:
+         - "host.docker.internal:host-gateway"
         volumes:
          - ${PROJECT_ROOT}/migrations:/migrations
     
