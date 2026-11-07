@@ -28,24 +28,25 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 
 	usersRepo, themesRepo, themesUserRepo := initFeatures(ctx, TestDB, redisClient)
 
-	if err := generateUsers(ctx, usersRepo, 1); err != nil {
-		t.Fatalf("failed to generate themes: %v", err)
-	}
-
-	themes_id, err := generateThemes(ctx, themesRepo, 1, 1)
+	users_id, err := generateUsers(ctx, usersRepo, 1)
 	if err != nil {
 		t.Fatalf("failed to generate themes: %v", err)
 	}
 
-	if err := generateThemeUsers(ctx, themesUserRepo, 1, themes_id[:(len(themes_id)/2)]); err != nil {
+	themes_id, err := generateThemes(ctx, themesRepo, users_id[0], 1)
+	if err != nil {
+		t.Fatalf("failed to generate themes: %v", err)
+	}
+
+	if err := generateThemeUsers(ctx, themesUserRepo, users_id[0], themes_id[:(len(themes_id)/2)]); err != nil {
 		t.Fatalf("failed to generate themes_user: %v", err)
 	}
 
-	if err := generateThemeUsers(ctx, themesUserRepo, 2, themes_id[(len(themes_id)/2):]); err != nil {
+	if err := generateThemeUsers(ctx, themesUserRepo, users_id[1], themes_id[(len(themes_id)/2):]); err != nil {
 		t.Fatalf("failed to generate themes_user: %v", err)
 	}
 
-	user_id := 2
+	user_id := users_id[1]
 
 	themes_user_user_id_2, err := themesUserRepo.GetThemesUser(ctx, &user_id, nil, nil, nil)
 	if err != nil {
@@ -62,7 +63,7 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 		}
 	}
 
-	theme_id := 2
+	theme_id := themes_id[1]
 
 	themes_user_theme_id_2, err := themesUserRepo.GetThemesUser(ctx, nil, &theme_id, nil, nil)
 	if err != nil {
@@ -185,9 +186,11 @@ func generateUsers(
 	ctx context.Context,
 	usersRepo *users_postgres_repository.UserRepository,
 	r int,
-) error {
+) ([]int, error) {
+	users_id := make([]int, 0, 10)
+
 	for i := r; i < r+10; i++ {
-		_, err := usersRepo.CreateUser(ctx, domain.User{
+		user, err := usersRepo.CreateUser(ctx, domain.User{
 			ID:        i,
 			Version:   1,
 			Email:     fmt.Sprintf("user%d@example.com", i),
@@ -196,11 +199,13 @@ func generateUsers(
 			FullName:  "Иван Иванов 1",
 		})
 		if err != nil {
-			return fmt.Errorf("create user #%d: %w", i, err)
+			return nil, fmt.Errorf("create user #%d: %w", i, err)
 		}
+
+		users_id = append(users_id, user.ID)
 	}
 
-	return nil
+	return users_id, nil
 }
 
 func generateThemeUsers(
