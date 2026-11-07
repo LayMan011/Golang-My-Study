@@ -33,9 +33,9 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 
 	ctx := core_logger.ToContext(context.Background(), logger)
 
-	usersService, themesService, _ := InitFeatures(ctx, TestDB, redisClient)
+	features := InitFeatures(ctx, TestDB, redisClient)
 
-	user, err := usersService.CreateUser(ctx, domain.User{
+	user, err := features.UsersService.CreateUser(ctx, domain.User{
 		ID:        42,
 		Version:   1,
 		Email:     "user@example.com",
@@ -47,7 +47,7 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 		t.Fatalf("create user: %v", err)
 	}
 
-	theme, err := themesService.CreateTheme(ctx, domain.Theme{
+	theme, err := features.ThemesService.CreateTheme(ctx, domain.Theme{
 		ID:              21,
 		Version:         1,
 		Title:           "123",
@@ -68,25 +68,25 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 		t.Fatalf("create theme: %v", err)
 	}
 
-	if _, err = usersService.GetUser(ctx, user.ID); err != nil {
+	if _, err = features.UsersService.GetUser(ctx, user.ID); err != nil {
 		t.Fatalf("get user before delete: %v", err)
 	}
 
-	if _, err = themesService.GetTheme(ctx, theme.ID); err != nil {
+	if _, err = features.ThemesService.GetTheme(ctx, theme.ID); err != nil {
 		t.Fatalf("get theme before delete: %v", err)
 	}
 
-	err = usersService.DeleteUser(ctx, user.ID)
+	err = features.UsersService.DeleteUser(ctx, user.ID)
 
 	if !errors.Is(err, core_errors.ErrConflict) {
 		t.Fatalf("expected ErrConflict, got %v", err)
 	}
 
-	if _, err = usersService.GetUser(ctx, user.ID); err != nil {
+	if _, err = features.UsersRepository.GetUser(ctx, user.ID); err != nil {
 		t.Fatalf("expected ErrNotFound user, got %v", err)
 	}
 
-	_, err = themesService.GetTheme(ctx, theme.ID)
+	_, err = features.ThemesRepository.GetTheme(ctx, theme.ID)
 	if err != nil {
 		t.Fatalf("expected ErrNotFound theme, got %v", err)
 	}
@@ -103,9 +103,9 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 
 	ctx := core_logger.ToContext(context.Background(), logger)
 
-	usersService, themesService, themesUserService := InitFeatures(ctx, TestDB, redisClient)
+	features := InitFeatures(ctx, TestDB, redisClient)
 
-	user, err := usersService.CreateUser(ctx, domain.User{
+	user, err := features.UsersService.CreateUser(ctx, domain.User{
 		ID:        42,
 		Version:   1,
 		Email:     "user1@example.com",
@@ -117,7 +117,7 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 		t.Fatalf("create user: %v", err)
 	}
 
-	theme, err := themesService.CreateTheme(ctx, domain.Theme{
+	theme, err := features.ThemesService.CreateTheme(ctx, domain.Theme{
 		ID:              21,
 		Version:         1,
 		Title:           "123",
@@ -138,7 +138,7 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 		t.Fatalf("create theme: %v", err)
 	}
 
-	theme_user, err := themesUserService.CreateThemeUser(
+	theme_user, err := features.ThemeUserService.CreateThemeUser(
 		ctx,
 		domain.NewThemeUserUnitialized(theme.ID, user.ID),
 	)
@@ -146,25 +146,25 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 		t.Fatalf("create theme-user relation: %v", err)
 	}
 
-	_, err = themesService.GetTheme(ctx, theme.ID)
+	_, err = features.ThemesService.GetTheme(ctx, theme.ID)
 	if err != nil {
 		t.Fatalf("get theme relation before delete: %v", err)
 	}
 
-	if _, err := themesUserService.GetThemeUser(ctx, theme_user.ID); err != nil {
+	if _, err := features.ThemeUserService.GetThemeUser(ctx, theme_user.ID); err != nil {
 		t.Fatalf("get theme_user relation before delete: %v", err)
 	}
 
-	if err := themesService.DeleteTheme(ctx, theme.ID); err != nil {
+	if err := features.ThemesService.DeleteTheme(ctx, theme.ID); err != nil {
 		t.Fatalf("delete theme: %v", err)
 	}
 
-	_, err = themesUserService.GetThemeUser(ctx, theme_user.ID)
+	_, err = features.ThemeUserRepository.GetThemeUser(ctx, theme_user.ID)
 	if !errors.Is(err, core_errors.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
 	}
 
-	_, err = themesService.GetTheme(ctx, theme.ID)
+	_, err = features.ThemesRepository.GetTheme(ctx, theme.ID)
 	if !errors.Is(err, core_errors.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound theme, got %v", err)
 	}
@@ -197,10 +197,9 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 
 	ctx := core_logger.ToContext(context.Background(), logger)
 
-	usersService, themesService, themesUserService :=
-		InitFeatures(ctx, TestDB, redisClient)
+	features := InitFeatures(ctx, TestDB, redisClient)
 
-	user_1, err := usersService.CreateUser(ctx, domain.User{
+	user_1, err := features.UsersService.CreateUser(ctx, domain.User{
 		ID:        41,
 		Version:   1,
 		Email:     "user3@example.com",
@@ -212,7 +211,7 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 		t.Fatalf("create user: %v", err)
 	}
 
-	theme, err := themesService.CreateTheme(ctx, domain.Theme{
+	theme, err := features.ThemesService.CreateTheme(ctx, domain.Theme{
 		ID:              21,
 		Version:         1,
 		Title:           "123",
@@ -233,7 +232,7 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 		t.Fatalf("create theme: %v", err)
 	}
 
-	user_2, err := usersService.CreateUser(ctx, domain.User{
+	user_2, err := features.UsersService.CreateUser(ctx, domain.User{
 		ID:        42,
 		Version:   1,
 		Email:     "user4@example.com",
@@ -249,7 +248,7 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 		t.Fatalf("expected distinct users, got same ID %d", user_1.ID)
 	}
 
-	theme_user, err := themesUserService.CreateThemeUser(
+	theme_user, err := features.ThemeUserService.CreateThemeUser(
 		ctx,
 		domain.NewThemeUserUnitialized(theme.ID, user_2.ID),
 	)
@@ -257,34 +256,43 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 		t.Fatalf("create theme_user relation: %v", err)
 	}
 
-	if _, err := usersService.GetUser(ctx, user_2.ID); err != nil {
+	if _, err := features.UsersService.GetUser(ctx, user_2.ID); err != nil {
 		t.Fatalf("get user relation before delete: %v", err)
 	}
 
-	if _, err := themesUserService.GetThemeUser(ctx, theme_user.ID); err != nil {
+	if _, err := features.ThemeUserService.GetThemeUser(ctx, theme_user.ID); err != nil {
 		t.Fatalf("get theme_user relation before delete: %v", err)
 	}
 
-	if err := usersService.DeleteUser(ctx, user_2.ID); err != nil {
+	if err := features.UsersService.DeleteUser(ctx, user_2.ID); err != nil {
 		t.Fatalf("delete user: %v", err)
 	}
 
-	_, err = usersService.GetUser(ctx, user_2.ID)
+	_, err = features.UsersRepository.GetUser(ctx, user_2.ID)
 	if !errors.Is(err, core_errors.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound user, got %v", err)
 	}
 
-	_, err = themesUserService.GetThemeUser(ctx, theme_user.ID)
+	_, err = features.ThemeUserRepository.GetThemeUser(ctx, theme_user.ID)
 	if !errors.Is(err, core_errors.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
 	}
+}
+
+type Features struct {
+	UsersService        *users_service.UserService
+	ThemesService       *themes_service.ThemeService
+	ThemeUserService    *themes_user_service.ThemeUserService
+	UsersRepository     *users_postgres_repository.UserRepository
+	ThemesRepository    *themes_postgres_repository.ThemeRepository
+	ThemeUserRepository *themes_user_postgres_repository.ThemeUserRepository
 }
 
 func InitFeatures(
 	ctx context.Context,
 	pool *core_pgx_pool.Pool,
 	redisClient *core_goredis_pool.RedisClient,
-) (*users_service.UserService, *themes_service.ThemeService, *themes_user_service.ThemeUserService) {
+) *Features {
 	usersRepositoryPostgres := users_postgres_repository.NewUsersRepository(pool)
 	usersRepositoryRedis := users_redis_repository.NewUsersRepository(redisClient)
 	usersService := users_service.NewUsersService(usersRepositoryPostgres, usersRepositoryRedis)
@@ -293,9 +301,16 @@ func InitFeatures(
 	themesRepositoryRedis := themes_redis_repository.NewThemesRepository(redisClient)
 	themesService := themes_service.NewThemeService(themesRepositoryPostgres, themesRepositoryRedis)
 
-	themesUserRepository := themes_user_postgres_repository.NewThemeUserRepository(pool)
+	themesUserRepositoryPostgres := themes_user_postgres_repository.NewThemeUserRepository(pool)
 	themesUserRepositoryRedis := themes_user_redis_repository.NewThemesUserRepository(redisClient)
-	themesUserService := themes_user_service.NewThemeUserService(themesUserRepository, themesUserRepositoryRedis)
+	themesUserService := themes_user_service.NewThemeUserService(themesUserRepositoryPostgres, themesUserRepositoryRedis)
 
-	return usersService, themesService, themesUserService
+	return &Features{
+		UsersService:        usersService,
+		ThemesService:       themesService,
+		ThemeUserService:    themesUserService,
+		UsersRepository:     usersRepositoryPostgres,
+		ThemesRepository:    themesRepositoryPostgres,
+		ThemeUserRepository: themesUserRepositoryPostgres,
+	}
 }
