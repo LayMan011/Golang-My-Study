@@ -777,7 +777,7 @@ paths:
         type: integer
       - description: Смещение страницы с темами пользователя
         in: query
-        name: offser
+        name: offset
         type: integer
       produces:
       - application/json

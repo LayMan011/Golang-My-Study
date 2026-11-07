@@ -20,7 +20,7 @@ type GetThemesUserResponse []domain.ThemeUser
 // @Param		user_id query int false "Фильтрация задач по ID автора"
 // @Param		theme_id query int false "Фильтрация задач по ID темы"
 // @Param 		limit query int false "Размер страницы с темами пользователя"
-// @Param 		offser query int false "Смещение страницы с темами пользователя"
+// @Param 		offset query int false "Смещение страницы с темами пользователя"
 // @Success 	200 {object} GetThemesUserResponse "Успешное получение списка тем пользователя"
 // @Failure 	400 {object} core_http_response.ErrorResponse "Bad request"
 // @Failure 	500 {object} core_http_response.ErrorResponse "Internal server error"
@@ -30,17 +30,17 @@ func (h *ThemeUserHTTPHandler) GetThemesUser(rw http.ResponseWriter, r *http.Req
 	log := core_logger.FromContext(ctx)
 	responseHandler := core_http_response.NewHTTPResponseHandler(log, rw)
 
-	userID, themeID, first, last, err := getUserIDThemeIDFirstLastQueryParams(r)
+	userID, themeID, limit, offset, err := getUserIDThemeIDLimitOffsetQueryParams(r)
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,
-			"failed to get userId/first/last query params",
+			"failed to get userId/themeID/limit/offset query params",
 		)
 
 		return
 	}
 
-	themesUserDomain, err := h.themeUserService.GetThemesUser(ctx, userID, themeID, first, last)
+	themesUserDomain, err := h.themeUserService.GetThemesUser(ctx, userID, themeID, limit, offset)
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,
@@ -55,12 +55,12 @@ func (h *ThemeUserHTTPHandler) GetThemesUser(rw http.ResponseWriter, r *http.Req
 	responseHandler.JSONResponse(response, http.StatusOK)
 }
 
-func getUserIDThemeIDFirstLastQueryParams(r *http.Request) (*int, *int, *int, *int, error) {
+func getUserIDThemeIDLimitOffsetQueryParams(r *http.Request) (*int, *int, *int, *int, error) {
 	const (
 		userIDQueryParamKey  = "user_id"
 		themeIDQueryParamKey = "theme_id"
-		firstQueryParamKey   = "first"
-		lastQueryParamKey    = "last"
+		limitQueryParamKey   = "limit"
+		offsetQueryParamKey  = "offset"
 	)
 
 	userID, err := core_http_request.GetIntQueryParam(r, userIDQueryParamKey)
@@ -73,14 +73,14 @@ func getUserIDThemeIDFirstLastQueryParams(r *http.Request) (*int, *int, *int, *i
 		return nil, nil, nil, nil, fmt.Errorf("get 'user_id' query param: %w", err)
 	}
 
-	first, err := core_http_request.GetIntQueryParam(r, firstQueryParamKey)
+	first, err := core_http_request.GetIntQueryParam(r, limitQueryParamKey)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("get 'first' query param: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("get 'limit' query param: %w", err)
 	}
 
-	last, err := core_http_request.GetIntQueryParam(r, lastQueryParamKey)
+	last, err := core_http_request.GetIntQueryParam(r, offsetQueryParamKey)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("get 'last' query param: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("get 'offset' query param: %w", err)
 	}
 
 	return userID, themeID, first, last, nil
