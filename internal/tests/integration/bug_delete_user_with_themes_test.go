@@ -86,7 +86,16 @@ func Test_Delete_User_With_Theme(t *testing.T) {
 		t.Fatalf("expected ErrNotFound user, got %v", err)
 	}
 
+	if _, err = features.UsersService.GetUser(ctx, user.ID); err != nil {
+		t.Fatalf("expected ErrNotFound user, got %v", err)
+	}
+
 	_, err = features.ThemesRepository.GetTheme(ctx, theme.ID)
+	if err != nil {
+		t.Fatalf("expected ErrNotFound theme, got %v", err)
+	}
+
+	_, err = features.ThemesService.GetTheme(ctx, theme.ID)
 	if err != nil {
 		t.Fatalf("expected ErrNotFound theme, got %v", err)
 	}
@@ -164,7 +173,17 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
 	}
 
+	_, err = features.ThemeUserService.GetThemeUser(ctx, theme_user.ID)
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
+	}
+
 	_, err = features.ThemesRepository.GetTheme(ctx, theme.ID)
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound theme, got %v", err)
+	}
+
+	_, err = features.ThemesService.GetTheme(ctx, theme.ID)
 	if !errors.Is(err, core_errors.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound theme, got %v", err)
 	}
@@ -273,7 +292,17 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 		t.Fatalf("expected ErrNotFound user, got %v", err)
 	}
 
+	_, err = features.UsersService.GetUser(ctx, user_2.ID)
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound user, got %v", err)
+	}
+
 	_, err = features.ThemeUserRepository.GetThemeUser(ctx, theme_user.ID)
+	if !errors.Is(err, core_errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
+	}
+
+	_, err = features.ThemeUserService.GetThemeUser(ctx, theme_user.ID)
 	if !errors.Is(err, core_errors.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
 	}
