@@ -15,11 +15,11 @@ var (
 	refreshTTL = 7 * 24 * time.Hour
 )
 
-func (r *UserRepository) GenerateTokenPair(ctx context.Context, ID string) (*domain.TokenPair, error) {
+func (r *UserRepository) GenerateTokenPair(ctx context.Context, ID string, userID int) (*domain.TokenPair, error) {
 	secret := []byte(os.Getenv("SECTER_KEY_FOR_JWT"))
 
-	accessClaims := domain.NewClaims(ID, uuid.NewString(), accessTTL)
-	refreshClaims := domain.NewClaims(ID, uuid.NewString(), refreshTTL)
+	accessClaims := domain.NewClaims(ID, uuid.NewString(), userID, accessTTL)
+	refreshClaims := domain.NewClaims(ID, uuid.NewString(), userID, refreshTTL)
 
 	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(secret)
 	if err != nil {

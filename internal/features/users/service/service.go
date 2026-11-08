@@ -26,6 +26,7 @@ type UserRepositoryRedis interface {
 	GenerateTokenPair(
 		ctx context.Context,
 		login string,
+		userID int,
 	) (*domain.TokenPair, error)
 
 	SaveUser(

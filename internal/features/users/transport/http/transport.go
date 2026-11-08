@@ -47,13 +47,13 @@ type UserService interface {
 
 	Login(
 		ctx context.Context,
-		id int,
 		pair *domain.TokenPair,
 	) error
 
 	GenerateTokenPair(
 		ctx context.Context,
 		login string,
+		userID int,
 	) (*domain.TokenPair, error)
 }
 

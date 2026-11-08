@@ -10,8 +10,9 @@ import (
 func (r *UserService) GenerateTokenPair(
 	ctx context.Context,
 	login string,
+	userID int,
 ) (*domain.TokenPair, error) {
-	token, err := r.userRepositoryRedis.GenerateTokenPair(ctx, login)
+	token, err := r.userRepositoryRedis.GenerateTokenPair(ctx, login, userID)
 	if err != nil {
 		return &domain.TokenPair{}, fmt.Errorf("failed to generate token: %w", err)
 	}

@@ -158,6 +158,7 @@ func (r *redisRepoStub) DeleteToken(
 func (r *redisRepoStub) GenerateTokenPair(
 	ctx context.Context,
 	login string,
+	userID int,
 ) (*domain.TokenPair, error) {
 	return nil, nil
 }

@@ -61,7 +61,7 @@ func (h *UsersHTTPHandler) LoginUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pair, err := h.userService.GenerateTokenPair(ctx, request.Email)
+	pair, err := h.userService.GenerateTokenPair(ctx, request.Email, userDomain.ID)
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,
@@ -71,7 +71,7 @@ func (h *UsersHTTPHandler) LoginUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.userService.Login(ctx, userDomain.ID, pair); err != nil {
+	if err := h.userService.Login(ctx, pair); err != nil {
 		responseHandler.ErrorResponse(
 			err,
 			"failed to write the token",

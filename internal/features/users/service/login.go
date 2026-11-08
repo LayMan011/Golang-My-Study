@@ -9,14 +9,20 @@ import (
 
 func (s *UserService) Login(
 	ctx context.Context,
-	id int,
 	pair *domain.TokenPair,
 ) error {
-	key := fmt.Sprintf("token:%d", id)
-
-	err := s.userRepositoryRedis.SaveToken(ctx, key, pair)
+	claims, err := domain.ParseToken(pair.AccessToken)
 	if err != nil {
-		return fmt.Errorf("set token from repository: %w", err)
+		return fmt.Errorf("parse access token: %w", err)
+	}
+
+	if claims.ID == "" {
+		return fmt.Errorf("access token is missing jti")
+	}
+
+	key := "token:" + claims.ID
+	if err := s.userRepositoryRedis.SaveToken(ctx, key, pair); err != nil {
+		return fmt.Errorf("save token to repository: %w", err)
 	}
 
 	return nil
