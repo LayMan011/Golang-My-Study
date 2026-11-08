@@ -202,6 +202,7 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 		if rec.Code != http.StatusNoContent {
 			t.Fatalf("session %d before deletion: status = %d, want %d; body = %q", i+1, rec.Code, http.StatusNoContent, rec.Body.String())
 		}
+
 		if handlerCalls != callsBefore+1 {
 			t.Fatalf("session %d: next handler calls = %d, want 1", i+1, handlerCalls-callsBefore)
 		}
