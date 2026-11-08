@@ -2,37 +2,35 @@ package users_redis_repository
 
 import (
 	"context"
-	"reflect"
+	"fmt"
+	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
 )
 
 func (r *UserRepository) SaveUser(ctx context.Context, key string, value domain.User) error {
-	val := reflect.ValueOf(value)
+	fields := map[string]any{
+		"id":         value.ID,
+		"version":    value.Version,
+		"email":      value.Email,
+		"created_at": value.CreatedAt.Format(time.RFC3339Nano),
+		"password":   string(value.Password),
+		"full_name":  value.FullName,
+	}
 
-	setter := func(p core_redis_pool.Pipeline) error {
-		for i := 0; i < val.NumField(); i++ {
-			field := val.Type().Field(i)
-			tag := field.Tag.Get("redis")
-			if tag == "" {
-				continue
-			}
-
-			if err := p.HSet(ctx, key, tag, val.Field(i).Interface()); err != nil {
+	_, err := r.pool.Pipelined(ctx, func(p core_redis_pool.Pipeline) error {
+		for field, fieldValue := range fields {
+			if err := p.HSet(ctx, key, field, fieldValue); err != nil {
 				return err
 			}
 		}
 
-		if err := p.Expire(ctx, key, core_redis_pool.TTLDataSave); err != nil {
-			return err
-		}
+		return p.Expire(ctx, key, core_redis_pool.TTLDataSave)
+	})
 
-		return nil
-	}
-
-	if _, err := r.pool.Pipelined(ctx, setter); err != nil {
-		return err
+	if err != nil {
+		return fmt.Errorf("save user to Redis: %w", err)
 	}
 
 	return nil
