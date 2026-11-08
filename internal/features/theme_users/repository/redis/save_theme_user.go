@@ -2,37 +2,48 @@ package themes_user_redis_repository
 
 import (
 	"context"
-	"reflect"
+	"fmt"
+	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
 )
 
 func (r *ThemeUserRepository) SaveThemeUser(ctx context.Context, key string, value domain.ThemeUser) error {
-	val := reflect.ValueOf(value)
+	fields := map[string]any{
+		"id":                value.ID,
+		"version":           value.Version,
+		"completed":         value.Completed,
+		"addition_at":       value.AdditionAt.Format(time.RFC3339Nano),
+		"percentages":       value.Percentages,
+		"total_lessons":     value.TotalLessons,
+		"completed_lessons": value.CompletedLessons,
+		"theme_id":          value.ThemeID,
+		"user_id":           value.UserID,
+	}
 
-	setter := func(p core_redis_pool.Pipeline) error {
-		for i := 0; i < val.NumField(); i++ {
-			field := val.Type().Field(i)
-			tag := field.Tag.Get("redis")
-			if tag == "" {
-				continue
-			}
+	if value.CompletedAt != nil {
+		fields["completed_at"] = value.CompletedAt.Format(time.RFC3339Nano)
+	}
 
-			if err := p.HSet(ctx, key, tag, val.Field(i).Interface()); err != nil {
+	_, err := r.pool.Pipelined(ctx, func(p core_redis_pool.Pipeline) error {
+		if value.CompletedAt == nil {
+			if err := p.HDel(ctx, key, "completed_at"); err != nil {
 				return err
 			}
 		}
 
-		if err := p.Expire(ctx, key, core_redis_pool.TTLDataSave); err != nil {
-			return err
+		for field, fieldValue := range fields {
+			if err := p.HSet(ctx, key, field, fieldValue); err != nil {
+				return err
+			}
 		}
 
-		return nil
-	}
+		return p.Expire(ctx, key, core_redis_pool.TTLDataSave)
+	})
 
-	if _, err := r.pool.Pipelined(ctx, setter); err != nil {
-		return err
+	if err != nil {
+		return fmt.Errorf("save theme_user to Redis: %w", err)
 	}
 
 	return nil
