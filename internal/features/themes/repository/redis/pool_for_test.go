@@ -28,10 +28,6 @@ func (p *testRedisPool) Get(ctx context.Context, key string) (string, error) {
 	return p.client.Get(ctx, key).Result()
 }
 
-func (p *testRedisPool) DoError(ctx context.Context, str1 string, key int) error {
-	return p.client.Do(ctx, str1, key).Err()
-}
-
 func (p *testRedisPool) HSet(ctx context.Context, key string, value any) error {
 	return p.client.HSet(ctx, key, value).Err()
 }
@@ -41,14 +37,6 @@ func (p *testRedisPool) HGetAll(
 	key string,
 ) (map[string]string, error) {
 	return p.client.HGetAll(ctx, key).Result()
-}
-
-func (p *testRedisPool) Expire(
-	ctx context.Context,
-	key string,
-	expiration time.Duration,
-) error {
-	return p.client.Expire(ctx, key, expiration).Err()
 }
 
 func (p *testRedisPool) Pipelined(
@@ -65,23 +53,12 @@ func (p *testRedisPool) Pipelined(
 	}, err
 }
 
-func (p *testRedisPool) Exists(
-	ctx context.Context,
-	key string,
-) core_redis_pool.CustomIntCmd {
-	return p.client.Exists(ctx, key)
-}
-
 func (p *testRedisPool) HDel(
 	ctx context.Context,
 	key string,
 	fields ...string,
 ) core_redis_pool.CustomIntCmd {
 	return p.client.HDel(ctx, key, fields...)
-}
-
-func (p *testRedisPool) Close() error {
-	return p.client.Close()
 }
 
 func (p *testRedisPool) Incr(ctx context.Context, key string) (int64, error) {
@@ -107,6 +84,15 @@ func (p testRedisPipeline) HSet(
 	value any,
 ) error {
 	p.pipe.HSet(ctx, key, field, value)
+	return nil
+}
+
+func (p testRedisPipeline) HDel(
+	ctx context.Context,
+	key string,
+	fields ...string,
+) error {
+	p.pipe.HDel(ctx, key, fields...)
 	return nil
 }
 
