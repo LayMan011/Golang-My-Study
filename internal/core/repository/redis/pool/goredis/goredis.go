@@ -76,15 +76,6 @@ func (r *RedisClient) HGetAll(ctx context.Context, key string) (map[string]strin
 	return data, nil
 }
 
-func (r *RedisClient) Expire(ctx context.Context, key string, time time.Duration) error {
-	err := r.Client.Expire(ctx, key, time).Err()
-	if err != nil {
-		return fmt.Errorf("failed to set TTL: %w", err)
-	}
-
-	return nil
-}
-
 func (r *RedisClient) Pipelined(
 	ctx context.Context,
 	fn func(core_redis_pool.Pipeline) error,
@@ -99,20 +90,8 @@ func (r *RedisClient) Pipelined(
 	return &CustomCmder{cmds: cmds}, nil
 }
 
-func (r *RedisClient) Exists(ctx context.Context, key string) core_redis_pool.CustomIntCmd {
-	return CustomIntCmd{r.Client.Exists(ctx, key)}
-}
-
 func (r *RedisClient) HDel(ctx context.Context, key string, fields ...string) core_redis_pool.CustomIntCmd {
 	return CustomIntCmd{r.Client.HDel(ctx, key, fields...)}
-}
-
-func (r *RedisClient) DoError(ctx context.Context, str1 string, key int) error {
-	return r.Client.Do(ctx, str1, key).Err()
-}
-
-func (r *RedisClient) Close() error {
-	return r.Client.Close()
 }
 
 func (r *RedisClient) Incr(ctx context.Context, key string) (int64, error) {

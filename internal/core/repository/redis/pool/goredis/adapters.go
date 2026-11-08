@@ -56,6 +56,14 @@ func (p *goRedisPipeline) Expire(ctx context.Context, key string, ttl time.Durat
 	return nil
 }
 
+func (p *goRedisPipeline) HDel(ctx context.Context, key string, fields ...string) error {
+	cmd := p.pipe.HDel(ctx, key, fields...)
+	if err := cmd.Err(); err != nil {
+		return fmt.Errorf("failed to delete fields from Redis hash: %w", err)
+	}
+	return nil
+}
+
 func (p *goRedisPipeline) HSet(ctx context.Context, key string, field string, value any) error {
 	cmd := p.pipe.HSet(ctx, key, field, value)
 	if err := cmd.Err(); err != nil {

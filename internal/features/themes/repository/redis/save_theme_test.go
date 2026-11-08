@@ -86,3 +86,54 @@ func TestThemeRedisRepository(t *testing.T) {
 		t.Errorf("CreatedAt: got %s, want %s", got.CreatedAt, want.CreatedAt)
 	}
 }
+
+func TestSaveTheme_RemovesWhenNil(t *testing.T) {
+	ctx := context.Background()
+
+	server := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: server.Addr()})
+	t.Cleanup(func() {
+		_ = client.Close()
+	})
+
+	repo := &ThemeRepository{pool: &testRedisPool{client: client}}
+	const key = "theme:save-nil-fields"
+
+	description := "описание"
+	rating := 4.5
+	value := domain.NewThemeUnitialized(
+		"Тема",
+		&description,
+		"Предмет",
+		5000,
+		"beginner",
+		"3 месяца",
+		"video",
+		26,
+	)
+	value.Rating = &rating
+
+	if err := repo.SaveTheme(ctx, key, value); err != nil {
+		t.Fatalf("first SaveTheme() error: %v", err)
+	}
+
+	value.Description = nil
+	value.Rating = nil
+
+	if err := repo.SaveTheme(ctx, key, value); err != nil {
+		t.Fatalf("second SaveTheme() error: %v", err)
+	}
+
+	data, err := client.HGetAll(ctx, key).Result()
+	if err != nil {
+		t.Fatalf("HGetAll() error: %v", err)
+	}
+
+	if _, ok := data["description"]; ok {
+		t.Errorf("description should have been deleted; hash contains %q", data["description"])
+	}
+
+	if _, ok := data["rating"]; ok {
+		t.Errorf("rating should have been deleted; hash contains %q", data["rating"])
+	}
+}
