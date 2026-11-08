@@ -441,7 +441,3 @@ func (p *miniredisPool) Incr(ctx context.Context, key string) (int64, error) {
 func (p *miniredisPool) Del(ctx context.Context, keys ...string) error {
 	return p.client.Del(ctx, keys...).Err()
 }
-
-func (p *miniredisPool) Del(ctx context.Context, keys ...string) error {
-	return p.client.Del(ctx, keys...).Err()
-}

@@ -61,11 +61,17 @@ func (r *UserRepository) SaveToken(
 		if err := p.HSet(ctx, key, "refresh_token", pair.RefreshToken); err != nil {
 			return err
 		}
-
 		if err := p.Expire(ctx, key, tokenTTL); err != nil {
 			return err
 		}
 
+<<<<<<< HEAD
+		if err := p.Expire(ctx, key, tokenTTL); err != nil {
+			return err
+		}
+
+=======
+>>>>>>> cfdc737 (mini fix pull)
 		if err := p.HSet(ctx, indexKey, accessKey, "1"); err != nil {
 			return err
 		}
@@ -77,13 +83,12 @@ func (r *UserRepository) SaveToken(
 		); err != nil {
 			return err
 		}
-
 		return p.Expire(ctx, indexKey, indexTTL)
 	})
 	if err != nil {
 		return fmt.Errorf("save token and index user sessions: %w", err)
 	}
-
+	
 	if err := cmd.Err(); err != nil {
 		return fmt.Errorf("save token and index user sessions: %w", err)
 	}
