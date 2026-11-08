@@ -179,7 +179,7 @@ func (p *recordingPool) Set(
 	if p.values == nil {
 		p.values = make(map[string]string)
 	}
-	p.values[key] = fmt.Sprint(value)
 
+	p.values[key] = fmt.Sprint(value)
 	return recordingStatusCmd{}
 }
