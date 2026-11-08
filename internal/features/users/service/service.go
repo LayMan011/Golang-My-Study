@@ -29,6 +29,11 @@ type UserRepositoryRedis interface {
 		userID int,
 	) (*domain.TokenPair, error)
 
+	DeleteUserSessions(
+		ctx context.Context,
+		userID int,
+	) error
+
 	SaveUser(
 		ctx context.Context,
 		key string,

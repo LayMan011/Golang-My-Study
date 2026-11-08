@@ -163,6 +163,13 @@ func (r *redisRepoStub) GenerateTokenPair(
 	return nil, nil
 }
 
+func (r *redisRepoStub) DeleteUserSessions(
+	ctx context.Context,
+	userID int,
+) error {
+	return nil
+}
+
 func (r *redisRepoStub) SaveUser(
 	ctx context.Context,
 	key string,
