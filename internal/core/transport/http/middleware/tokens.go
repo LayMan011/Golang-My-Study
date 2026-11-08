@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
@@ -34,19 +33,15 @@ func AuthMiddleware(pool core_redis_pool.Pool) Middleware {
 			}
 			accessToken := parts[1]
 
-			// 2. Парсим логин из токена
-			login, err := parseLoginFromToken(accessToken)
-			if err != nil || login == "" {
+			subject, jti, err := parseTokenClaims(accessToken)
+			if err != nil || subject == "" || jti == "" {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
 			}
 
-			ctx := r.Context()
+			key := fmt.Sprintf("token:%s", jti)
 
-			// 3. Читаем TokenPair из Redis через GetToken
-			key := fmt.Sprintf("jwt:%s", login)
-
-			tokenPair, err := getToken(ctx, key, pool)
+			tokenPair, err := getToken(r.Context(), key, pool)
 			if err != nil {
 				if errors.Is(err, core_errors.ErrNotFound) {
 					http.Error(w, "session expired or not found", http.StatusUnauthorized)
@@ -56,17 +51,20 @@ func AuthMiddleware(pool core_redis_pool.Pool) Middleware {
 				return
 			}
 
-			// 4. Проверяем, что accessToken совпадает с тем, что в Redis
 			if tokenPair.AccessToken != accessToken {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
 			}
 
-			// 5. Кладём логин (и при желании другие данные) в контекст
-			ctxWithLogin := context.WithValue(ctx, ctxKeyLogin, login)
+			ctxWithLogin := context.WithValue(r.Context(), ctxKeyLogin, subject)
 			next.ServeHTTP(w, r.WithContext(ctxWithLogin))
 		})
 	}
+}
+
+func LoginFromContext(ctx context.Context) (string, bool) {
+	login, ok := ctx.Value(ctxKeyLogin).(string)
+	return login, ok
 }
 
 func getToken(ctx context.Context, key string, pool core_redis_pool.Pool) (domain.TokenPair, error) {
@@ -105,15 +103,11 @@ func getToken(ctx context.Context, key string, pool core_redis_pool.Pool) (domai
 	return t, nil
 }
 
-func parseLoginFromToken(ID string) (string, error) {
-	claims, err := domain.ParseToken(ID)
+func parseTokenClaims(tokenString string) (subject, jti string, err error) {
+	claims, err := domain.ParseToken(tokenString)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse token: %w", err)
+		return "", "", err
 	}
 
-	if claims.ExpiresAt != nil && time.Now().After(claims.ExpiresAt.Time) {
-		return "", fmt.Errorf("token expired")
-	}
-
-	return claims.ID, nil
+	return claims.Subject, claims.ID, nil
 }

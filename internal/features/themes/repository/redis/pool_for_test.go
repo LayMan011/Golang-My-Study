@@ -69,6 +69,10 @@ func (p *testRedisPool) Incr(ctx context.Context, key string) (int64, error) {
 	return value, nil
 }
 
+func (p *testRedisPool) Del(ctx context.Context, keys ...string) error {
+	return p.client.Del(ctx, keys...).Err()
+}
+
 type testRedisPipeline struct {
 	pipe redis.Pipeliner
 }

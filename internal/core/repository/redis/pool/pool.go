@@ -14,6 +14,7 @@ type Pool interface {
 	Pipelined(ctx context.Context, fn func(Pipeline) error) (CustomCmder, error)
 
 	HDel(ctx context.Context, key string, fields ...string) CustomIntCmd
+	Del(ctx context.Context, keys ...string) error
 
 	Incr(ctx context.Context, key string) (int64, error)
 }
