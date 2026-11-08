@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"reflect"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
-	"github.com/joho/godotenv"
 )
 
 type contextKey string
@@ -100,19 +98,10 @@ func getToken(ctx context.Context, key string, pool core_redis_pool.Pool) (domai
 	return t, nil
 }
 
-func parseTokenClaims(tokenString string) (string, string, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
+func parseTokenClaims(tokenString string) (subject, jti string, err error) {
 	claims, err := domain.ParseToken(tokenString)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to parse token: %w", err)
-	}
-
-	if claims.Subject == "" || claims.ID == "" {
-		return "", "", fmt.Errorf("token is missing subject or jti")
+		return "", "", err
 	}
 
 	return claims.Subject, claims.ID, nil

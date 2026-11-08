@@ -12,7 +12,8 @@ import (
 
 func TestGenerateToken(t *testing.T) {
 	const (
-		userID = "user-123"
+		login  = "user@example.test"
+		userID = 123
 		secret = "test-secret"
 	)
 
@@ -31,12 +32,12 @@ func TestGenerateToken(t *testing.T) {
 	}
 	r := NewUsersRepository(pool)
 
-	first, err := r.GenerateTokenPair(ctx, userID)
+	first, err := r.GenerateTokenPair(ctx, login, userID)
 	if err != nil {
 		t.Fatalf("generate first token pair: %v", err)
 	}
 
-	second, err := r.GenerateTokenPair(ctx, userID)
+	second, err := r.GenerateTokenPair(ctx, login, userID)
 	if err != nil {
 		t.Fatalf("generate second token pair: %v", err)
 	}
@@ -88,15 +89,16 @@ func TestGenerateToken(t *testing.T) {
 			t.Fatalf("get refresh session %q from Redis: %v", key, err)
 		}
 
-		if got != userID {
-			t.Errorf("refresh session %q contains user ID %q, want %q", key, got, userID)
+		if got != login {
+			t.Errorf("refresh session %q contains user ID %q, want %q", key, got, login)
 		}
 	}
 }
 
 func TestGenerateToken_SavesRefreshSessions(t *testing.T) {
 	const (
-		userID = "user-123"
+		login  = "user@example.test"
+		userID = 123
 		secret = "test-secret"
 	)
 
@@ -106,12 +108,12 @@ func TestGenerateToken_SavesRefreshSessions(t *testing.T) {
 	repo := NewUsersRepository(pool)
 	ctx := context.Background()
 
-	firstPair, err := repo.GenerateTokenPair(ctx, userID)
+	firstPair, err := repo.GenerateTokenPair(ctx, login, userID)
 	if err != nil {
 		t.Fatalf("GenerateTokenPair() first call returned error: %v", err)
 	}
 
-	secondPair, err := repo.GenerateTokenPair(ctx, userID)
+	secondPair, err := repo.GenerateTokenPair(ctx, login, userID)
 	if err != nil {
 		t.Fatalf("GenerateTokenPair() second call returned error: %v", err)
 	}
@@ -144,8 +146,8 @@ func TestGenerateToken_SavesRefreshSessions(t *testing.T) {
 	for _, key := range []string{firstKey, secondKey} {
 		if got, ok := pool.values[key]; !ok {
 			t.Errorf("expected refresh session %q to be saved", key)
-		} else if got != userID {
-			t.Errorf("refresh session %q: expected user ID %q, got %q", key, userID, got)
+		} else if got != login {
+			t.Errorf("refresh session %q: expected user ID %q, got %q", key, login, got)
 		}
 	}
 }
