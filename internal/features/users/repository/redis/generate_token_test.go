@@ -2,9 +2,12 @@ package users_redis_repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_redis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
@@ -26,9 +29,8 @@ func TestGenerateToken(t *testing.T) {
 		_ = redisClient.Close()
 	})
 
-	pool := &miniredisPool{
-		PoolStub: NewPoolStub(),
-		client:   redisClient,
+	pool := &testRedisPool{
+		client: redisClient,
 	}
 	r := NewUsersRepository(pool)
 
@@ -150,4 +152,34 @@ func TestGenerateToken_SavesRefreshSessions(t *testing.T) {
 			t.Errorf("refresh session %q: expected user ID %q, got %q", key, login, got)
 		}
 	}
+}
+
+type recordingPool struct {
+	core_redis_pool.Pool
+
+	values map[string]string
+}
+
+var _ core_redis_pool.Pool = (*recordingPool)(nil)
+
+type recordingStatusCmd struct {
+	err error
+}
+
+func (c recordingStatusCmd) Err() error {
+	return c.err
+}
+
+func (p *recordingPool) Set(
+	_ context.Context,
+	key string,
+	value any,
+	_ time.Duration,
+) core_redis_pool.CustomStatusCmd {
+	if p.values == nil {
+		p.values = make(map[string]string)
+	}
+	p.values[key] = fmt.Sprint(value)
+
+	return recordingStatusCmd{}
 }
