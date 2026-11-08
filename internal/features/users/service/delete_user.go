@@ -12,10 +12,6 @@ func (s *UserService) DeleteUser(
 	ctx context.Context,
 	id int,
 ) error {
-	if err := s.userRepositoryRedis.DeleteUserSessions(ctx, id); err != nil {
-		return fmt.Errorf("revoke user sessions: %w", err)
-	}
-
 	if err := s.userRepositoryPostgres.DeleteUser(ctx, id); err != nil {
 		return fmt.Errorf("delete user: %w", err)
 	}
@@ -23,6 +19,10 @@ func (s *UserService) DeleteUser(
 	if err := s.userRepositoryRedis.BumpUsersListVersion(ctx); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to invalidate users list cache", zap.Error(err))
+	}
+
+	if err := s.userRepositoryRedis.DeleteUserSessions(ctx, id); err != nil {
+		return fmt.Errorf("revoke user sessions: %w", err)
 	}
 
 	key := fmt.Sprintf("user:%d", id)
