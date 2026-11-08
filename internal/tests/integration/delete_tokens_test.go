@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
+	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	core_http_middleware "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/middleware"
 	users_redis_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/redis"
@@ -58,7 +60,8 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 	type session struct {
 		accessToken  string
 		refreshToken string
-		jti          string
+		accessJTI    string
+		refreshJTI   string
 	}
 
 	issueSession := func() session {
@@ -84,8 +87,7 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 		usersHandler.LoginUser(rec, req)
 
 		if rec.Code != http.StatusOK {
-			t.Fatalf("LoginUser status = %d, want %d; body = %q",
-				rec.Code, http.StatusOK, rec.Body.String())
+			t.Fatalf("LoginUser status = %d, want %d; body = %q", rec.Code, http.StatusOK, rec.Body.String())
 		}
 
 		var tokens users_transport_http.LoginResponse
@@ -101,12 +103,12 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 			t.Fatal("LoginUser returned an empty refresh token")
 		}
 
-		claims, err := domain.ParseToken(tokens.AccessToken)
+		accessClaims, err := domain.ParseToken(tokens.AccessToken)
 		if err != nil {
 			t.Fatalf("parse access token: %v", err)
 		}
 
-		if claims.ID == "" {
+		if accessClaims.ID == "" {
 			t.Fatal("access token has an empty jti")
 		}
 
@@ -126,7 +128,8 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 		return session{
 			accessToken:  tokens.AccessToken,
 			refreshToken: tokens.RefreshToken,
-			jti:          claims.ID,
+			accessJTI:    accessClaims.ID,
+			refreshJTI:   refreshClaims.ID,
 		}
 	}
 
@@ -134,22 +137,35 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 		issueSession(),
 		issueSession(),
 	}
-	if sessions[0].jti == sessions[1].jti {
-		t.Fatal("two logins returned the same session ID; expected separate sessions")
+
+	if sessions[0].accessJTI == sessions[1].accessJTI {
+		t.Fatal("two logins returned the same access session ID")
+	}
+
+	if sessions[0].refreshJTI == sessions[1].refreshJTI {
+		t.Fatal("two logins returned the same refresh session ID")
 	}
 
 	for i, s := range sessions {
-		pair, err := redisClient.HGetAll(ctx, "token:"+s.jti)
+		pair, err := redisClient.HGetAll(ctx, "token:"+s.accessJTI)
 		if err != nil {
-			t.Fatalf("read session %d from Redis: %v", i+1, err)
+			t.Fatalf("read token pair for session %d: %v", i+1, err)
 		}
 
 		if pair["access_token"] != s.accessToken {
 			t.Errorf("session %d access token was not saved in Redis", i+1)
 		}
-
 		if pair["refresh_token"] != s.refreshToken {
 			t.Errorf("session %d refresh token was not saved in Redis", i+1)
+		}
+
+		refreshValue, err := redisClient.Get(ctx, "refresh:"+s.refreshJTI)
+		if err != nil {
+			t.Fatalf("read refresh record for session %d: %v", i+1, err)
+		}
+
+		if refreshValue == "" {
+			t.Errorf("session %d refresh record is empty", i+1)
 		}
 	}
 
@@ -186,7 +202,6 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 		if rec.Code != http.StatusNoContent {
 			t.Fatalf("session %d before deletion: status = %d, want %d; body = %q", i+1, rec.Code, http.StatusNoContent, rec.Body.String())
 		}
-
 		if handlerCalls != callsBefore+1 {
 			t.Fatalf("session %d: next handler calls = %d, want 1", i+1, handlerCalls-callsBefore)
 		}
@@ -207,13 +222,18 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 			t.Errorf("next handler was called for session %d after deletion", i+1)
 		}
 
-		pair, err := redisClient.HGetAll(ctx, "token:"+s.jti)
+		_, err := redisClient.Get(ctx, "refresh:"+s.refreshJTI)
+		if !errors.Is(err, core_errors.ErrNotFound) {
+			t.Errorf("session %d refresh record should be absent; Get() error = %v", i+1, err)
+		}
+
+		pair, err := redisClient.HGetAll(ctx, "token:"+s.accessJTI)
 		if err != nil {
-			t.Fatalf("read session %d from Redis after deletion: %v", i+1, err)
+			t.Fatalf("read token pair for session %d after deletion: %v", i+1, err)
 		}
 
 		if len(pair) != 0 {
-			t.Errorf("session %d still has token data in Redis after deletion: %#v", i+1, pair)
+			t.Errorf("session %d still has token data in Redis: %#v", i+1, pair)
 		}
 	}
 }
