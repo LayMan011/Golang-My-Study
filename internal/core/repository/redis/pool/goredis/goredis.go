@@ -105,3 +105,7 @@ func (r *RedisClient) Incr(ctx context.Context, key string) (int64, error) {
 func (r *RedisClient) Del(ctx context.Context, keys ...string) error {
 	return r.Client.Del(ctx, keys...).Err()
 }
+
+func (r *RedisClient) Del(ctx context.Context, keys ...string) error {
+	return r.Client.Del(ctx, keys...).Err()
+}
