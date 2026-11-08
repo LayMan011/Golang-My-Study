@@ -254,6 +254,17 @@ func (p *PoolStub) Incr(ctx context.Context, key string) (int64, error) {
 	return value, nil
 }
 
+func (p *PoolStub) Del(_ context.Context, keys ...string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for _, key := range keys {
+		delete(p.hashes, key)
+	}
+
+	return nil
+}
+
 type pipelineStub struct {
 	pool *PoolStub
 	ctx  context.Context
@@ -425,4 +436,8 @@ func (p *miniredisPool) Set(
 
 func (p *miniredisPool) Incr(ctx context.Context, key string) (int64, error) {
 	return p.client.Incr(ctx, key).Result()
+}
+
+func (p *miniredisPool) Del(ctx context.Context, keys ...string) error {
+	return p.client.Del(ctx, keys...).Err()
 }

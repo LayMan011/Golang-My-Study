@@ -62,6 +62,11 @@ func AuthMiddleware(pool core_redis_pool.Pool) Middleware {
 	}
 }
 
+func LoginFromContext(ctx context.Context) (string, bool) {
+	login, ok := ctx.Value(ctxKeyLogin).(string)
+	return login, ok
+}
+
 func getToken(ctx context.Context, key string, pool core_redis_pool.Pool) (domain.TokenPair, error) {
 	data, err := pool.HGetAll(ctx, key)
 	if err != nil {

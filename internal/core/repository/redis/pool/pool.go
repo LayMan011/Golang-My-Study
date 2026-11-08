@@ -17,6 +17,7 @@ type Pool interface {
 
 	Exists(ctx context.Context, key string) CustomIntCmd
 	HDel(ctx context.Context, key string, fields ...string) CustomIntCmd
+	Del(ctx context.Context, keys ...string) error
 
 	Close() error
 	Incr(ctx context.Context, key string) (int64, error)
