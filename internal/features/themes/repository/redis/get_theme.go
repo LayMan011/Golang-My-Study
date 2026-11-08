@@ -3,7 +3,6 @@ package themes_redis_repository
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -16,78 +15,77 @@ func (r *ThemeRepository) GetTheme(ctx context.Context, key string) (domain.Them
 	if err != nil {
 		return domain.Theme{}, fmt.Errorf("get theme from redis: %w", err)
 	}
-
 	if len(data) == 0 {
 		return domain.Theme{}, core_errors.ErrNotFound
 	}
 
 	var t domain.Theme
-	v := reflect.ValueOf(&t).Elem()
 
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Type().Field(i)
-		tag := field.Tag.Get("redis")
-		if tag == "" || tag == "-" {
-			continue
-		}
-
-		raw, ok := data[tag]
+	parseInt := func(redisKey string) (int, error) {
+		raw, ok := data[redisKey]
 		if !ok {
-			continue
+			return 0, nil
 		}
 
-		fv := v.Field(i)
-		if !fv.CanSet() {
-			continue
+		n, err := strconv.Atoi(raw)
+		if err != nil {
+			return 0, fmt.Errorf("field %s: parse int from %q: %w", redisKey, raw, err)
 		}
 
-		switch fv.Kind() {
-		case reflect.Int:
-			n, convErr := strconv.ParseInt(raw, 10, 64)
-			if convErr != nil {
-				return domain.Theme{}, fmt.Errorf("field %s: parse int from %q: %w", field.Name, raw, convErr)
-			}
-			fv.SetInt(n)
+		return n, nil
+	}
 
-		case reflect.String:
-			fv.SetString(raw)
+	if t.ID, err = parseInt("id"); err != nil {
+		return domain.Theme{}, err
+	}
 
-		case reflect.Pointer:
-			// *string, *float64 и другие ptr-типы
-			elemKind := fv.Type().Elem().Kind()
+	if t.Version, err = parseInt("version"); err != nil {
+		return domain.Theme{}, err
+	}
 
-			switch elemKind {
-			case reflect.String:
-				s := raw
-				fv.Set(reflect.ValueOf(&s))
+	if t.AllRatings, err = parseInt("all_ratings"); err != nil {
+		return domain.Theme{}, err
+	}
 
-			case reflect.Float32, reflect.Float64:
-				f, convErr := strconv.ParseFloat(raw, 64)
-				if convErr != nil {
-					return domain.Theme{}, fmt.Errorf("field %s: parse float from %q: %w", field.Name, raw, convErr)
-				}
-				ptr := reflect.New(fv.Type().Elem())
-				ptr.Elem().SetFloat(f)
-				fv.Set(ptr)
+	if t.NumberOfRatings, err = parseInt("number_of_ratings"); err != nil {
+		return domain.Theme{}, err
+	}
 
-			default:
-				return domain.Theme{}, fmt.Errorf("field %s: unsupported ptr elem kind %s", field.Name, elemKind)
-			}
+	if t.NumberOfUsers, err = parseInt("number_of_users"); err != nil {
+		return domain.Theme{}, err
+	}
 
-		case reflect.Struct:
-			if fv.Type() == reflect.TypeOf(time.Time{}) {
-				// ВАЖНО: layout должен совпадать с тем, как ты сохраняешь CreatedAt в Redis при SaveTheme.
-				tm, convErr := time.Parse(time.RFC3339Nano, raw)
-				if convErr != nil {
-					return domain.Theme{}, fmt.Errorf("field %s: parse time from %q: %w", field.Name, raw, convErr)
-				}
-				fv.Set(reflect.ValueOf(tm))
-			} else {
-				return domain.Theme{}, fmt.Errorf("field %s: unsupported struct type %s", field.Name, fv.Type())
-			}
+	if t.Price, err = parseInt("price"); err != nil {
+		return domain.Theme{}, err
+	}
 
-		default:
-			return domain.Theme{}, fmt.Errorf("field %s: unsupported kind %s", field.Name, fv.Kind())
+	if t.AuthorUserID, err = parseInt("author_user_id"); err != nil {
+		return domain.Theme{}, err
+	}
+
+	t.Title = data["title"]
+	t.Subject = data["subject"]
+	t.Level = data["level"]
+	t.Duration = data["duration"]
+	t.Format = data["format"]
+
+	if raw, ok := data["description"]; ok {
+		t.Description = &raw
+	}
+
+	if raw, ok := data["rating"]; ok {
+		rating, parseErr := strconv.ParseFloat(raw, 64)
+		if parseErr != nil {
+			return domain.Theme{}, fmt.Errorf("field Rating: parse float from %q: %w", raw, parseErr)
+		}
+
+		t.Rating = &rating
+	}
+
+	if raw, ok := data["created_at"]; ok {
+		t.CreatedAt, err = time.Parse(time.RFC3339Nano, raw)
+		if err != nil {
+			return domain.Theme{}, fmt.Errorf("field CreatedAt: parse time from %q: %w", raw, err)
 		}
 	}
 

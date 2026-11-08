@@ -3,7 +3,6 @@ package themes_user_redis_repository
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -22,82 +21,70 @@ func (r *ThemeUserRepository) GetThemeUser(ctx context.Context, key string) (dom
 	}
 
 	var tu domain.ThemeUser
-	v := reflect.ValueOf(&tu).Elem()
 
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Type().Field(i)
-		tag := field.Tag.Get("redis")
-		if tag == "" || tag == "-" {
-			continue
-		}
-
-		raw, ok := data[tag]
+	parseInt := func(redisKey string) (int, error) {
+		raw, ok := data[redisKey]
 		if !ok {
-			continue
+			return 0, nil
 		}
 
-		fv := v.Field(i)
-		if !fv.CanSet() {
-			continue
+		n, err := strconv.Atoi(raw)
+		if err != nil {
+			return 0, fmt.Errorf("field %s: parse int from %q: %w", redisKey, raw, err)
 		}
 
-		switch fv.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			n, convErr := strconv.ParseInt(raw, 10, 64)
-			if convErr != nil {
-				return domain.ThemeUser{}, fmt.Errorf("field %s: parse int from %q: %w", field.Name, raw, convErr)
-			}
-			fv.SetInt(n)
+		return n, nil
+	}
 
-		case reflect.Bool:
-			b, convErr := strconv.ParseBool(raw)
-			if convErr != nil {
-				return domain.ThemeUser{}, fmt.Errorf("field %s: parse bool from %q: %w", field.Name, raw, convErr)
-			}
-			fv.SetBool(b)
+	if tu.ID, err = parseInt("id"); err != nil {
+		return domain.ThemeUser{}, err
+	}
 
-		case reflect.String:
-			fv.SetString(raw)
+	if tu.Version, err = parseInt("version"); err != nil {
+		return domain.ThemeUser{}, err
+	}
 
-		case reflect.Struct:
-			if fv.Type() == reflect.TypeOf(time.Time{}) {
-				const layout = "2026-02-26T10:30:00Z"
-				tm, convErr := time.Parse(layout, raw)
-				if convErr != nil {
-					return domain.ThemeUser{}, fmt.Errorf("field %s: parse time from %q: %w", field.Name, raw, convErr)
-				}
-				fv.Set(reflect.ValueOf(tm))
-			} else {
-				return domain.ThemeUser{}, fmt.Errorf("field %s: unsupported struct type %s", field.Name, fv.Type())
-			}
+	if tu.Percentages, err = parseInt("percentages"); err != nil {
+		return domain.ThemeUser{}, err
+	}
 
-		case reflect.Pointer:
-			elemType := fv.Type().Elem()
-			switch elemType {
-			case reflect.TypeOf(time.Time{}):
-				// Если в Redis пустая строка или специальное значение — можно трактовать как nil.
-				if raw == "" {
-					fv.Set(reflect.Zero(fv.Type()))
-					continue
-				}
+	if tu.TotalLessons, err = parseInt("total_lessons"); err != nil {
+		return domain.ThemeUser{}, err
+	}
 
-				const layout = "2026-02-26T10:30:00Z"
-				tm, convErr := time.Parse(layout, raw)
-				if convErr != nil {
-					return domain.ThemeUser{}, fmt.Errorf("field %s: parse time from %q: %w", field.Name, raw, convErr)
-				}
+	if tu.CompletedLessons, err = parseInt("completed_lessons"); err != nil {
+		return domain.ThemeUser{}, err
+	}
 
-				ptr := reflect.New(elemType)
-				ptr.Elem().Set(reflect.ValueOf(tm))
-				fv.Set(ptr)
+	if tu.ThemeID, err = parseInt("theme_id"); err != nil {
+		return domain.ThemeUser{}, err
+	}
 
-			default:
-				return domain.ThemeUser{}, fmt.Errorf("field %s: unsupported ptr elem type %s", field.Name, elemType)
-			}
+	if tu.UserID, err = parseInt("user_id"); err != nil {
+		return domain.ThemeUser{}, err
+	}
 
-		default:
-			return domain.ThemeUser{}, fmt.Errorf("field %s: unsupported kind %s", field.Name, fv.Kind())
+	if raw, ok := data["completed"]; ok {
+		tu.Completed, err = strconv.ParseBool(raw)
+		if err != nil {
+			return domain.ThemeUser{}, fmt.Errorf("field Completed: parse bool from %q: %w", raw, err)
 		}
+	}
+
+	if raw, ok := data["addition_at"]; ok {
+		tu.AdditionAt, err = time.Parse(time.RFC3339Nano, raw)
+		if err != nil {
+			return domain.ThemeUser{}, fmt.Errorf("field AdditionAt: parse time from %q: %w", raw, err)
+		}
+	}
+
+	if raw, ok := data["completed_at"]; ok && raw != "" {
+		completedAt, parseErr := time.Parse(time.RFC3339Nano, raw)
+		if parseErr != nil {
+			return domain.ThemeUser{}, fmt.Errorf("field CompletedAt: parse time from %q: %w", raw, parseErr)
+		}
+
+		tu.CompletedAt = &completedAt
 	}
 
 	return tu, nil
