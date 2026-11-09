@@ -61,9 +61,19 @@ func Begin(redisErr error) (context.Context, *UserService, domain.User) {
 		listVersion: 0,
 	}
 
+	postgresThemeUser := &themeUserCachePostgresStub{
+		ids: []int{},
+	}
+
+	redisThemeUser := &themeUserCacheRedisStub{
+		err: redisErr,
+	}
+
 	service := &UserService{
 		userRepositoryPostgres: postgres,
 		userRepositoryRedis:    redis,
+		themeUserCachePostgres: postgresThemeUser,
+		themeUserCacheRedis:    redisThemeUser,
 	}
 
 	return ctx, service, inputUser

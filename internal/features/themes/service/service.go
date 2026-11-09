@@ -9,6 +9,22 @@ import (
 type ThemeService struct {
 	themeRepositoryPostgres ThemeRepositoryPostgres
 	themeRepositoryRedis    ThemeRepositoryRedis
+	themeUserCachePostgres  ThemeUserCachePostgres
+	themeUserCacheRedis     ThemeUserCacheRedis
+}
+
+type ThemeUserCachePostgres interface {
+	GetIDsByThemeID(
+		ctx context.Context,
+		themeID int,
+	) ([]int, error)
+}
+
+type ThemeUserCacheRedis interface {
+	InvalidateByIDs(
+		ctx context.Context,
+		ids []int,
+	) error
 }
 
 type ThemeRepositoryRedis interface {
@@ -87,9 +103,13 @@ type ThemeRepositoryPostgres interface {
 func NewThemeService(
 	themeRepositoryPostgres ThemeRepositoryPostgres,
 	themeRepositoryRedis ThemeRepositoryRedis,
+	themeUserCachePostgres ThemeUserCachePostgres,
+	themeUserCacheRedis ThemeUserCacheRedis,
 ) *ThemeService {
 	return &ThemeService{
 		themeRepositoryPostgres: themeRepositoryPostgres,
 		themeRepositoryRedis:    themeRepositoryRedis,
+		themeUserCachePostgres:  themeUserCachePostgres,
+		themeUserCacheRedis:     themeUserCacheRedis,
 	}
 }

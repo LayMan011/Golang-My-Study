@@ -9,6 +9,22 @@ import (
 type UserService struct {
 	userRepositoryPostgres UserRepositoryPostgres
 	userRepositoryRedis    UserRepositoryRedis
+	themeUserCachePostgres ThemeUserCachePostgres
+	themeUserCacheRedis    ThemeUserCacheRedis
+}
+
+type ThemeUserCachePostgres interface {
+	GetIDsByUserID(
+		ctx context.Context,
+		userID int,
+	) ([]int, error)
+}
+
+type ThemeUserCacheRedis interface {
+	InvalidateByIDs(
+		ctx context.Context,
+		ids []int,
+	) error
 }
 
 type UserRepositoryRedis interface {
@@ -113,9 +129,13 @@ type UserRepositoryPostgres interface {
 func NewUsersService(
 	userRepositoryPostgres UserRepositoryPostgres,
 	userRepositoryRedis UserRepositoryRedis,
+	themeUserCachePostgres ThemeUserCachePostgres,
+	themeUserCacheRedis ThemeUserCacheRedis,
 ) *UserService {
 	return &UserService{
 		userRepositoryPostgres: userRepositoryPostgres,
 		userRepositoryRedis:    userRepositoryRedis,
+		themeUserCachePostgres: themeUserCachePostgres,
+		themeUserCacheRedis:    themeUserCacheRedis,
 	}
 }

@@ -12,12 +12,22 @@ func (s *UserService) DeleteUser(
 	ctx context.Context,
 	id int,
 ) error {
+	log := core_logger.FromContext(ctx)
+
+	theme_user_ids, err := s.themeUserCachePostgres.GetIDsByUserID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("get theme_user IDs for user %d: %w", id, err)
+	}
+
 	if err := s.userRepositoryPostgres.DeleteUser(ctx, id); err != nil {
 		return fmt.Errorf("delete user: %w", err)
 	}
 
+	if err := s.themeUserCacheRedis.InvalidateByIDs(ctx, theme_user_ids); err != nil {
+		log.Warn("failed to invalidate theme_user cache", zap.Int("theme_id", id), zap.Error(err))
+	}
+
 	if err := s.userRepositoryRedis.BumpUsersListVersion(ctx); err != nil {
-		log := core_logger.FromContext(ctx)
 		log.Warn("failed to invalidate users list cache", zap.Error(err))
 	}
 
@@ -27,7 +37,6 @@ func (s *UserService) DeleteUser(
 
 	key := fmt.Sprintf("user:%d", id)
 	if err := s.userRepositoryRedis.DeleteUser(ctx, key); err != nil {
-		log := core_logger.FromContext(ctx)
 		log.Warn("failed to delete user from cache", zap.Error(err))
 	}
 
