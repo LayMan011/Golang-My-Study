@@ -16,7 +16,7 @@ func (s *ThemeService) DeleteTheme(
 
 	theme_user_ids, err := s.themeUserCachePostgres.GetIDsByThemeID(ctx, id)
 	if err != nil {
-		log.Warn("failed to get theme_user IDs for cache invalidation", zap.Int("theme_id", id), zap.Error(err))
+		return fmt.Errorf("get theme_user IDs for theme %d: %w", id, err)
 	}
 
 	if err := s.themeRepositoryPostgres.DeleteTheme(ctx, id); err != nil {

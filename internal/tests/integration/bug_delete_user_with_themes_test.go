@@ -164,6 +164,17 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 		t.Fatalf("get theme_user relation before delete: %v", err)
 	}
 
+	themeID := theme.ID
+
+	themeUsersBefore, err := features.ThemeUserService.GetThemesUser(ctx, nil, &themeID, nil, nil)
+	if err != nil {
+		t.Fatalf("get theme users before delete: %v", err)
+	}
+
+	if !containsThemeUser(themeUsersBefore, theme_user.ID) {
+		t.Fatalf("expected theme_user %d in GetThemesUser before delete", theme_user.ID)
+	}
+
 	if err := features.ThemesService.DeleteTheme(ctx, theme.ID); err != nil {
 		t.Fatalf("delete theme: %v", err)
 	}
@@ -188,6 +199,15 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 		t.Fatalf("expected ErrNotFound theme, got %v", err)
 	}
 
+	themeUsersAfter, err := features.ThemeUserService.GetThemesUser(ctx, nil, &themeID, nil, nil)
+	if err != nil {
+		t.Fatalf("get theme users after delete: %v", err)
+	}
+
+	if containsThemeUser(themeUsersAfter, theme_user.ID) {
+		t.Fatalf("expected theme_user %d to be absent from GetThemesUser after deleting theme", theme_user.ID)
+	}
+
 	var exists bool
 	err = TestDB.QueryRow(ctx, `
 	SELECT EXISTS (
@@ -203,6 +223,15 @@ func Test_Delete_Theme_With_ThemeUser(t *testing.T) {
 	if exists {
 		t.Fatal("expected theme_user relation to be absent from Postgres")
 	}
+}
+
+func containsThemeUser(themeUsers []domain.ThemeUser, id int) bool {
+	for _, item := range themeUsers {
+		if item.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func Test_Delete_User_With_ThemeUser(t *testing.T) {
@@ -283,6 +312,17 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 		t.Fatalf("get theme_user relation before delete: %v", err)
 	}
 
+	userID := user_2.ID
+
+	themeUsersBefore, err := features.ThemeUserService.GetThemesUser(ctx, &userID, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("get theme users before delete: %v", err)
+	}
+
+	if !containsThemeUser(themeUsersBefore, theme_user.ID) {
+		t.Fatalf("expected theme_user %d in GetThemesUser before delete", theme_user.ID)
+	}
+
 	if err := features.UsersService.DeleteUser(ctx, user_2.ID); err != nil {
 		t.Fatalf("delete user: %v", err)
 	}
@@ -305,6 +345,15 @@ func Test_Delete_User_With_ThemeUser(t *testing.T) {
 	_, err = features.ThemeUserService.GetThemeUser(ctx, theme_user.ID)
 	if !errors.Is(err, core_errors.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound theme_user, got %v", err)
+	}
+
+	themeUsersAfter, err := features.ThemeUserService.GetThemesUser(ctx, &userID, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("get theme users after delete: %v", err)
+	}
+
+	if containsThemeUser(themeUsersAfter, theme_user.ID) {
+		t.Fatalf("expected theme_user %d to be absent from GetThemesUser after deleting theme", theme_user.ID)
 	}
 }
 

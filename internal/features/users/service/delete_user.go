@@ -16,7 +16,7 @@ func (s *UserService) DeleteUser(
 
 	theme_user_ids, err := s.themeUserCachePostgres.GetIDsByUserID(ctx, id)
 	if err != nil {
-		log.Warn("failed to get theme_user IDs for cache invalidation", zap.Int("user_id", id), zap.Error(err))
+		return fmt.Errorf("get theme_user IDs for user %d: %w", id, err)
 	}
 
 	if err := s.userRepositoryPostgres.DeleteUser(ctx, id); err != nil {
