@@ -16,6 +16,15 @@ func (s *UserService) DeleteUser(
 		return fmt.Errorf("delete user: %w", err)
 	}
 
+	theme_user_ids, err := s.themeUserCachePostgres.GetIDsByThemeID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("get theme_user IDs for user %d: %w", id, err)
+	}
+
+	if err := s.themeUserCacheRedis.InvalidateByIDs(ctx, theme_user_ids); err != nil {
+		return fmt.Errorf("invalidate theme_user cache for user %d: %w", id, err)
+	}
+
 	if err := s.userRepositoryRedis.BumpUsersListVersion(ctx); err != nil {
 		log := core_logger.FromContext(ctx)
 		log.Warn("failed to invalidate users list cache", zap.Error(err))

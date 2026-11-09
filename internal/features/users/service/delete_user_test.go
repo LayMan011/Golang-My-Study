@@ -36,6 +36,22 @@ func (r *sessionsRedisRepository) DeleteUserSessions(
 	return nil
 }
 
+type themeUserCachePostgresStub struct {
+	users_service.ThemeUserCachePostgres
+}
+
+func (r *themeUserCachePostgresStub) GetIDsByThemeID(ctx context.Context, themeID int) ([]int, error) {
+	return nil, nil
+}
+
+type themeUserCacheRedisStub struct {
+	users_service.ThemeUserCacheRedis
+}
+
+func (r *themeUserCacheRedisStub) InvalidateByIDs(ctx context.Context, ids []int) error {
+	return nil
+}
+
 func TestDeleteUser_PostgresConflictLeavesSessionsActive(t *testing.T) {
 	postgresRepo := &conflictPostgresRepository{
 		deleteErr: core_errors.ErrConflict,
@@ -47,7 +63,7 @@ func TestDeleteUser_PostgresConflictLeavesSessionsActive(t *testing.T) {
 		},
 	}
 
-	service := users_service.NewUsersService(postgresRepo, redisRepo)
+	service := users_service.NewUsersService(postgresRepo, redisRepo, &themeUserCachePostgresStub{}, &themeUserCacheRedisStub{})
 
 	err := service.DeleteUser(context.Background(), 42)
 	if !errors.Is(err, core_errors.ErrConflict) {

@@ -322,17 +322,27 @@ func InitFeatures(
 	pool *core_pgx_pool.Pool,
 	redisClient *core_goredis_pool.RedisClient,
 ) *Features {
-	usersRepositoryPostgres := users_postgres_repository.NewUsersRepository(pool)
-	usersRepositoryRedis := users_redis_repository.NewUsersRepository(redisClient)
-	usersService := users_service.NewUsersService(usersRepositoryPostgres, usersRepositoryRedis)
-
-	themesRepositoryPostgres := themes_postgres_repository.NewThemeRepository(pool)
-	themesRepositoryRedis := themes_redis_repository.NewThemesRepository(redisClient)
-	themesService := themes_service.NewThemeService(themesRepositoryPostgres, themesRepositoryRedis)
-
 	themesUserRepositoryPostgres := themes_user_postgres_repository.NewThemeUserRepository(pool)
 	themesUserRepositoryRedis := themes_user_redis_repository.NewThemesUserRepository(redisClient)
 	themesUserService := themes_user_service.NewThemeUserService(themesUserRepositoryPostgres, themesUserRepositoryRedis)
+
+	usersRepositoryPostgres := users_postgres_repository.NewUsersRepository(pool)
+	usersRepositoryRedis := users_redis_repository.NewUsersRepository(redisClient)
+	usersService := users_service.NewUsersService(
+		usersRepositoryPostgres,
+		usersRepositoryRedis,
+		themesUserRepositoryPostgres,
+		themesUserRepositoryRedis,
+	)
+
+	themesRepositoryPostgres := themes_postgres_repository.NewThemeRepository(pool)
+	themesRepositoryRedis := themes_redis_repository.NewThemesRepository(redisClient)
+	themesService := themes_service.NewThemeService(
+		themesRepositoryPostgres,
+		themesRepositoryRedis,
+		themesUserRepositoryPostgres,
+		themesUserRepositoryRedis,
+	)
 
 	return &Features{
 		UsersService:        usersService,

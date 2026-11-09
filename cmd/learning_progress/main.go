@@ -74,28 +74,28 @@ func main() {
 	redisClient := core_goredis_pool.CreateRedisClientMust(redisConfig)
 	defer redisClient.Close()
 
+	logger.Debug("initializing feature", zap.String("feature", "themes_user"))
+	themesUserRepository := themes_user_postgres_repository.NewThemeUserRepository(pool)
+	themesUserRepositoryRedis := themes_user_redis_repository.NewThemesUserRepository(redisClient)
+	themesUserService := themes_user_service.NewThemeUserService(themesUserRepository, themesUserRepositoryRedis)
+	themesUserTransportHTTP := themes_user_transport_http.NewThemeUserHTTPHandler(themesUserService)
+
 	logger.Debug("initializing feature", zap.String("feature", "users"))
 	usersRepositoryPostgres := users_postgres_repository.NewUsersRepository(pool)
 	usersRepositoryRedis := users_redis_repository.NewUsersRepository(redisClient)
-	usersService := users_service.NewUsersService(usersRepositoryPostgres, usersRepositoryRedis)
+	usersService := users_service.NewUsersService(usersRepositoryPostgres, usersRepositoryRedis, themesUserRepository, themesUserRepositoryRedis)
 	usersTranspostHTTP := users_transport_http.NewUsersHTTPHandler(usersService)
 
 	logger.Debug("initializing feature", zap.String("feature", "themes"))
 	themesRepositoryPostgres := themes_postgres_repository.NewThemeRepository(pool)
 	themesRepositoryRedis := themes_redis_repository.NewThemesRepository(redisClient)
-	themesService := themes_service.NewThemeService(themesRepositoryPostgres, themesRepositoryRedis)
+	themesService := themes_service.NewThemeService(themesRepositoryPostgres, themesRepositoryRedis, themesUserRepository, themesUserRepositoryRedis)
 	themesTransportHTTP := themes_transport_http.NewThemesHTTPHandler(themesService)
 
 	logger.Debug("initializing feature", zap.String("feature", "statistics"))
 	statisticsRepository := statistics_postgres_repository.NewStatisticsRepository(pool)
 	statisticsService := statistics_service.NewStatisticsService(statisticsRepository)
 	statisticsTransportHTTP := statistics_transport_http.NewStatisticsHTTPHandler(statisticsService)
-
-	logger.Debug("initializing feature", zap.String("feature", "themes_user"))
-	themesUserRepository := themes_user_postgres_repository.NewThemeUserRepository(pool)
-	themesUserRepositoryRedis := themes_user_redis_repository.NewThemesUserRepository(redisClient)
-	themesUserService := themes_user_service.NewThemeUserService(themesUserRepository, themesUserRepositoryRedis)
-	themesUserTransportHTTP := themes_user_transport_http.NewThemeUserHTTPHandler(themesUserService)
 
 	logger.Debug("initializing HTTP server")
 	httpServer := core_http_server.NewHTTPServer(

@@ -14,7 +14,12 @@ import (
 	"github.com/LayMan011/Golang-My-Study/internal/core/domain"
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
 	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
+	core_pgx_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/postgres/pool/pgx"
+	core_goredis_pool "github.com/LayMan011/Golang-My-Study/internal/core/repository/redis/pool/goredis"
 	core_http_middleware "github.com/LayMan011/Golang-My-Study/internal/core/transport/http/middleware"
+	themes_user_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/repository/postgres"
+	themes_user_redis_repository "github.com/LayMan011/Golang-My-Study/internal/features/theme_users/repository/redis"
+	users_postgres_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/postgres"
 	users_redis_repository "github.com/LayMan011/Golang-My-Study/internal/features/users/repository/redis"
 	users_service "github.com/LayMan011/Golang-My-Study/internal/features/users/service"
 	users_transport_http "github.com/LayMan011/Golang-My-Study/internal/features/users/transport/http"
@@ -35,9 +40,9 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 
 	ctx := core_logger.ToContext(context.Background(), logger)
 
-	usersRepo, _, _ := initFeatures(ctx, TestDB, redisClient)
+	usersRepo, themesUserRepositoryPostgres, themesUserRepositoryRedis := Init(ctx, TestDB, redisClient)
 	usersRedisRepo := users_redis_repository.NewUsersRepository(redisClient)
-	userService := users_service.NewUsersService(usersRepo, usersRedisRepo)
+	userService := users_service.NewUsersService(usersRepo, usersRedisRepo, themesUserRepositoryPostgres, themesUserRepositoryRedis)
 	usersHandler := users_transport_http.NewUsersHTTPHandler(userService)
 
 	login := fmt.Sprintf("token-revocation-%d@example.com", time.Now().UnixNano())
@@ -237,4 +242,21 @@ func TestDeleteUser_RevokesAllSessions(t *testing.T) {
 			t.Errorf("session %d still has token data in Redis: %#v", i+1, pair)
 		}
 	}
+}
+
+func Init(
+	ctx context.Context,
+	pool *core_pgx_pool.Pool,
+	redisClient *core_goredis_pool.RedisClient,
+) (
+	*users_postgres_repository.UserRepository,
+	*themes_user_postgres_repository.ThemeUserRepository,
+	*themes_user_redis_repository.ThemeUserRepository,
+) {
+	themesUserRepositoryPostgres := themes_user_postgres_repository.NewThemeUserRepository(pool)
+	themesUserRepositoryRedis := themes_user_redis_repository.NewThemesUserRepository(redisClient)
+
+	usersRepositoryPostgres := users_postgres_repository.NewUsersRepository(pool)
+
+	return usersRepositoryPostgres, themesUserRepositoryPostgres, themesUserRepositoryRedis
 }
