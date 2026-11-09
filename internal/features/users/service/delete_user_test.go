@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	core_errors "github.com/LayMan011/Golang-My-Study/internal/core/errors"
+	core_logger "github.com/LayMan011/Golang-My-Study/internal/core/logger"
 	users_service "github.com/LayMan011/Golang-My-Study/internal/features/users/service"
 )
 
@@ -40,7 +41,7 @@ type themeUserCachePostgresStub struct {
 	users_service.ThemeUserCachePostgres
 }
 
-func (r *themeUserCachePostgresStub) GetIDsByThemeID(ctx context.Context, themeID int) ([]int, error) {
+func (r *themeUserCachePostgresStub) GetIDsByUserID(ctx context.Context, themeID int) ([]int, error) {
 	return nil, nil
 }
 
@@ -53,6 +54,16 @@ func (r *themeUserCacheRedisStub) InvalidateByIDs(ctx context.Context, ids []int
 }
 
 func TestDeleteUser_PostgresConflictLeavesSessionsActive(t *testing.T) {
+	t.Setenv("LOGGER_FOLDER", t.TempDir())
+
+	logger, err := core_logger.NewLogger(core_logger.NewConfigMust())
+	if err != nil {
+		t.Fatalf("init application logger: %v", err)
+	}
+	defer logger.Close()
+
+	ctx := core_logger.ToContext(context.Background(), logger)
+
 	postgresRepo := &conflictPostgresRepository{
 		deleteErr: core_errors.ErrConflict,
 	}
@@ -65,7 +76,7 @@ func TestDeleteUser_PostgresConflictLeavesSessionsActive(t *testing.T) {
 
 	service := users_service.NewUsersService(postgresRepo, redisRepo, &themeUserCachePostgresStub{}, &themeUserCacheRedisStub{})
 
-	err := service.DeleteUser(context.Background(), 42)
+	err = service.DeleteUser(ctx, 42)
 	if !errors.Is(err, core_errors.ErrConflict) {
 		t.Fatalf("DeleteUser() error = %v, want %v", err, core_errors.ErrConflict)
 	}

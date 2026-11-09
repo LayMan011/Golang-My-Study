@@ -382,13 +382,37 @@ func cacheKeyInt(key, marker, nextMarker string) (int, bool) {
 	return value, true
 }
 
-func (r *redisRepoStub) BumpThemesListVersion(
+type themeUserCachePostgresStub struct {
+	ids []int
+	err error
+
+	getIDsByThemeIDCalls int
+}
+
+func (s *themeUserCachePostgresStub) GetIDsByUserID(
 	ctx context.Context,
-) error {
-	if r.err != nil {
-		return r.err
+	userID int,
+) ([]int, error) {
+	s.getIDsByThemeIDCalls++
+	if s.err != nil {
+		return nil, s.err
 	}
 
-	r.listVersion++
-	return nil
+	return append([]int(nil), s.ids...), nil
+}
+
+type themeUserCacheRedisStub struct {
+	err error
+
+	invalidatedIDs       []int
+	invalidateByIDsCalls int
+}
+
+func (s *themeUserCacheRedisStub) InvalidateByIDs(
+	ctx context.Context,
+	ids []int,
+) error {
+	s.invalidateByIDsCalls++
+	s.invalidatedIDs = append([]int(nil), ids...)
+	return s.err
 }

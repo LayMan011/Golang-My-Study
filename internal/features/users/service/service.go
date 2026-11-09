@@ -14,9 +14,9 @@ type UserService struct {
 }
 
 type ThemeUserCachePostgres interface {
-	GetIDsByThemeID(
+	GetIDsByUserID(
 		ctx context.Context,
-		themeID int,
+		userID int,
 	) ([]int, error)
 }
 

@@ -365,3 +365,38 @@ func cacheKeyInt(key, marker, nextMarker string) (int, bool) {
 	}
 	return value, true
 }
+
+type themeUserCachePostgresStub struct {
+	ids []int
+	err error
+
+	getIDsByThemeIDCalls int
+}
+
+func (s *themeUserCachePostgresStub) GetIDsByThemeID(
+	ctx context.Context,
+	themeID int,
+) ([]int, error) {
+	s.getIDsByThemeIDCalls++
+	if s.err != nil {
+		return nil, s.err
+	}
+
+	return append([]int(nil), s.ids...), nil
+}
+
+type themeUserCacheRedisStub struct {
+	err error
+
+	invalidatedIDs       []int
+	invalidateByIDsCalls int
+}
+
+func (s *themeUserCacheRedisStub) InvalidateByIDs(
+	ctx context.Context,
+	ids []int,
+) error {
+	s.invalidateByIDsCalls++
+	s.invalidatedIDs = append([]int(nil), ids...)
+	return s.err
+}
